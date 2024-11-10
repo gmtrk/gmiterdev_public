@@ -3,6 +3,8 @@ import os
 import tensorflowjs as tfjs
 import numpy as np
 
+# Where the model is saved
+model_path = "your_path_here"
 
 class MNISTModel:
     def __init__(self):
@@ -36,7 +38,7 @@ class MNISTModel:
         ])
 
         # Update paths
-        self.model_dir = 'mnist/static/mnist/model'
+        self.model_dir = model_path
         self.h5_path = os.path.join(self.model_dir, 'mnist_model.h5')
 
         if os.path.exists(self.h5_path):
