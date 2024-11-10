@@ -1,0 +1,49 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block title %}gmiterDev{% endblock %}
+
+{% block content %}
+<main class="container flex-grow text-xl font-roboto-condensed">
+  <div class="mx-auto w-full md:w-3/4 lg:w-2/3">
+    <section class="mb-8">
+      <div class="flex items-end">
+        <img src="{% static 'img/fish_nobg.svg' %}" class="h-24 object-cover animate-bounce ml-4">
+        <div class="relative max-w-md ml-5 mb-7">
+          <!-- Text inside the bubble -->
+          <div class="bg-white p-4 rounded-lg shadow-lg space-y-2">
+            <p>hello, my name is <b>Jakub</b></p>
+            <p>I’m a passionate, young <b>software engineer</b> with a love for tech and software</p>
+            <p><b>welcome to my website!</b></p>
+            <p>here, you’ll find a small collection of apps that showcase my skills and approach to software development</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-bold mb-4">My Apps</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="/mnist" class="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+          <img src="{% static 'img/mnist_thumbnail.png' %}" alt="MNIST playground" class="w-full h-48 object-cover">
+          <div class="p-4">
+            <h3 class="text-xl font-bold mb-2 font-tourney">MNIST Playground</h3>
+            <p>explore the MNIST dataset and see how the model reacts to your input</p>
+            <p class="text-gray-500 mt-2 text-sm">visits: {{ mnist_visits }}</p>
+          </div>
+        </a>
+          <a href="/metaguess" class="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+          <img src="{% static 'img/metaguess_thumbnail.png' %}" alt="metaguess" class="w-full h-48 object-cover">
+          <div class="p-4">
+            <h3 class="text-xl font-bold mb-2 font-tourney">MetaGuess</h3>
+            <p>guess if the given score is higher or lower than the metacritic score</p>
+            <p class="text-gray-500 mt-2 text-sm">visits: {{ metaguess_visits }}</p>
+          </div>
+        </a>
+        <!-- Add more app tiles here -->
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}
