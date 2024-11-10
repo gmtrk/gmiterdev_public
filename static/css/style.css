@@ -1,0 +1,25 @@
+@font-face {
+    font-family: 'Eurostile';
+    src: url('../fonts/Eurostile.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.font-roboto-condensed {
+    font-family: 'Roboto Condensed', sans-serif;
+}
+
+.font-tourney {
+  font-family: "Tourney", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+}
+
+.font-alfa-slab-one-regular {
+  font-family: "Alfa Slab One", serif;
+  font-weight: 400;
+  font-style: normal;
+}

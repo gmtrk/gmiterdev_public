@@ -1,0 +1,82 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block title %}MetaGuess{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'metaguess/css/tailwind.min.css' %}">
+<script src="{% static 'metaguess/js/game.js' %}"></script>
+    <style>
+    @keyframes floatFadeOut {
+        0% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+    .animate-float-fade-out {
+        animation: floatFadeOut 2s ease forwards;
+    }
+</style>
+
+<div class="max-w-2xl mx-auto p-5 font-sans">
+    <div class="flex items-center justify-between rounded-t-lg bg-black px-4 py-2 text-white">
+    <div class="flex items-center space-x-2">
+      <div class="h-6 w-6 rounded-full bg-yellow-400">
+        <div class="ml-1 mt-1 h-4 w-4 rounded-full bg-black"></div>
+        </div>
+      <div class="text-xl font-bold">metaguess</div>
+    </div>
+    <div class="text-lg">Score: <span id="score" class="font-bold">0</span></div>
+  </div>
+
+    <div class="bg-white rounded-b-lg shadow-md p-5">
+        <div class="flex gap-5 mb-5">
+            <div class="relative w-auto h-auto">
+                <img id="game-image" src="" alt="Game Cover" class="absolute w-full h-full object-cover rounded-lg">
+                <img src="{% static 'metaguess/img/nocover.png' %}" alt="No Cover Available" class="w-full h-full object-cover rounded-lg">
+            </div>
+            <div class="flex flex-col justify-between w-full">
+                <div>
+                    <h2 id="game-title" class="text-2xl font-bold text-gray-800">Game Title</h2>
+                    <p id="game-platforms" class="text-gray-600">Platforms: </p>
+                    <p id="game-year" class="text-gray-600">Year: </p>
+                <div class="flex justify-end items-center space-x-2 mt-4 relative">
+                    <div id="guess-score" class="w-32 h-32 flex items-center justify-center text-4xl font-bold rounded-lg bg-gray-100 text-gray-700">?</div>
+                </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="text-center text-lg mb-5 text-gray-700">
+            Is the Metacritic score higher or lower than
+            <span id="compare-score" class="inline-flex items-center justify-center w-12 h-12 text-2xl font-bold rounded-lg ml-2 -translate-y-1 bg-gray-200"></span>?
+        </div>
+
+        <div class="flex justify-center space-x-4 h-10">
+            <button id="higher-btn" class="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">
+                Higher
+            </button>
+            <button id="lower-btn" class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition">
+                Lower
+            </button>
+        </div>
+    </div>
+
+    <div id="game-over" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-10 rounded-lg text-center shadow-lg">
+            <h2 class="text-3xl font-bold text-red-600 mb-5">Game Over!</h2>
+            <p class="text-lg">Final Score: <span id="final-score" class="font-bold text-gray-800">0</span></p>
+            <p class="text-lg">Personal Best: <span id="personal-best" class="font-bold text-gray-800">0</span></p>
+            <button id="restart-btn" class="mt-5 px-5 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">
+                Play Again
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

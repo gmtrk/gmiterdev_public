@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}gmiterDev{% endblock %}</title>
+    <link rel="icon" href="{% static 'img/favicon.svg' %}">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Tourney:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .font-roboto-condensed {
+    font-family: 'Roboto Condensed', sans-serif;
+    }
+        .font-alfa-slab-one-regular {
+  font-family: "Alfa Slab One", serif;
+  font-weight: 400;
+  font-style: normal;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-roboto-condensed h-screen flex flex-col">
+
+    <!-- Header with clickable logo -->
+    <header class="py-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'main' %}">
+              <h1 class="font-alfa-slab-one-regular text-2xl font-bold mb-4 px-4 flex items-center group">
+                <span class="transition-colors duration-300 ease-in-out group-hover:text-red-500">gmiter</span>
+                <span class="mx-1 mt-2 w-3 h-3 rounded-full bg-red-500 transition-colors duration-300 ease-in-out group-hover:bg-black group-hover:animate-bounce"></span>
+                <span class="transition-colors duration-300 ease-in-out group-hover:text-red-500">dev</span>
+              </h1>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="container flex-grow">
+        {% block content %}
+        <!-- Content from child templates will go here -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-4 mt-5">
+
+        <div class="container mx-auto text-center text-sm">
+            <a>
+                <h1>
+                    contact me: gmtrkk@gmail.com
+                </h1>
+            </a>
+            <p>&copy; 2024 gmiterDev. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

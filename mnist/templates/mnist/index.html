@@ -1,0 +1,120 @@
+{% extends "master.html" %}
+{% load static %}
+
+{% block title %}MNIST playground{% endblock %}
+
+{% block content %}
+    <style>
+        .font-tourney {
+      font-family: "Tourney", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 600;
+      font-style: normal;
+      font-variation-settings:
+        "wdth" 100;
+    }
+    </style>
+<div class="container mx-auto px-4 py-8 font-roboto-condensed">
+    <div class="text-center mb-8">
+        <h1 class="text-6xl font-bold mb-4 font-tourney">MNIST playground</h1>
+        <p class="text-lg text-gray-600">draw a digit (0-9) in the canvas below</p>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-center items-start gap-8 ">
+        <div class="relative flex flex-col items-center">
+            <!-- Canvas is 28x28 pixels, scaled up 10x with CSS -->
+            <canvas id="drawingCanvas" width="28" height="28" class="border-2 border-gray-300 rounded-lg cursor-crosshair w-[252px] h-[252px] image-rendering-pixelated"></canvas>
+            <button id="clearButton" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                Clear Canvas
+            </button>
+        </div>
+
+        <div class="w-64">
+            <h2 class="text-xl font-semibold mb-4">predictions</h2>
+            <div id="predictions" class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">0:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred0" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred0Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">1:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred1" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred1Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">2:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred2" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred2Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">3:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred3" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred3Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">4:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred4" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred4Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">5:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred5" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred5Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">6:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred6" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred6Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">7:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred7" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred7Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">8:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred8" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred8Text" class="w-16 text-right">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 text-right">9:</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div id="pred9" class="h-full bg-gray-800" style="width: 0%"></div>
+                    </div>
+                    <span id="pred9Text" class="w-16 text-right">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .image-rendering-pixelated {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0"></script>
+<script src="{% static 'mnist/js/drawing.js' %}"></script>
+{% endblock %}
