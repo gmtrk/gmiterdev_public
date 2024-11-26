@@ -25,7 +25,8 @@ An interactive playground where you can test a model trained on the MNIST datase
 A fun game where you guess whether a given Metacritic score is higher or lower than the selected value.
 
 - **Overview**: I created a scraper to gather information on all Metacritic games with more than 7 reviews ([Metacritic Games](https://www.metacritic.com/browse/game/)), including titles, scores, and release years. This data is saved in a SQL database. Anti-scraping measures on Metacritic prevented me from retrieving cover images directly (even when using Selenium). However, I utilized the IGDB API to fetch most game covers and platform details.
-- **Future Updates**: Although scores are not saved currently, a leaderboard feature is planned to store high scores.
+- **Updates**: Added a leaderboard, now top 5 scores are saved and displayed after a game over.
+- **Future Updates**: Add a movie gamemode.
 - **Tech Stack**: Python, JavaScript, SQL, CSS, HTML
 
 ---
