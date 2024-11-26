@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const gameYearElem = document.getElementById("game-year");
     const gameImageElem = document.getElementById("game-image");
     const restartBtn = document.getElementById("restart-btn");
+    const submithighscoreBtn = document.getElementById("submit-high-score-btn");
 
     let score = 0;
     let personalbest = 0;
@@ -35,6 +36,8 @@ document.addEventListener("DOMContentLoaded", function () {
             personalbest = score;
         }
         personalBestElem.textContent = personalbest;
+
+        showHighScores(score);
     }
 
     // Animate score reveal
@@ -143,6 +146,73 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 2000);
     }
 
+    // Function to show high scores
+    function showHighScores(finalScore) {
+        submithighscoreBtn.classList.remove("hidden");
+        fetch("/metaguess/get-high-scores/")
+            .then(response => response.json())
+            .then(data => {
+                const highScoreTable = document.getElementById("high-score-table");
+                const newHighScoreForm = document.getElementById("new-high-score-form");
+
+                // Populate high scores
+                highScoreTable.innerHTML = "<ul class='text-left space-y-2'>";
+                data.forEach((entry, index) => {
+                    highScoreTable.innerHTML += `<li>${index + 1}. <strong>${entry.initials}</strong> - ${entry.score}</li>`;
+                });
+                highScoreTable.innerHTML += "</ul>";
+
+                // Check if the player's score qualifies for the top 5
+                if (data.length < 5 || finalScore > data[data.length - 1].score) {
+                    newHighScoreForm.classList.remove("hidden");
+                    document.getElementById("submit-high-score-btn").onclick = () => {
+                        console.log("Submit button clicked!");
+                        const initials = document.getElementById("high-score-initials").value.trim().toUpperCase();
+                        console.log("Entered initials:", initials);
+                        submithighscoreBtn.classList.add("hidden");
+
+                        if (initials.length === 3) {
+                            fetch("/metaguess/add-high-score/", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": getCSRFToken(), // Add CSRF token
+                                },
+                                body: JSON.stringify({ initials: initials, score: finalScore }),
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log("Score submitted successfully:", data);
+                                alert("Score submitted successfully!");
+                                document.getElementById("new-high-score-form").classList.add("hidden");
+                                showHighScores(finalScore); // Refresh high scores
+                            })
+                            .catch(error => console.error("Error submitting high score:", error));
+                        } else {
+                            alert("Please enter exactly 3 characters for initials.");
+                        }
+                    };
+                } else {
+                    newHighScoreForm.classList.add("hidden");
+                }
+
+                // Display the Game Over screen with the high score table
+                document.getElementById("game-over").classList.remove("hidden");
+            })
+            .catch(error => console.error("Error fetching high scores:", error));
+    }
+
+    // Utility: Get CSRF Token
+    function getCSRFToken() {
+        const tokenElement = document.querySelector("[name=csrfmiddlewaretoken]");
+        if (tokenElement) {
+            return tokenElement.value;
+        }
+        console.error("CSRF token not found.");
+        return ""; // Fallback for debugging
+    }
+
+
 
     // Reset the game
     function resetGame() {
@@ -162,6 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
     higherBtn.addEventListener("click", () => makeGuess(true));
     lowerBtn.addEventListener("click", () => makeGuess(false));
     restartBtn.addEventListener("click", resetGame);
+    //submithighscoreBtn.addEventListener("click", resetGame);
 
     // Fetch the first game on page load
     fetchRandomGame();

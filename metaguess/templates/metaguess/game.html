@@ -69,14 +69,28 @@
     </div>
 
     <div id="game-over" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white p-10 rounded-lg text-center shadow-lg">
-            <h2 class="text-3xl font-bold text-red-600 mb-5">Game Over!</h2>
-            <p class="text-lg">Final Score: <span id="final-score" class="font-bold text-gray-800">0</span></p>
-            <p class="text-lg">Personal Best: <span id="personal-best" class="font-bold text-gray-800">0</span></p>
-            <button id="restart-btn" class="mt-5 px-5 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">
-                Play Again
+    <div class="bg-white p-8 rounded-lg text-center shadow-lg max-w-lg w-full">
+        <h2 class="text-3xl font-bold text-red-600 mb-4">Game Over!</h2>
+        <p class="text-lg mb-2">Your Score: <span id="final-score" class="font-bold text-gray-800">0</span></p>
+        <p class="text-lg mb-4">Personal Best: <span id="personal-best" class="font-bold text-gray-800">0</span></p>
+
+        <h3 class="text-2xl font-semibold text-gray-700 mb-2">Best Scores</h3>
+        <div id="high-score-table" class="mb-4">
+        </div>
+
+        <div id="new-high-score-form" class="hidden mb-4">
+            <p class="mb-2 text-gray-600">Congrats! Enter your initials (3 characters):</p>
+            <input type="text" id="high-score-initials" maxlength="3" class="px-3 py-2 border rounded mb-3 text-center w-full max-w-xs">
+            <button id="submit-high-score-btn" class="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">
+                Submit Score
             </button>
         </div>
+
+        <button id="restart-btn" class="px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition mt-4">
+            Play Again
+        </button>
     </div>
+</div>
+</div>
 </div>
 {% endblock %}

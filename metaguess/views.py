@@ -2,8 +2,10 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import random
 from django.http import JsonResponse
-from .models import Games
+from .models import Games, HighScore
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 def game(request):
     return render(request, 'metaguess/game.html')
@@ -28,3 +30,19 @@ def get_random_game(request):
         "cover_url": game.cover_url or "/static/metaguess/img/nocover.png",
     }
     return JsonResponse(game_data)
+
+@never_cache
+def get_high_scores(request):
+    high_scores = HighScore.objects.all()[:5]  # Get top 5 scores
+    data = [{"initials": score.initials, "score": score.score} for score in high_scores]
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def add_high_score(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        initials = data.get("initials", "").upper()[:3]
+        score = data.get("score", 0)
+        HighScore.objects.create(initials=initials, score=score)
+        return JsonResponse({"message": "High score added successfully!"})
+    return JsonResponse({"error": "Invalid request method"}, status=400)
