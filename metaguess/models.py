@@ -148,3 +148,14 @@ class MetaguessGame(models.Model):
     class Meta:
         managed = False
         db_table = 'metaguess_game'
+
+class HighScore(models.Model):
+    initials = models.CharField(max_length=3)
+    score = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-score', 'created_at']
+
+    def __str__(self):
+        return f"{self.initials}: {self.score}"
