@@ -16,3 +16,7 @@ def _plain_static_storage(settings):
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
+
+    # Tests run with DEBUG=False, which activates SECURE_SSL_REDIRECT in settings.py. That would
+    # make the test client receive 301 redirects instead of 200s, so disable it for the suite.
+    settings.SECURE_SSL_REDIRECT = False

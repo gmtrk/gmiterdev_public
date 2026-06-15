@@ -1,10 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpResponse
 import random
 from django.http import JsonResponse
 from .models import Games, HighScore
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
 import json
 
 def game(request):
@@ -12,15 +10,9 @@ def game(request):
 
 @never_cache
 def get_random_game(request):
-    # Get the total number of games
-    game_count = Games.objects.count()
-
-    if game_count == 0:
+    game = Games.objects.order_by('?').first()
+    if game is None:
         return JsonResponse({"error": "No games found in the database"}, status=404)
-
-    # Choose a random offset and retrieve a game
-    random_index = random.randint(0, game_count - 1)
-    game = Games.objects.all()[random_index]
 
     game_data = {
         "game_name": game.game_name,
@@ -37,12 +29,21 @@ def get_high_scores(request):
     data = [{"initials": score.initials, "score": score.score} for score in high_scores]
     return JsonResponse(data, safe=False)
 
-@csrf_exempt
 def add_high_score(request):
-    if request.method == "POST":
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=400)
+    try:
         data = json.loads(request.body)
-        initials = data.get("initials", "").upper()[:3]
-        score = data.get("score", 0)
-        HighScore.objects.create(initials=initials, score=score)
-        return JsonResponse({"message": "High score added successfully!"})
-    return JsonResponse({"error": "Invalid request method"}, status=400)
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+    initials = str(data.get("initials", "")).upper()[:3]
+    if len(initials) != 3 or not initials.isalpha():
+        return JsonResponse({"error": "Initials must be exactly 3 letters"}, status=400)
+    try:
+        score = int(data.get("score", 0))
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid score"}, status=400)
+    if not (0 <= score <= 1_000_000):
+        return JsonResponse({"error": "Score out of range"}, status=400)
+    HighScore.objects.create(initials=initials, score=score)
+    return JsonResponse({"message": "High score added successfully!"})

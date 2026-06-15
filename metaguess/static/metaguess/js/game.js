@@ -42,21 +42,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Animate score reveal
     function animateScoreReveal(start, end) {
+        if (start === end) {
+            guessScoreElem.textContent = end;
+            setScoreColor(guessScoreElem, end);
+            return;
+        }
+
+        const target = Math.round(end);
         let current = start;
-        const increment = end > start ? 1 : -1;
-        const duration = Math.abs(end - start) * 20;
+        const increment = target > start ? 1 : -1;
+        const duration = Math.abs(target - start) * 20;
 
         const animate = setInterval(() => {
             current += increment;
             guessScoreElem.textContent = current;
             setScoreColor(guessScoreElem, current);
-            if (current === end) clearInterval(animate);
-        }, duration / Math.abs(end - start));
+            if (current === target) clearInterval(animate);
+        }, duration / Math.abs(target - start));
+    }
+
+    // Remove score-related color classes
+    function clearScoreColor(el) {
+        el.classList.remove("bg-green-400", "bg-yellow-400", "bg-red-500", "text-white");
     }
 
     // Set color based on score
     function setScoreColor(element, score) {
-        element.classList.remove("bg-green-400", "bg-yellow-400", "bg-red-500", "text-white");
+        clearScoreColor(element);
         if (score >= 75) {
             element.classList.add("bg-green-400", "text-black");
         } else if (score >= 50) {
@@ -134,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 setTimeout(() => {
                     messageElem.remove();
-                    guessScoreElem.classList.remove("bg-green-400", "bg-yellow-400", "bg-red-500", "text-white");
+                    clearScoreColor(guessScoreElem);
                     higherBtn.classList.remove("hidden");
                     lowerBtn.classList.remove("hidden");
                     submithighscoreBtn.classList.remove("hidden");
@@ -166,9 +178,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.length < 5 || finalScore > data[data.length - 1].score) {
                     newHighScoreForm.classList.remove("hidden");
                     document.getElementById("submit-high-score-btn").onclick = () => {
-                        console.log("Submit button clicked!");
                         const initials = document.getElementById("high-score-initials").value.trim().toUpperCase();
-                        console.log("Entered initials:", initials);
                         submithighscoreBtn.classList.add("hidden");
 
                         if (initials.length === 3) {
@@ -182,7 +192,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             })
                             .then(response => response.json())
                             .then(data => {
-                                console.log("Score submitted successfully:", data);
                                 alert("Score submitted successfully!");
                                 document.getElementById("new-high-score-form").classList.add("hidden");
                                 showHighScores(finalScore); // Refresh high scores
@@ -221,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
         gameOverElem.classList.add("hidden");
         higherBtn.classList.remove("hidden");
         lowerBtn.classList.remove("hidden");
-        guessScoreElem.classList.remove("bg-green-400", "bg-yellow-400", "bg-red-500", "text-white");
+        clearScoreColor(guessScoreElem);
         guessScoreElem.textContent = "?";
         compareScoreElem.textContent = "";
 
@@ -232,7 +241,6 @@ document.addEventListener("DOMContentLoaded", function () {
     higherBtn.addEventListener("click", () => makeGuess(true));
     lowerBtn.addEventListener("click", () => makeGuess(false));
     restartBtn.addEventListener("click", resetGame);
-    //submithighscoreBtn.addEventListener("click", resetGame);
 
     // Fetch the first game on page load
     fetchRandomGame();

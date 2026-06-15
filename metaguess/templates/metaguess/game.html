@@ -79,6 +79,7 @@
         </div>
 
         <div id="new-high-score-form" class="hidden mb-4">
+            {% csrf_token %}
             <p class="mb-2 text-gray-600">Congrats! Enter your initials (3 characters):</p>
             <input type="text" id="high-score-initials" maxlength="3" class="px-3 py-2 border rounded mb-3 text-center w-full max-w-xs">
             <button id="submit-high-score-btn" class="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">

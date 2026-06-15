@@ -110,22 +110,6 @@ function clearCanvas() {
     }
 }
 
-function debugModelInput() {
-    const imageData = context.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-    const pixels = new Uint8Array(imageData.data.buffer);
-    console.log('Sample pixels:', pixels.slice(0, 20));
-
-    // Create a temporary canvas to display the processed image
-    const debugCanvas = document.createElement('canvas');
-    debugCanvas.width = CANVAS_SIZE;
-    debugCanvas.height = CANVAS_SIZE;
-    const debugCtx = debugCanvas.getContext('2d');
-    debugCtx.putImageData(imageData, 0, 0);
-
-    // Log data URL to see actual input
-    console.log('Debug image:', debugCanvas.toDataURL());
-}
-
 async function predict() {
     if (!model) return;
 
@@ -135,18 +119,8 @@ async function predict() {
         .div(255.0)        // Normalize to 0-1
         .expandDims(0);    // Add batch dimension
 
-    // Debug: Log input range
-    const inputMin = await input.min().data();
-    const inputMax = await input.max().data();
-    console.log('Input range:', inputMin[0], inputMax[0]);
-
     // Get prediction
     const predictions = await model.predict(input).data();
-
-    // Log the highest prediction for debugging
-    const maxPred = Math.max(...predictions);
-    const predictedDigit = predictions.indexOf(maxPred);
-    console.log('Predicted digit:', predictedDigit, 'with confidence:', maxPred);
 
     // Update prediction bars
     predictions.forEach((pred, i) => {

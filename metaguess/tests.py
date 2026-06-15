@@ -16,11 +16,6 @@ def test_metaguess_page_loads(client):
     assert resp.status_code == 200
 
 
-@pytest.mark.xfail(
-    reason="HighScore has no migration (CLAUDE.md landmine #11), so `metaguess_highscore` "
-    "doesn't exist on a fresh DB. Run `make makemigrations` to fix — then this xpasses.",
-    strict=False,
-)
 def test_high_scores_endpoint_returns_empty_json(client):
     resp = client.get("/metaguess/get-high-scores/")
     assert resp.status_code == 200
