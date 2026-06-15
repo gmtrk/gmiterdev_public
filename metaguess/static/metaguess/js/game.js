@@ -47,6 +47,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return arr;
   }
 
+  const preloaded = new Set();
+  function preload(url) {
+    if (!url || preloaded.has(url)) return;
+    preloaded.add(url);
+    const img = new Image();
+    img.src = url;
+  }
+  function preloadAhead(n) {
+    for (let i = index; i < Math.min(index + n, deck.length); i++) {
+      preload(deck[i].cover_url);
+    }
+  }
+
   function scoreBand(value) {
     if (value >= 90) return { cls: "good", sentiment: "Universal Acclaim" };
     if (value >= 75) return { cls: "good", sentiment: "Generally Favorable" };
@@ -142,6 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setCard("challenger", challenger, false);
     els.higherBtn.classList.remove("mg-hidden");
     els.lowerBtn.classList.remove("mg-hidden");
+    preloadAhead(3);
     busy = false;
   }
 
