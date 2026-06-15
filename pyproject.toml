@@ -1,0 +1,28 @@
+# Tooling config for ruff (lint/format) and pytest (tests).
+# Project dependencies live in requirements.txt / requirements-dev.txt.
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["migrations", ".venv", "static", "staticfiles"]
+
+# NOTE: import-sorting ("I") is intentionally omitted for now — enforcing it would mean
+# reformatting every existing module. Re-enable it in the cleanup pass and run
+# `ruff check --fix` once (see CLAUDE.md "Roadmap / known TODO").
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B"]  # pycodestyle, pyflakes, pyupgrade, bugbear
+ignore = ["E501"]               # don't fail on long lines (formatter handles them)
+
+[tool.ruff.lint.per-file-ignores]
+# Intentional star-import so the project urlconf can reference mnist.views.main_view.
+"gmiterdev/urls.py" = ["F403", "F405"]
+# inspectdb-generated; left as-is until the models are reworked (see CLAUDE.md landmine #2).
+"metaguess/models.py" = ["E", "F", "B"]
+# Pre-existing lint debt in legacy files — clear these during the cleanup pass.
+"metaguess/views.py" = ["F401"]      # unused HttpResponse import
+"mnist/mnist_model.py" = ["F841"]    # unused locals in the training script
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "gmiterdev.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "-q"

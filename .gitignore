@@ -1,1 +1,21 @@
-/.env
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Django
+*.log
+/staticfiles/
+local.sqlite3
+
+# Local environment / secrets
+.env
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
