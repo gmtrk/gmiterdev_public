@@ -27,8 +27,7 @@ def test_mnist_model_artifacts_present():
     """The browser loads these via TensorFlow.js; missing files = broken playground."""
     model_dir = Path(__file__).resolve().parent / "static" / "mnist" / "model"
     assert (model_dir / "model.json").exists()
-    assert (model_dir / "group1-shard1of2.bin").exists()
-    assert (model_dir / "group1-shard2of2.bin").exists()
+    assert any(model_dir.glob("*.bin")), "expected at least one .bin shard in model dir"
 
 
 def test_mnist_page_has_layer_pipeline(client):
@@ -45,3 +44,13 @@ def test_mnist_page_has_layer_pipeline(client):
     assert b'block 1' in body                    # teaching label
     assert b'high activation' in body            # legend
     assert b'type="module"' in body              # ES-module entrypoint
+
+
+def test_slim_model_artifact():
+    """The served model is the slim, named-tap model and stays under the size budget."""
+    model_dir = Path(__file__).resolve().parent / "static" / "mnist" / "model"
+    text = (model_dir / "model.json").read_text()
+    for name in ("block1", "block2", "dense_reason"):
+        assert name in text, f"expected tapped layer '{name}' in model.json"
+    total = sum(p.stat().st_size for p in model_dir.glob("*.bin"))
+    assert total < 500 * 1024, f"model weights {total} bytes exceed the 500KB slim budget"

@@ -26,7 +26,7 @@ def build_model():
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPooling2D(2),
             tf.keras.layers.GlobalAveragePooling2D(),
-            tf.keras.layers.Dense(64, activation="relu", name="dense_reason"),
+            tf.keras.layers.Dense(96, activation="relu", name="dense_reason"),
             tf.keras.layers.Dense(10, activation="softmax", name="output"),
         ]
     )
