@@ -6,17 +6,19 @@
 {% block extra_head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'metaguess/css/game.css' %}">
 {% endblock %}
 
 {% block header %}
 <header class="mg-topbar">
   <div class="mg-topbar__inner">
-    <span class="mg-brand">
-      <a class="mg-logo" href="{% url 'main' %}">gmiter<span class="mg-logo__dot"></span>dev</a>
-      <span class="mg-tag">METAGUESS</span>
-    </span>
+    <a class="mg-logo" href="{% url 'main' %}">
+      <span class="mg-logo__seg mg-logo__seg--pre">gmiter</span>
+      <span class="mg-logo__circle">M</span>
+      <span class="mg-logo__seg mg-logo__seg--post">dev</span>
+      <span class="mg-logo__game">metaguess</span>
+    </a>
     <span class="mg-scoreline">SCORE&nbsp;&nbsp;<b id="score">0</b></span>
   </div>
 </header>
@@ -29,18 +31,35 @@
   <p class="mg-prompt">Does the <b>right</b> game score higher or lower than the <b>left</b>?</p>
 
   <div class="mg-board">
-    <div class="mg-card">
-      <img id="anchor-image" class="mg-cover" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover">
-      <div id="anchor-title" class="mg-card__title">&mdash;</div>
-      <div id="anchor-meta" class="mg-card__meta"></div>
-      <div id="anchor-score" class="mg-score mg-score--hidden">?</div>
+    <div id="anchor-card" class="mg-card">
+      <div class="mg-card__top">
+        <img id="anchor-image" class="mg-cover" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover">
+        <h3 id="anchor-title" class="mg-card__title">&mdash;</h3>
+        <span id="anchor-tag" class="mg-tag-pill"></span>
+      </div>
+      <div class="mg-score-sec">
+        <div>
+          <div class="mg-score-label">Metascore</div>
+          <div id="anchor-sentiment" class="mg-sentiment">&mdash;</div>
+          <div id="anchor-sub" class="mg-subline"></div>
+        </div>
+        <div id="anchor-score" class="mg-square">?</div>
+      </div>
     </div>
-    <div class="mg-card">
-      <img id="challenger-image" class="mg-cover" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover">
-      <div id="challenger-title" class="mg-card__title">&mdash;</div>
-      <div id="challenger-meta" class="mg-card__meta"></div>
-      <div style="position: relative;">
-        <div id="challenger-score" class="mg-score mg-score--hidden">?</div>
+
+    <div id="challenger-card" class="mg-card">
+      <div class="mg-card__top">
+        <img id="challenger-image" class="mg-cover" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover">
+        <h3 id="challenger-title" class="mg-card__title">&mdash;</h3>
+        <span id="challenger-tag" class="mg-tag-pill"></span>
+      </div>
+      <div class="mg-score-sec">
+        <div>
+          <div class="mg-score-label">Metascore</div>
+          <div id="challenger-sentiment" class="mg-sentiment">&mdash;</div>
+          <div id="challenger-sub" class="mg-subline"></div>
+        </div>
+        <div id="challenger-score" class="mg-square">?</div>
       </div>
     </div>
   </div>

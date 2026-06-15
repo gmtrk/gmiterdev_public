@@ -1,31 +1,35 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const id = (x) => document.getElementById(x);
   const els = {
-    score: document.getElementById("score"),
-    finalScore: document.getElementById("final-score"),
-    personalBest: document.getElementById("personal-best"),
-    gameOver: document.getElementById("game-over"),
-    higherBtn: document.getElementById("higher-btn"),
-    lowerBtn: document.getElementById("lower-btn"),
-    buttons: document.getElementById("buttons"),
-    restartBtn: document.getElementById("restart-btn"),
-    submitBtn: document.getElementById("submit-high-score-btn"),
-    emptyMsg: document.getElementById("empty-msg"),
-    anchorImage: document.getElementById("anchor-image"),
-    anchorTitle: document.getElementById("anchor-title"),
-    anchorMeta: document.getElementById("anchor-meta"),
-    anchorScore: document.getElementById("anchor-score"),
-    challengerImage: document.getElementById("challenger-image"),
-    challengerTitle: document.getElementById("challenger-title"),
-    challengerMeta: document.getElementById("challenger-meta"),
-    challengerScore: document.getElementById("challenger-score"),
+    score: id("score"),
+    finalScore: id("final-score"),
+    personalBest: id("personal-best"),
+    gameOver: id("game-over"),
+    higherBtn: id("higher-btn"),
+    lowerBtn: id("lower-btn"),
+    buttons: id("buttons"),
+    restartBtn: id("restart-btn"),
+    submitBtn: id("submit-high-score-btn"),
+    emptyMsg: id("empty-msg"),
+    anchorCard: id("anchor-card"),
+    anchorImage: id("anchor-image"),
+    anchorTitle: id("anchor-title"),
+    anchorTag: id("anchor-tag"),
+    anchorSentiment: id("anchor-sentiment"),
+    anchorSub: id("anchor-sub"),
+    anchorScore: id("anchor-score"),
+    challengerCard: id("challenger-card"),
+    challengerImage: id("challenger-image"),
+    challengerTitle: id("challenger-title"),
+    challengerTag: id("challenger-tag"),
+    challengerSentiment: id("challenger-sentiment"),
+    challengerSub: id("challenger-sub"),
+    challengerScore: id("challenger-score"),
   };
 
   const NOCOVER = "/static/metaguess/img/nocover.png";
-  const MESSAGES = [
-    "great job!", "you got it!", "spot on!", "nice guess!", "you're on fire!",
-    "keep it up!", "well done!", "nailed it!", "correct!", "the numbers don't lie",
-  ];
-  const randomMessage = () => MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+  const CARD_BANDS = ["mg-card--good", "mg-card--mixed", "mg-card--bad"];
+  const SQUARE_BANDS = ["mg-square--good", "mg-square--mixed", "mg-square--bad"];
 
   let deck = [];
   let index = 0;
@@ -43,32 +47,56 @@ document.addEventListener("DOMContentLoaded", () => {
     return arr;
   }
 
-  const SCORE_CLASSES = ["mg-score--good", "mg-score--mixed", "mg-score--bad", "mg-score--hidden"];
-
-  function clearScoreColor(el) {
-    el.classList.remove(...SCORE_CLASSES);
+  function scoreBand(value) {
+    if (value >= 90) return { cls: "good", sentiment: "Universal Acclaim" };
+    if (value >= 75) return { cls: "good", sentiment: "Generally Favorable" };
+    if (value >= 50) return { cls: "mixed", sentiment: "Mixed or Average" };
+    return { cls: "bad", sentiment: "Generally Unfavorable" };
   }
 
-  function setScoreColor(el, value) {
-    clearScoreColor(el);
-    if (value >= 75) el.classList.add("mg-score--good");
-    else if (value >= 50) el.classList.add("mg-score--mixed");
-    else el.classList.add("mg-score--bad");
+  function clearBands(prefix) {
+    els[prefix + "Card"].classList.remove(...CARD_BANDS, "mg-flash");
+    els[prefix + "Score"].classList.remove(...SQUARE_BANDS);
   }
 
-  function setCard(prefix, game, revealScore) {
+  function countUp(el, value) {
+    const target = Math.round(value);
+    if (target <= 0) { el.textContent = Math.max(0, target); return; }
+    let current = 0;
+    el.textContent = current;
+    const stepMs = Math.max(10, Math.round(700 / target));
+    const timer = setInterval(() => {
+      current += 1;
+      el.textContent = current;
+      if (current >= target) clearInterval(timer);
+    }, stepMs);
+  }
+
+  function revealCard(prefix, value, animate) {
+    const band = scoreBand(value);
+    els[prefix + "Card"].classList.add("mg-card--" + band.cls);
+    els[prefix + "Score"].classList.add("mg-square--" + band.cls);
+    const sentiment = els[prefix + "Sentiment"];
+    sentiment.textContent = band.sentiment;
+    sentiment.classList.remove("mg-sentiment--muted");
+    if (animate) countUp(els[prefix + "Score"], value);
+    else els[prefix + "Score"].textContent = Math.round(value);
+  }
+
+  function setCard(prefix, game, reveal) {
     els[prefix + "Image"].onerror = function () { this.src = NOCOVER; };
     els[prefix + "Image"].src = game.cover_url || NOCOVER;
     els[prefix + "Title"].textContent = game.game_name;
-    els[prefix + "Meta"].textContent = `${game.platform || "Unknown"} · ${game.release_year || "—"}`;
-    const scoreEl = els[prefix + "Score"];
-    if (revealScore) {
-      setScoreColor(scoreEl, game.score);
-      scoreEl.textContent = Math.round(game.score);
+    els[prefix + "Tag"].textContent = game.platform || "Unknown platform";
+    els[prefix + "Sub"].textContent = game.release_year ? `Released ${game.release_year}` : "";
+    clearBands(prefix);
+    if (reveal) {
+      revealCard(prefix, game.score, false);
     } else {
-      clearScoreColor(scoreEl);
-      scoreEl.classList.add("mg-score--hidden");
-      scoreEl.textContent = "?";
+      const sentiment = els[prefix + "Sentiment"];
+      sentiment.textContent = "Higher or lower?";
+      sentiment.classList.add("mg-sentiment--muted");
+      els[prefix + "Score"].textContent = "?";
     }
   }
 
@@ -76,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (index >= deck.length) {
       shuffle(deck);
       index = 0;
-      // Avoid comparing a game against itself right after a reshuffle.
       if (deck.length > 1 && anchor && deck[0] === anchor) {
         [deck[0], deck[1]] = [deck[1], deck[0]];
       }
@@ -92,31 +119,20 @@ document.addEventListener("DOMContentLoaded", () => {
     busy = false;
   }
 
-  function animateScoreReveal(el, value) {
-    const target = Math.round(value);
-    if (target === 0) {
-      setScoreColor(el, 0);
-      el.textContent = 0;
-      return;
-    }
-    let current = 0;
-    setScoreColor(el, current);
-    el.textContent = current;
-    const stepMs = Math.max(10, Math.round(600 / (target || 1)));
-    const timer = setInterval(() => {
-      current += 1;
-      el.textContent = current;
-      setScoreColor(el, current);
-      if (current >= target) clearInterval(timer);
-    }, stepMs);
+  function bumpScore() {
+    els.score.classList.remove("mg-bump");
+    // force reflow so the animation can replay
+    void els.score.offsetWidth;
+    els.score.classList.add("mg-bump");
+    setTimeout(() => els.score.classList.remove("mg-bump"), 450);
   }
 
-  function floatMessage(text) {
-    const span = document.createElement("span");
-    span.className = "mg-float";
-    span.textContent = text;
-    els.challengerScore.parentElement.appendChild(span);
-    setTimeout(() => span.remove(), 1600);
+  function plusOne() {
+    const chip = document.createElement("span");
+    chip.className = "mg-plusone";
+    chip.textContent = "+1";
+    els.challengerScore.appendChild(chip);
+    setTimeout(() => chip.remove(), 1100);
   }
 
   function makeGuess(isHigher) {
@@ -124,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     busy = true;
     els.higherBtn.classList.add("mg-hidden");
     els.lowerBtn.classList.add("mg-hidden");
-    animateScoreReveal(els.challengerScore, challenger.score);
+    revealCard("challenger", challenger.score, true);
 
     // Ties count as correct, in either direction.
     const correct = isHigher
@@ -135,16 +151,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (correct) {
         score += 1;
         els.score.textContent = score;
-        floatMessage(randomMessage());
+        bumpScore();
+        plusOne();
         setTimeout(() => {
           anchor = challenger;
           challenger = nextCard();
           renderRound();
         }, 1200);
       } else {
-        showGameOver();
+        els.challengerCard.classList.add("mg-flash");
+        setTimeout(showGameOver, 2000);
       }
-    }, 800);
+    }, 900);
   }
 
   function startGame() {
@@ -196,8 +214,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fetch("/metaguess/get-high-scores/")
       .then((r) => r.json())
       .then((data) => {
-        const table = document.getElementById("high-score-table");
-        const form = document.getElementById("new-high-score-form");
+        const table = id("high-score-table");
+        const form = id("new-high-score-form");
         table.innerHTML = data
           .map(
             (entry, i) =>
@@ -219,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function submitHighScore(finalScore) {
-    const initials = document.getElementById("high-score-initials").value.trim().toUpperCase();
+    const initials = id("high-score-initials").value.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(initials)) {
       alert("Please enter exactly 3 letters for initials.");
       return;
@@ -232,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((r) => r.json())
       .then(() => {
-        document.getElementById("new-high-score-form").classList.add("mg-hidden");
+        id("new-high-score-form").classList.add("mg-hidden");
         showHighScores(finalScore);
       })
       .catch((err) => console.error("Error submitting high score:", err));
