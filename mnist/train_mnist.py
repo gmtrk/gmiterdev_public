@@ -53,7 +53,10 @@ def main():
     x_train = x_train.reshape(-1, 28, 28, 1).astype("float32") / 255.0
     x_test = x_test.reshape(-1, 28, 28, 1).astype("float32") / 255.0
 
-    # hold out a validation split from train (keep the test set purely for the gate)
+    # shuffle before splitting so the validation set is class-representative
+    # (MNIST ships class-ordered); keep the test set purely for the gate
+    perm = np.random.default_rng(SEED).permutation(len(x_train))
+    x_train, y_train = x_train[perm], y_train[perm]
     val_n = 6000
     x_val, y_val = x_train[:val_n], y_train[:val_n]
     x_tr, y_tr = x_train[val_n:], y_train[val_n:]
@@ -68,9 +71,9 @@ def main():
 
     augment = tf.keras.Sequential(
         [
-            tf.keras.layers.RandomRotation(0.1),
-            tf.keras.layers.RandomZoom(0.1),
-            tf.keras.layers.RandomTranslation(0.1, 0.1),
+            tf.keras.layers.RandomRotation(0.05),
+            tf.keras.layers.RandomZoom(0.08),
+            tf.keras.layers.RandomTranslation(0.08, 0.08),
         ]
     )
     train_ds = (
