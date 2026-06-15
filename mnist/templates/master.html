@@ -21,9 +21,11 @@
   font-style: normal;
         }
     </style>
+    {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-100 font-roboto-condensed h-screen flex flex-col">
 
+    {% block header %}
     <!-- Header with clickable logo -->
     <header class="py-4">
         <div class="container mx-auto flex justify-between items-center">
@@ -36,6 +38,7 @@
             </a>
         </div>
     </header>
+    {% endblock %}
 
     <!-- Main content -->
     <main class="container mx-auto flex-grow">
@@ -44,6 +47,7 @@
         {% endblock %}
     </main>
 
+    {% block footer %}
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-4 mt-5">
 
@@ -56,6 +60,7 @@
             <p>&copy; 2024 gmiterDev. All rights reserved.</p>
         </div>
     </footer>
+    {% endblock %}
 
 </body>
 </html>
