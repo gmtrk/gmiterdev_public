@@ -3,6 +3,7 @@ import { createDrawCanvas } from './drawCanvas.js';
 import { buildInfernoLUT } from './colormap.js';
 import { createStageRenderer } from './featureMaps.js';
 import { createDenseField } from './denseField.js';
+import { createPredictions } from './predictions.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -14,6 +15,7 @@ let draw = null;
 let block1 = null;
 let block2 = null;
 let dense = null;
+let preds = null;
 
 function schedule() {
   pending = true;
@@ -31,6 +33,7 @@ function frame() {
   block1.render(out.block1);
   block2.render(out.block2);
   dense.render(out.dense);
+  preds.render(out.preds);
 }
 
 function attachHover(canvas, renderer) {
@@ -59,9 +62,10 @@ window.addEventListener('load', async () => {
   block1 = createStageRenderer({ gridCanvas: $('b1grid'), compositeCanvas: $('b1comp'), cols: 8, gap: 1, lut });
   block2 = createStageRenderer({ gridCanvas: $('b2grid'), compositeCanvas: $('b2comp'), cols: 8, gap: 1, lut });
   dense = createDenseField({ canvas: $('densefield'), cols: 32, lut });
+  preds = createPredictions($('predictions'));
   attachHover($('b1grid'), block1);
   attachHover($('b2grid'), block2);
-  $('clearButton').addEventListener('click', () => { draw.clear(); block1.clear(); block2.clear(); dense.clear(); });
+  $('clearButton').addEventListener('click', () => { draw.clear(); block1.clear(); block2.clear(); dense.clear(); preds.reset(); });
   try {
     model = await loadVizModel();
     console.log('mnist viz: model ready');
