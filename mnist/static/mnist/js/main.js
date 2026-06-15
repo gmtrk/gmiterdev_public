@@ -4,6 +4,7 @@ import { buildInfernoLUT } from './colormap.js';
 import { createStageRenderer } from './featureMaps.js';
 import { createDenseField } from './denseField.js';
 import { createPredictions } from './predictions.js';
+import { createPulses } from './pulses.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,6 +17,7 @@ let block1 = null;
 let block2 = null;
 let dense = null;
 let preds = null;
+let pulses = null;
 
 function schedule() {
   pending = true;
@@ -34,6 +36,7 @@ function frame() {
   block2.render(out.block2);
   dense.render(out.dense);
   preds.render(out.preds);
+  pulses.fire();
 }
 
 function attachHover(canvas, renderer) {
@@ -63,6 +66,7 @@ window.addEventListener('load', async () => {
   block2 = createStageRenderer({ gridCanvas: $('b2grid'), compositeCanvas: $('b2comp'), cols: 8, gap: 1, lut });
   dense = createDenseField({ canvas: $('densefield'), cols: 32, lut });
   preds = createPredictions($('predictions'));
+  pulses = createPulses();
   attachHover($('b1grid'), block1);
   attachHover($('b2grid'), block2);
   $('clearButton').addEventListener('click', () => { draw.clear(); block1.clear(); block2.clear(); dense.clear(); preds.reset(); });
