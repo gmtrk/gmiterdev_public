@@ -1,91 +1,115 @@
-.game-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
+/* MetaGuess — Metacritic-inspired theme (loaded only on the game page). */
+
+:root {
+  --mg-yellow: #ffcc33;
+  --mg-yellow-hover: #f5c01f;
+  --mg-black: #111111;
+  --mg-card: #ffffff;
+  --mg-border: #e6e6e6;
+  --mg-muted: #8a8a8a;
+  --mg-good: #66cc33;
+  --mg-good-ink: #0f3a00;
+  --mg-mixed: #ffcc33;
+  --mg-bad: #e84d4d;
+  --mg-hidden-bg: #ececec;
+  --mg-hidden-ink: #9a9a9a;
+  --mg-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-.game-card {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-}
+/* Show/hide utility — !important so it always beats theme display rules
+   regardless of stylesheet source order (game.css loads after Tailwind). */
+.mg-hidden { display: none !important; }
 
-.game-cover {
-    width: 200px;
-    height: 300px;
-    object-fit: cover;
-    border-radius: 8px;
+/* ---- Top bar (overrides the shared header on the game page) ---- */
+.mg-topbar { background: var(--mg-yellow); color: var(--mg-black); font-family: var(--mg-font); }
+.mg-topbar__inner {
+  max-width: 768px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px;
 }
+.mg-brand { display: inline-flex; align-items: center; }
+.mg-logo {
+  display: inline-flex; align-items: center;
+  font-weight: 900; font-size: 20px; letter-spacing: .2px;
+  color: var(--mg-black); text-decoration: none;
+}
+.mg-logo:hover { opacity: .85; }
+.mg-logo__dot { width: 12px; height: 12px; border-radius: 3px; background: var(--mg-good); margin: 0 3px; display: inline-block; }
+.mg-tag {
+  font-weight: 800; font-size: 11px; letter-spacing: 1.2px;
+  background: var(--mg-black); color: var(--mg-yellow);
+  padding: 4px 9px; border-radius: 6px; margin-left: 11px;
+}
+.mg-scoreline { font-size: 12px; font-weight: 700; }
+.mg-scoreline b { font-size: 17px; }
 
-.game-info h2, .game-info p {
-    margin: 0;
+/* ---- Page + board ---- */
+.mg-page { font-family: var(--mg-font); max-width: 768px; margin: 0 auto; padding: 18px; }
+.mg-prompt { text-align: center; color: #444; font-size: 14px; margin: 6px 0 16px; }
+.mg-prompt b { color: var(--mg-black); }
+.mg-board { display: flex; gap: 14px; }
+@media (max-width: 560px) { .mg-board { flex-direction: column; } }
+.mg-card {
+  flex: 1; background: var(--mg-card); border: 1px solid var(--mg-border);
+  border-radius: 10px; padding: 14px; text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
+.mg-cover { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; background: #1f232b; margin-bottom: 10px; }
+.mg-card__title { font-weight: 800; font-size: 15px; color: #161616; }
+.mg-card__meta { font-size: 12px; color: var(--mg-muted); margin-top: 2px; }
 
-.score-container {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin: 20px 0;
+/* ---- Metascore square ---- */
+.mg-score {
+  width: 64px; height: 64px; border-radius: 8px; margin: 12px auto 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 26px;
 }
+.mg-score--good { background: var(--mg-good); color: var(--mg-good-ink); }
+.mg-score--mixed { background: var(--mg-mixed); color: var(--mg-black); }
+.mg-score--bad { background: var(--mg-bad); color: #fff; }
+.mg-score--hidden { background: var(--mg-hidden-bg); color: var(--mg-hidden-ink); }
 
-.score-box {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: bold;
-    border-radius: 10px;
-    color: white;
+/* ---- Buttons ---- */
+.mg-actions { text-align: center; margin-top: 18px; min-height: 44px; }
+.mg-btn {
+  display: inline-block; padding: 10px 26px; border-radius: 8px;
+  font-weight: 800; font-size: 13px; letter-spacing: .8px; margin: 0 6px;
+  border: none; cursor: pointer; font-family: var(--mg-font);
 }
+.mg-btn--higher { background: var(--mg-yellow); color: var(--mg-black); }
+.mg-btn--higher:hover { background: var(--mg-yellow-hover); }
+.mg-btn--lower { background: var(--mg-black); color: #fff; }
+.mg-btn--lower:hover { background: #333; }
+.mg-empty { text-align: center; color: var(--mg-bad); margin-top: 16px; }
 
-#compare-score {
-    background-color: #f1c40f;
+/* ---- Game over modal + leaderboard ---- */
+.mg-modal {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.5); font-family: var(--mg-font);
 }
+.mg-modal__box { background: #fff; border-radius: 12px; padding: 28px; text-align: center; max-width: 380px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.mg-modal__title { font-weight: 900; font-size: 24px; color: var(--mg-bad); margin: 0 0 4px; }
+.mg-stat { font-size: 14px; color: #444; }
+.mg-stat b { color: #111; }
+.mg-label { font-size: 11px; letter-spacing: 1px; color: #999; text-transform: uppercase; margin: 0 0 6px; }
+.mg-lb { margin: 16px auto 0; max-width: 260px; text-align: left; }
+.mg-lb__row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 6px; font-size: 14px; }
+.mg-lb__row:nth-child(odd) { background: #f5f5f5; }
+.mg-lb__rank { font-weight: 800; color: #999; margin-right: 8px; }
+.mg-lb__ini { font-weight: 800; color: #161616; letter-spacing: 1px; }
+.mg-lb__pts { font-weight: 900; background: var(--mg-black); color: var(--mg-yellow); border-radius: 5px; padding: 1px 8px; font-size: 13px; }
+.mg-form { margin-top: 16px; }
+.mg-form__hint { font-size: 12px; color: #555; margin-bottom: 6px; }
+.mg-form input {
+  border: 1px solid #ccc; border-radius: 6px; padding: 8px; width: 90px;
+  text-align: center; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+  font-family: var(--mg-font);
+}
+.mg-restart { margin-top: 18px; }
 
-.question-mark {
-    background-color: white;
-    color: #333;
+/* ---- Float success message (anchored to the challenger score box) ---- */
+@keyframes mgFloat {
+  0%   { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -120%); }
 }
-
-.hidden {
-    display: none;
-}
-
-.game-over {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #ffffff;
-    padding: 40px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    font-size: 24px;
-}
-
-#restart-btn {
-    background-color: #3498db;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    cursor: pointer;
-}
-
-button {
-    padding: 12px 40px;
-    font-size: 18px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: transform 0.2s, background-color 0.2s;
-}
-
-button:hover {
-    transform: translateY(-2px);
-}
+.mg-float { position: absolute; top: 50%; left: 50%; color: #1f7a00; font-weight: 800; white-space: nowrap; animation: mgFloat 1.6s ease forwards; }
