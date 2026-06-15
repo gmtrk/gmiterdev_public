@@ -48,7 +48,7 @@
 .mg-board { display: flex; gap: 18px; align-items: stretch; }
 @media (max-width: 600px) { .mg-board { flex-direction: column; } }
 .mg-card { position: relative; flex: 1; display: flex; flex-direction: column; gap: 16px; border-radius: 12px; background: var(--mg-card); padding: 16px; overflow: hidden; }
-.mg-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 30%; border-radius: 12px 12px 0 0; background: var(--mg-neutral); transition: background .5s ease; }
+.mg-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 30%; border-radius: 12px 12px 0 0; background: var(--mg-neutral); }
 .mg-card--good::before { background: var(--mg-good); }
 .mg-card--mixed::before { background: var(--mg-mixed); }
 .mg-card--bad::before { background: var(--mg-bad); }

@@ -59,28 +59,54 @@ document.addEventListener("DOMContentLoaded", () => {
     els[prefix + "Score"].classList.remove(...SQUARE_BANDS);
   }
 
-  function countUp(el, value) {
-    const target = Math.round(value);
-    if (target <= 0) { el.textContent = Math.max(0, target); return; }
-    let current = 0;
-    el.textContent = current;
-    const stepMs = Math.max(10, Math.round(700 / target));
-    const timer = setInterval(() => {
-      current += 1;
-      el.textContent = current;
-      if (current >= target) clearInterval(timer);
-    }, stepMs);
+  function applyBand(prefix, cls) {
+    const card = els[prefix + "Card"];
+    const sq = els[prefix + "Score"];
+    card.classList.remove(...CARD_BANDS);
+    sq.classList.remove(...SQUARE_BANDS);
+    card.classList.add("mg-card--" + cls);
+    sq.classList.add("mg-square--" + cls);
   }
 
   function revealCard(prefix, value, animate) {
     const band = scoreBand(value);
-    els[prefix + "Card"].classList.add("mg-card--" + band.cls);
-    els[prefix + "Score"].classList.add("mg-square--" + band.cls);
+    const sq = els[prefix + "Score"];
     const sentiment = els[prefix + "Sentiment"];
-    sentiment.textContent = band.sentiment;
-    sentiment.classList.remove("mg-sentiment--muted");
-    if (animate) countUp(els[prefix + "Score"], value);
-    else els[prefix + "Score"].textContent = Math.round(value);
+
+    function showSentiment() {
+      sentiment.textContent = band.sentiment;
+      sentiment.classList.remove("mg-sentiment--muted");
+    }
+
+    // Anchor (known reference): reveal instantly.
+    if (!animate) {
+      applyBand(prefix, band.cls);
+      sq.textContent = Math.round(value);
+      showSentiment();
+      return;
+    }
+
+    // Challenger reveal: color + number climb together so the final band
+    // never shows before the number lands (no spoiler). Sentiment waits
+    // until the count finishes.
+    const target = Math.round(value);
+    let current = 0;
+    sq.textContent = current;
+    applyBand(prefix, scoreBand(current).cls);
+    if (target <= 0) {
+      showSentiment();
+      return;
+    }
+    const stepMs = Math.max(8, Math.round(600 / target));
+    const timer = setInterval(() => {
+      current += 1;
+      sq.textContent = current;
+      applyBand(prefix, scoreBand(current).cls);
+      if (current >= target) {
+        clearInterval(timer);
+        showSentiment();
+      }
+    }, stepMs);
   }
 
   function setCard(prefix, game, reveal) {
