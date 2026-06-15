@@ -17,7 +17,7 @@ install: .venv ## Create venv, install deps, create .env if missing
 	$(PIP) install -r requirements-dev.txt
 	@test -f .env || (cp .env.example .env && echo "Created .env from .env.example")
 
-setup: install migrate ## One-shot: install + migrate a fresh local DB (then `make run`)
+setup: install migrate seed ## One-shot: install + migrate + seed a fresh local DB (then `make run`)
 
 run: ## Run the dev server at http://127.0.0.1:8000
 	$(MANAGE) runserver
@@ -36,6 +36,9 @@ check: lint test ## Lint + test (run before every PR)
 migrate: ## Apply database migrations
 	$(MANAGE) migrate
 
+seed: ## Load game data into the DB from the committed fixture
+	$(MANAGE) seed_games
+
 makemigrations: ## Create new migrations
 	$(MANAGE) makemigrations
 
@@ -45,4 +48,4 @@ collectstatic: ## Rebuild the staticfiles/ bundle
 shell: ## Open the Django shell
 	$(MANAGE) shell
 
-.PHONY: help install setup run test lint format check migrate makemigrations collectstatic shell
+.PHONY: help install setup run test lint format check migrate seed makemigrations collectstatic shell

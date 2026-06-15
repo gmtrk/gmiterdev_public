@@ -10,3 +10,6 @@ python manage.py collectstatic --no-input
 
 # Apply any outstanding database migrations
 python manage.py migrate
+
+# Load/refresh game data (idempotent; no-op if the fixture is missing)
+python manage.py seed_games
