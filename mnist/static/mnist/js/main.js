@@ -1,12 +1,17 @@
 import { loadVizModel, infer } from './model.js';
 import { createDrawCanvas } from './drawCanvas.js';
+import { buildInfernoLUT } from './colormap.js';
+import { createStageRenderer } from './featureMaps.js';
 
 const $ = (id) => document.getElementById(id);
 
+const lut = buildInfernoLUT();
 let model = null;
 let pending = false;
 let scheduled = false;
 let draw = null;
+let block1 = null;
+let block2 = null;
 
 function schedule() {
   pending = true;
@@ -21,12 +26,15 @@ function frame() {
   if (!pending || !model) return;
   pending = false;
   const out = infer(model, draw.getImageData());
-  console.log('shapes', out.block1.shape, out.block2.shape, out.dense.shape, out.preds.shape);
+  block1.render(out.block1);
+  block2.render(out.block2);
 }
 
 window.addEventListener('load', async () => {
   draw = createDrawCanvas($('drawingCanvas'), schedule);
-  $('clearButton').addEventListener('click', () => draw.clear());
+  block1 = createStageRenderer({ gridCanvas: $('b1grid'), compositeCanvas: $('b1comp'), cols: 8, gap: 1, lut });
+  block2 = createStageRenderer({ gridCanvas: $('b2grid'), compositeCanvas: $('b2comp'), cols: 8, gap: 1, lut });
+  $('clearButton').addEventListener('click', () => { draw.clear(); block1.clear(); block2.clear(); });
   try {
     model = await loadVizModel();
     console.log('mnist viz: model ready');
