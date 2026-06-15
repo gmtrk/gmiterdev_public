@@ -88,3 +88,30 @@ def test_seed_games_rejects_malformed_json(tmp_path):
     bad.write_text("{not valid json")
     with pytest.raises(CommandError):
         call_command("seed_games", path=str(bad))
+
+
+def test_to_record_maps_rawg_fields():
+    from metaguess.management.commands.build_games_fixture import to_record
+    rec = to_record({
+        "id": 3498, "name": "GTA V", "released": "2013-09-17", "metacritic": 92,
+        "background_image": "http://img/x.jpg",
+        "platforms": [{"platform": {"name": "PC"}}, {"platform": {"name": "PlayStation 5"}}],
+    })
+    assert rec == {
+        "external_id": 3498, "game_name": "GTA V", "platform": "PC, PlayStation 5",
+        "release_year": 2013, "score": 92, "cover_url": "http://img/x.jpg",
+    }
+
+
+def test_to_record_skips_without_metacritic():
+    from metaguess.management.commands.build_games_fixture import to_record
+    assert to_record({"id": 1, "name": "X", "metacritic": None}) is None
+
+
+def test_to_record_handles_missing_optional_fields():
+    from metaguess.management.commands.build_games_fixture import to_record
+    rec = to_record({"id": 7, "name": "Y", "metacritic": 70})
+    assert rec == {
+        "external_id": 7, "game_name": "Y", "platform": None,
+        "release_year": None, "score": 70, "cover_url": None,
+    }
