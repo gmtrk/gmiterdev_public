@@ -1,247 +1,249 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const scoreElem = document.getElementById("score");
-    const finalScoreElem = document.getElementById("final-score");
-    const personalBestElem = document.getElementById("personal-best");
-    const gameOverElem = document.getElementById("game-over");
-    const higherBtn = document.getElementById("higher-btn");
-    const lowerBtn = document.getElementById("lower-btn");
-    const guessScoreElem = document.getElementById("guess-score");
-    const compareScoreElem = document.getElementById("compare-score");
-    const gameTitleElem = document.getElementById("game-title");
-    const gamePlatformsElem = document.getElementById("game-platforms");
-    const gameYearElem = document.getElementById("game-year");
-    const gameImageElem = document.getElementById("game-image");
-    const restartBtn = document.getElementById("restart-btn");
-    const submithighscoreBtn = document.getElementById("submit-high-score-btn");
+document.addEventListener("DOMContentLoaded", () => {
+  const els = {
+    score: document.getElementById("score"),
+    finalScore: document.getElementById("final-score"),
+    personalBest: document.getElementById("personal-best"),
+    gameOver: document.getElementById("game-over"),
+    higherBtn: document.getElementById("higher-btn"),
+    lowerBtn: document.getElementById("lower-btn"),
+    buttons: document.getElementById("buttons"),
+    restartBtn: document.getElementById("restart-btn"),
+    submitBtn: document.getElementById("submit-high-score-btn"),
+    emptyMsg: document.getElementById("empty-msg"),
+    anchorImage: document.getElementById("anchor-image"),
+    anchorTitle: document.getElementById("anchor-title"),
+    anchorMeta: document.getElementById("anchor-meta"),
+    anchorScore: document.getElementById("anchor-score"),
+    challengerImage: document.getElementById("challenger-image"),
+    challengerTitle: document.getElementById("challenger-title"),
+    challengerMeta: document.getElementById("challenger-meta"),
+    challengerScore: document.getElementById("challenger-score"),
+  };
 
-    let score = 0;
-    let personalbest = 0;
+  const NOCOVER = "/static/metaguess/img/nocover.png";
+  const MESSAGES = [
+    "great job!", "you got it!", "spot on!", "nice guess!", "you're on fire!",
+    "keep it up!", "well done!", "nailed it!", "correct!", "the numbers don't lie",
+  ];
+  const randomMessage = () => MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
 
-    // Success messages
-    const successMessages = [
-        "great job!", "you got it!", "spot on!", "right on the money!", "nice guess!",
-        "you're on fire!", "keep it up!", "well done!", "nailed it!", "correct!",
-        "good job!", "wow... so good...", "letsgo!!!", "here we go!", "the numbers don't lie",
-    ];
+  let deck = [];
+  let index = 0;
+  let anchor = null;
+  let challenger = null;
+  let score = 0;
+  let personalBest = 0;
+  let busy = false;
 
-    function getRandomMessage() {
-        return successMessages[Math.floor(Math.random() * successMessages.length)];
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+    return arr;
+  }
 
-    // Show game over screen
-    function showGameOver() {
-        gameOverElem.classList.remove("hidden");
-        finalScoreElem.textContent = score;
-        if (score > personalbest){
-            personalbest = score;
-        }
-        personalBestElem.textContent = personalbest;
+  function clearScoreColor(el) {
+    el.classList.remove(
+      "bg-green-400", "bg-yellow-400", "bg-red-500", "bg-gray-100", "bg-gray-200",
+      "text-white", "text-black", "text-gray-700"
+    );
+  }
 
-        showHighScores(score);
-    }
+  function setScoreColor(el, value) {
+    clearScoreColor(el);
+    if (value >= 75) el.classList.add("bg-green-400", "text-black");
+    else if (value >= 50) el.classList.add("bg-yellow-400", "text-black");
+    else el.classList.add("bg-red-500", "text-white");
+  }
 
-    // Animate score reveal
-    function animateScoreReveal(start, end) {
-        if (start === end) {
-            guessScoreElem.textContent = end;
-            setScoreColor(guessScoreElem, end);
-            return;
-        }
-
-        const target = Math.round(end);
-        let current = start;
-        const increment = target > start ? 1 : -1;
-        const duration = Math.abs(target - start) * 20;
-
-        const animate = setInterval(() => {
-            current += increment;
-            guessScoreElem.textContent = current;
-            setScoreColor(guessScoreElem, current);
-            if (current === target) clearInterval(animate);
-        }, duration / Math.abs(target - start));
-    }
-
-    // Remove score-related color classes
-    function clearScoreColor(el) {
-        el.classList.remove("bg-green-400", "bg-yellow-400", "bg-red-500", "text-white");
-    }
-
-    // Set color based on score
-    function setScoreColor(element, score) {
-        clearScoreColor(element);
-        if (score >= 75) {
-            element.classList.add("bg-green-400", "text-black");
-        } else if (score >= 50) {
-            element.classList.add("bg-yellow-400", "text-black");
-        } else {
-            element.classList.add("bg-red-500", "text-white");
-        }
-    }
-
-    // Fetch a new random game
-    function fetchRandomGame() {
-        fetch("random-game/")
-            .then(response => response.json())
-            .then(data => {
-                // Populate game data
-                actualScore = parseFloat(data.score);
-                gameTitleElem.textContent = data.game_name;
-                gamePlatformsElem.textContent = `Platforms: ${data.platform}`;
-                gameYearElem.textContent = `Year: ${data.release_year}`;
-                gameImageElem.src = data.cover_url || "/static/metaguess/img/nocover.png";
-                // Set comparison score
-                guessScoreElem.textContent = "?";
-                compareScoreElem.textContent = getCompareScore(actualScore);
-                setScoreColor(compareScoreElem, parseInt(compareScoreElem.textContent));
-
-                // Reset game image error handling
-                gameImageElem.onerror = function() {
-                    this.src = "/static/metaguess/img/nocover.png";
-                };
-            })
-            .catch(error => console.error("Error fetching random game:", error));
-    }
-
-    // Generate comparison score for guessing
-    function getCompareScore(trueScore) {
-    let compareScore;
-    if (trueScore < 75) {
-        // Generate a random score between 30 and 95 for low true scores
-        compareScore = Math.floor(Math.random() * (95 - 30 + 1)) + 30;
+  function setCard(prefix, game, revealScore) {
+    els[prefix + "Image"].onerror = function () { this.src = NOCOVER; };
+    els[prefix + "Image"].src = game.cover_url || NOCOVER;
+    els[prefix + "Title"].textContent = game.game_name;
+    els[prefix + "Meta"].textContent = `${game.platform || "Unknown"} · ${game.release_year || "—"}`;
+    const scoreEl = els[prefix + "Score"];
+    if (revealScore) {
+      setScoreColor(scoreEl, game.score);
+      scoreEl.textContent = Math.round(game.score);
     } else {
-        // Adjust true score slightly for higher scores
-        const randomAdjust = Math.floor(Math.random() * 6) + 5;
-        compareScore = Math.random() > 0.5 ? trueScore + randomAdjust : trueScore - randomAdjust;
-        compareScore = Math.min(95, Math.max(30, compareScore)); // Ensure within range
+      clearScoreColor(scoreEl);
+      scoreEl.classList.add("bg-gray-100", "text-gray-700");
+      scoreEl.textContent = "?";
     }
+  }
 
-    // Ensure compareScore is not the same as trueScore
-    if (compareScore === trueScore) {
-        compareScore = compareScore < 95 ? compareScore + 1 : compareScore - 1;
+  function nextCard() {
+    if (index >= deck.length) {
+      shuffle(deck);
+      index = 0;
+      // Avoid comparing a game against itself right after a reshuffle.
+      if (deck.length > 1 && anchor && deck[0] === anchor) {
+        [deck[0], deck[1]] = [deck[1], deck[0]];
+      }
     }
-    return compareScore;
-}
+    return deck[index++];
+  }
 
-    function makeGuess(isHigher) {
-        const compareScore = parseInt(compareScoreElem.textContent);
+  function renderRound() {
+    setCard("anchor", anchor, true);
+    setCard("challenger", challenger, false);
+    els.higherBtn.classList.remove("hidden");
+    els.lowerBtn.classList.remove("hidden");
+    busy = false;
+  }
 
-        higherBtn.classList.add("hidden");
-        lowerBtn.classList.add("hidden");
+  function animateScoreReveal(el, value) {
+    const target = Math.round(value);
+    if (target === 0) {
+      setScoreColor(el, 0);
+      el.textContent = 0;
+      return;
+    }
+    let current = 0;
+    setScoreColor(el, current);
+    el.textContent = current;
+    const stepMs = Math.max(10, Math.round(600 / (target || 1)));
+    const timer = setInterval(() => {
+      current += 1;
+      el.textContent = current;
+      setScoreColor(el, current);
+      if (current >= target) clearInterval(timer);
+    }, stepMs);
+  }
 
-        animateScoreReveal(0, actualScore);
+  function floatMessage(text) {
+    const span = document.createElement("span");
+    span.classList.add("absolute", "text-green-700", "font-semibold", "animate-float-fade-out");
+    span.style.top = "50%";
+    span.style.left = "50%";
+    span.textContent = text;
+    els.challengerScore.parentElement.appendChild(span);
+    setTimeout(() => span.remove(), 1600);
+  }
 
+  function makeGuess(isHigher) {
+    if (busy || !anchor || !challenger) return;
+    busy = true;
+    els.higherBtn.classList.add("hidden");
+    els.lowerBtn.classList.add("hidden");
+    animateScoreReveal(els.challengerScore, challenger.score);
+
+    // Ties count as correct, in either direction.
+    const correct = isHigher
+      ? challenger.score >= anchor.score
+      : challenger.score <= anchor.score;
+
+    setTimeout(() => {
+      if (correct) {
+        score += 1;
+        els.score.textContent = score;
+        floatMessage(randomMessage());
         setTimeout(() => {
-            if ((isHigher && actualScore > compareScore) || (!isHigher && actualScore < compareScore)) {
-                score += 10;
-                scoreElem.textContent = score;
+          anchor = challenger;
+          challenger = nextCard();
+          renderRound();
+        }, 1200);
+      } else {
+        showGameOver();
+      }
+    }, 800);
+  }
 
-                // Display floating success message
-                const messageElem = document.createElement("span");
-                messageElem.classList.add("absolute", "text-green-800", "font-semibold", "animate-float-fade-out");
-                messageElem.style.top = "50%";
-                messageElem.style.left = "50%";
-                messageElem.style.transform = "translate(-50%, -50%)";
-                messageElem.textContent = getRandomMessage();
-                guessScoreElem.appendChild(messageElem);
-
-                setTimeout(() => {
-                    messageElem.remove();
-                    clearScoreColor(guessScoreElem);
-                    higherBtn.classList.remove("hidden");
-                    lowerBtn.classList.remove("hidden");
-                    submithighscoreBtn.classList.remove("hidden");
-                    fetchRandomGame();
-                }, 2000);
-
-            } else {
-                showGameOver();
-            }
-        }, 2000);
+  function startGame() {
+    score = 0;
+    els.score.textContent = score;
+    els.gameOver.classList.add("hidden");
+    if (deck.length < 2) {
+      els.emptyMsg.classList.remove("hidden");
+      els.buttons.classList.add("hidden");
+      return;
     }
+    els.emptyMsg.classList.add("hidden");
+    els.buttons.classList.remove("hidden");
+    shuffle(deck);
+    index = 0;
+    anchor = deck[index++];
+    challenger = deck[index++];
+    renderRound();
+  }
 
-    // Function to show high scores
-    function showHighScores(finalScore) {
-        fetch("/metaguess/get-high-scores/")
-            .then(response => response.json())
-            .then(data => {
-                const highScoreTable = document.getElementById("high-score-table");
-                const newHighScoreForm = document.getElementById("new-high-score-form");
+  function loadDeckAndStart() {
+    fetch("/metaguess/deck/")
+      .then((r) => r.json())
+      .then((data) => {
+        deck = Array.isArray(data) ? data : [];
+        startGame();
+      })
+      .catch((err) => {
+        console.error("Error loading deck:", err);
+        els.emptyMsg.classList.remove("hidden");
+        els.buttons.classList.add("hidden");
+      });
+  }
 
-                // Populate high scores
-                highScoreTable.innerHTML = "<ul class='text-left space-y-2'>";
-                data.forEach((entry, index) => {
-                    highScoreTable.innerHTML += `<li>${index + 1}. <strong>${entry.initials}</strong> - ${entry.score}</li>`;
-                });
-                highScoreTable.innerHTML += "</ul>";
+  function showGameOver() {
+    if (score > personalBest) personalBest = score;
+    els.finalScore.textContent = score;
+    els.personalBest.textContent = personalBest;
+    showHighScores(score);
+    els.gameOver.classList.remove("hidden");
+  }
 
-                // Check if the player's score qualifies for the top 5
-                if (data.length < 5 || finalScore > data[data.length - 1].score) {
-                    newHighScoreForm.classList.remove("hidden");
-                    document.getElementById("submit-high-score-btn").onclick = () => {
-                        const initials = document.getElementById("high-score-initials").value.trim().toUpperCase();
-                        submithighscoreBtn.classList.add("hidden");
+  function getCSRFToken() {
+    const el = document.querySelector("[name=csrfmiddlewaretoken]");
+    return el ? el.value : "";
+  }
 
-                        if (initials.length === 3) {
-                            fetch("/metaguess/add-high-score/", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "X-CSRFToken": getCSRFToken(), // Add CSRF token
-                                },
-                                body: JSON.stringify({ initials: initials, score: finalScore }),
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                alert("Score submitted successfully!");
-                                document.getElementById("new-high-score-form").classList.add("hidden");
-                                showHighScores(finalScore); // Refresh high scores
-                            })
-                            .catch(error => console.error("Error submitting high score:", error));
-                        } else {
-                            alert("Please enter exactly 3 characters for initials.");
-                        }
-                    };
-                } else {
-                    newHighScoreForm.classList.add("hidden");
-                }
+  function showHighScores(finalScore) {
+    fetch("/metaguess/get-high-scores/")
+      .then((r) => r.json())
+      .then((data) => {
+        const table = document.getElementById("high-score-table");
+        const form = document.getElementById("new-high-score-form");
+        let html = "<ul class='text-left space-y-2 inline-block'>";
+        data.forEach((entry, i) => {
+          html += `<li>${i + 1}. <strong>${entry.initials}</strong> &mdash; ${entry.score}</li>`;
+        });
+        html += "</ul>";
+        table.innerHTML = html;
 
-                // Display the Game Over screen with the high score table
-                document.getElementById("game-over").classList.remove("hidden");
-            })
-            .catch(error => console.error("Error fetching high scores:", error));
-    }
-
-    // Utility: Get CSRF Token
-    function getCSRFToken() {
-        const tokenElement = document.querySelector("[name=csrfmiddlewaretoken]");
-        if (tokenElement) {
-            return tokenElement.value;
+        const qualifies =
+          finalScore > 0 && (data.length < 5 || finalScore > data[data.length - 1].score);
+        if (qualifies) {
+          form.classList.remove("hidden");
+          els.submitBtn.classList.remove("hidden");
+          els.submitBtn.onclick = () => submitHighScore(finalScore);
+        } else {
+          form.classList.add("hidden");
         }
-        console.error("CSRF token not found.");
-        return ""; // Fallback for debugging
+      })
+      .catch((err) => console.error("Error fetching high scores:", err));
+  }
+
+  function submitHighScore(finalScore) {
+    const initials = document.getElementById("high-score-initials").value.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(initials)) {
+      alert("Please enter exactly 3 letters for initials.");
+      return;
     }
+    els.submitBtn.classList.add("hidden");
+    fetch("/metaguess/add-high-score/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+      body: JSON.stringify({ initials, score: finalScore }),
+    })
+      .then((r) => r.json())
+      .then(() => {
+        document.getElementById("new-high-score-form").classList.add("hidden");
+        showHighScores(finalScore);
+      })
+      .catch((err) => console.error("Error submitting high score:", err));
+  }
 
+  els.higherBtn.addEventListener("click", () => makeGuess(true));
+  els.lowerBtn.addEventListener("click", () => makeGuess(false));
+  els.restartBtn.addEventListener("click", startGame);
 
-
-    // Reset the game
-    function resetGame() {
-        score = 0;
-        scoreElem.textContent = score;
-        gameOverElem.classList.add("hidden");
-        higherBtn.classList.remove("hidden");
-        lowerBtn.classList.remove("hidden");
-        clearScoreColor(guessScoreElem);
-        guessScoreElem.textContent = "?";
-        compareScoreElem.textContent = "";
-
-        // Fetch a new game
-        fetchRandomGame();
-    }
-
-    higherBtn.addEventListener("click", () => makeGuess(true));
-    lowerBtn.addEventListener("click", () => makeGuess(false));
-    restartBtn.addEventListener("click", resetGame);
-
-    // Fetch the first game on page load
-    fetchRandomGame();
+  loadDeckAndStart();
 });
