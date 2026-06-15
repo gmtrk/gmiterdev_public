@@ -1,10 +1,7 @@
 """Smoke tests for the metaguess app.
 
-The game page and the leaderboard endpoint work on a fresh DB. The random-game endpoint does
-NOT on a fresh DB, because the `games`/`metaguess_games` table (landmine #2, now fixed in
-migration 0006) exists but contains no rows — the endpoint returns 404 when there is no seed
-data. That gap is encoded below as an xfail so the suite stays green and the known gap is
-documented and tracked. It will be enabled once a data fixture is in place.
+All endpoints are tested against a clean test database; tests that need
+game rows create them inline via the ORM.
 """
 
 import json
@@ -29,14 +26,33 @@ def test_high_scores_endpoint_returns_empty_json(client):
     assert resp.json() == []  # empty leaderboard on a fresh DB
 
 
-@pytest.mark.xfail(
-    reason="The `games` table exists (landmine #2 fixed in migration 0006) but a fresh test DB "
-    "has no seed data, so the endpoint returns 404. Will be enabled once a data fixture is added.",
-    strict=False,
-)
+def test_random_game_returns_404_when_no_games(client):
+    resp = client.get("/metaguess/random-game/")
+    assert resp.status_code == 404
+
+
 def test_random_game_endpoint(client):
+    Games.objects.create(external_id=1, game_name="A", platform="PC", release_year=2020, score=90)
     resp = client.get("/metaguess/random-game/")
     assert resp.status_code == 200
+    assert resp.json()["game_name"] == "A"
+
+
+def test_deck_returns_games(client):
+    Games.objects.create(external_id=1, game_name="A", platform="PC", release_year=2020, score=90)
+    Games.objects.create(external_id=2, game_name="B", platform="PC", release_year=2019, score=80)
+    resp = client.get("/metaguess/deck/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+    assert {"game_name", "platform", "release_year", "score", "cover_url"} <= set(data[0].keys())
+    assert isinstance(data[0]["score"], float)
+
+
+def test_deck_empty_when_no_games(client):
+    resp = client.get("/metaguess/deck/")
+    assert resp.status_code == 200
+    assert resp.json() == []
 
 
 def test_games_model_is_usable():

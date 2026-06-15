@@ -29,6 +29,19 @@ def get_high_scores(request):
     data = [{"initials": score.initials, "score": score.score} for score in high_scores]
     return JsonResponse(data, safe=False)
 
+@never_cache
+def deck(request):
+    games = list(
+        Games.objects.exclude(score__isnull=True).values(
+            "game_name", "platform", "release_year", "score", "cover_url"
+        )
+    )
+    for g in games:
+        g["score"] = float(g["score"])
+        g["cover_url"] = g["cover_url"] or "/static/metaguess/img/nocover.png"
+    random.shuffle(games)
+    return JsonResponse(games, safe=False)
+
 def add_high_score(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method"}, status=400)
