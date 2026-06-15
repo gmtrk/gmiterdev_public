@@ -29,3 +29,19 @@ def test_mnist_model_artifacts_present():
     assert (model_dir / "model.json").exists()
     assert (model_dir / "group1-shard1of2.bin").exists()
     assert (model_dir / "group1-shard2of2.bin").exists()
+
+
+def test_mnist_page_has_layer_pipeline(client):
+    """The redesigned playground renders the live layer-visualization pipeline."""
+    resp = client.get("/mnist/")
+    assert resp.status_code == 200
+    body = resp.content
+    assert b'id="nn-pipeline"' in body          # the dark viewport container
+    assert b'id="b1grid"' in body                # block 1 feature-map canvas
+    assert b'id="b2grid"' in body                # block 2 feature-map canvas
+    assert b'id="densefield"' in body            # dense activation canvas
+    assert b'id="predictions"' in body           # prediction bars container
+    assert b'data-pred="0"' in body              # first prediction row
+    assert b'block 1' in body                    # teaching label
+    assert b'high activation' in body            # legend
+    assert b'type="module"' in body              # ES-module entrypoint
