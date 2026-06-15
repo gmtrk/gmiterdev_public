@@ -3,81 +3,72 @@
 
 {% block title %}MetaGuess{% endblock %}
 
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'metaguess/css/game.css' %}">
+{% endblock %}
+
+{% block header %}
+<header class="mg-topbar">
+  <div class="mg-topbar__inner">
+    <span class="mg-brand">
+      <a class="mg-logo" href="{% url 'main' %}">gmiter<span class="mg-logo__dot"></span>dev</a>
+      <span class="mg-tag">METAGUESS</span>
+    </span>
+    <span class="mg-scoreline">SCORE&nbsp;&nbsp;<b id="score">0</b></span>
+  </div>
+</header>
+{% endblock %}
+
 {% block content %}
 <script src="{% static 'metaguess/js/game.js' %}" defer></script>
-<style>
-  @keyframes floatFadeOut {
-    0%   { opacity: 1; transform: translate(-50%, -50%); }
-    100% { opacity: 0; transform: translate(-50%, -120%); }
-  }
-  .animate-float-fade-out { animation: floatFadeOut 1.6s ease forwards; }
-</style>
 
-<div class="max-w-3xl mx-auto p-5 font-sans">
-  <div class="flex items-center justify-between rounded-t-lg bg-black px-4 py-2 text-white">
-    <div class="flex items-center space-x-2">
-      <div class="h-6 w-6 rounded-full bg-yellow-400">
-        <div class="ml-1 mt-1 h-4 w-4 rounded-full bg-black"></div>
-      </div>
-      <div class="text-xl font-bold">metaguess</div>
+<div class="mg-page">
+  <p class="mg-prompt">Does the <b>right</b> game score higher or lower than the <b>left</b>?</p>
+
+  <div class="mg-board">
+    <div class="mg-card">
+      <img id="anchor-image" class="mg-cover" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover">
+      <div id="anchor-title" class="mg-card__title">&mdash;</div>
+      <div id="anchor-meta" class="mg-card__meta"></div>
+      <div id="anchor-score" class="mg-score mg-score--hidden">?</div>
     </div>
-    <div class="text-lg">Score: <span id="score" class="font-bold">0</span></div>
+    <div class="mg-card">
+      <img id="challenger-image" class="mg-cover" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover">
+      <div id="challenger-title" class="mg-card__title">&mdash;</div>
+      <div id="challenger-meta" class="mg-card__meta"></div>
+      <div style="position: relative;">
+        <div id="challenger-score" class="mg-score mg-score--hidden">?</div>
+      </div>
+    </div>
   </div>
 
-  <div class="bg-white rounded-b-lg shadow-md p-5">
-    <p class="text-center text-lg mb-5 text-gray-700">
-      Does the <span class="font-semibold">right</span> game have a higher or lower
-      Metascore than the <span class="font-semibold">left</span> one?
-    </p>
-
-    <div class="flex flex-col sm:flex-row gap-5 mb-5">
-      <div class="flex-1 border rounded-lg p-4 flex flex-col items-center text-center">
-        <img id="anchor-image" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover"
-             class="w-40 h-56 object-cover rounded-lg mb-3">
-        <h2 id="anchor-title" class="text-xl font-bold text-gray-800">&mdash;</h2>
-        <p id="anchor-meta" class="text-gray-500 text-sm mb-2"></p>
-        <div id="anchor-score"
-             class="w-20 h-20 flex items-center justify-center text-3xl font-bold rounded-lg bg-gray-200">?</div>
-      </div>
-
-      <div class="flex-1 border rounded-lg p-4 flex flex-col items-center text-center">
-        <img id="challenger-image" src="{% static 'metaguess/img/nocover.png' %}" alt="Game cover"
-             class="w-40 h-56 object-cover rounded-lg mb-3">
-        <h2 id="challenger-title" class="text-xl font-bold text-gray-800">&mdash;</h2>
-        <p id="challenger-meta" class="text-gray-500 text-sm mb-2"></p>
-        <div class="relative">
-          <div id="challenger-score"
-               class="w-20 h-20 flex items-center justify-center text-3xl font-bold rounded-lg bg-gray-100 text-gray-700">?</div>
-        </div>
-      </div>
-    </div>
-
-    <div id="buttons" class="flex justify-center space-x-4 h-10">
-      <button id="higher-btn" class="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">Higher</button>
-      <button id="lower-btn" class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition">Lower</button>
-    </div>
-
-    <p id="empty-msg" class="hidden text-center text-red-600 mt-4">
-      No games loaded yet. Run <code>make seed</code> to populate the database.
-    </p>
+  <div id="buttons" class="mg-actions">
+    <button id="higher-btn" class="mg-btn mg-btn--higher">HIGHER</button>
+    <button id="lower-btn" class="mg-btn mg-btn--lower">LOWER</button>
   </div>
 
-  <div id="game-over" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white p-8 rounded-lg text-center shadow-lg max-w-lg w-full">
-      <h2 class="text-3xl font-bold text-red-600 mb-4">Game Over!</h2>
-      <p class="text-lg mb-2">Your Score: <span id="final-score" class="font-bold text-gray-800">0</span></p>
-      <p class="text-lg mb-4">Personal Best: <span id="personal-best" class="font-bold text-gray-800">0</span></p>
-      <h3 class="text-2xl font-semibold text-gray-700 mb-2">Best Scores</h3>
-      <div id="high-score-table" class="mb-4"></div>
-      <div id="new-high-score-form" class="hidden mb-4">
-        {% csrf_token %}
-        <p class="mb-2 text-gray-600">Congrats! Enter your initials (3 letters):</p>
-        <input type="text" id="high-score-initials" maxlength="3"
-               class="px-3 py-2 border rounded mb-3 text-center w-full max-w-xs">
-        <button id="submit-high-score-btn"
-                class="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition">Submit Score</button>
-      </div>
-      <button id="restart-btn" class="px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition mt-4">Play Again</button>
+  <p id="empty-msg" class="mg-empty mg-hidden">No games loaded yet. Run <code>make seed</code> to populate the database.</p>
+</div>
+
+<div id="game-over" class="mg-modal mg-hidden">
+  <div class="mg-modal__box">
+    <h2 class="mg-modal__title">Game Over</h2>
+    <p class="mg-stat">Your score <b id="final-score">0</b> &middot; Personal best <b id="personal-best">0</b></p>
+    <div class="mg-lb">
+      <p class="mg-label">Top scores</p>
+      <div id="high-score-table"></div>
+    </div>
+    <div id="new-high-score-form" class="mg-form mg-hidden">
+      {% csrf_token %}
+      <div class="mg-form__hint">You made the board &mdash; enter initials:</div>
+      <input type="text" id="high-score-initials" maxlength="3">
+      <button id="submit-high-score-btn" class="mg-btn mg-btn--higher">SUBMIT</button>
+    </div>
+    <div class="mg-restart">
+      <button id="restart-btn" class="mg-btn mg-btn--lower">PLAY AGAIN</button>
     </div>
   </div>
 </div>

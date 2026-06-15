@@ -43,18 +43,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return arr;
   }
 
+  const SCORE_CLASSES = ["mg-score--good", "mg-score--mixed", "mg-score--bad", "mg-score--hidden"];
+
   function clearScoreColor(el) {
-    el.classList.remove(
-      "bg-green-400", "bg-yellow-400", "bg-red-500", "bg-gray-100", "bg-gray-200",
-      "text-white", "text-black", "text-gray-700"
-    );
+    el.classList.remove(...SCORE_CLASSES);
   }
 
   function setScoreColor(el, value) {
     clearScoreColor(el);
-    if (value >= 75) el.classList.add("bg-green-400", "text-black");
-    else if (value >= 50) el.classList.add("bg-yellow-400", "text-black");
-    else el.classList.add("bg-red-500", "text-white");
+    if (value >= 75) el.classList.add("mg-score--good");
+    else if (value >= 50) el.classList.add("mg-score--mixed");
+    else el.classList.add("mg-score--bad");
   }
 
   function setCard(prefix, game, revealScore) {
@@ -68,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       scoreEl.textContent = Math.round(game.score);
     } else {
       clearScoreColor(scoreEl);
-      scoreEl.classList.add("bg-gray-100", "text-gray-700");
+      scoreEl.classList.add("mg-score--hidden");
       scoreEl.textContent = "?";
     }
   }
@@ -88,8 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderRound() {
     setCard("anchor", anchor, true);
     setCard("challenger", challenger, false);
-    els.higherBtn.classList.remove("hidden");
-    els.lowerBtn.classList.remove("hidden");
+    els.higherBtn.classList.remove("mg-hidden");
+    els.lowerBtn.classList.remove("mg-hidden");
     busy = false;
   }
 
@@ -114,9 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function floatMessage(text) {
     const span = document.createElement("span");
-    span.classList.add("absolute", "text-green-700", "font-semibold", "animate-float-fade-out");
-    span.style.top = "50%";
-    span.style.left = "50%";
+    span.className = "mg-float";
     span.textContent = text;
     els.challengerScore.parentElement.appendChild(span);
     setTimeout(() => span.remove(), 1600);
@@ -125,8 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function makeGuess(isHigher) {
     if (busy || !anchor || !challenger) return;
     busy = true;
-    els.higherBtn.classList.add("hidden");
-    els.lowerBtn.classList.add("hidden");
+    els.higherBtn.classList.add("mg-hidden");
+    els.lowerBtn.classList.add("mg-hidden");
     animateScoreReveal(els.challengerScore, challenger.score);
 
     // Ties count as correct, in either direction.
@@ -153,14 +150,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function startGame() {
     score = 0;
     els.score.textContent = score;
-    els.gameOver.classList.add("hidden");
+    els.gameOver.classList.add("mg-hidden");
     if (deck.length < 2) {
-      els.emptyMsg.classList.remove("hidden");
-      els.buttons.classList.add("hidden");
+      els.emptyMsg.classList.remove("mg-hidden");
+      els.buttons.classList.add("mg-hidden");
       return;
     }
-    els.emptyMsg.classList.add("hidden");
-    els.buttons.classList.remove("hidden");
+    els.emptyMsg.classList.add("mg-hidden");
+    els.buttons.classList.remove("mg-hidden");
     shuffle(deck);
     index = 0;
     anchor = deck[index++];
@@ -177,8 +174,8 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch((err) => {
         console.error("Error loading deck:", err);
-        els.emptyMsg.classList.remove("hidden");
-        els.buttons.classList.add("hidden");
+        els.emptyMsg.classList.remove("mg-hidden");
+        els.buttons.classList.add("mg-hidden");
       });
   }
 
@@ -187,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     els.finalScore.textContent = score;
     els.personalBest.textContent = personalBest;
     showHighScores(score);
-    els.gameOver.classList.remove("hidden");
+    els.gameOver.classList.remove("mg-hidden");
   }
 
   function getCSRFToken() {
@@ -201,21 +198,21 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         const table = document.getElementById("high-score-table");
         const form = document.getElementById("new-high-score-form");
-        let html = "<ul class='text-left space-y-2 inline-block'>";
-        data.forEach((entry, i) => {
-          html += `<li>${i + 1}. <strong>${entry.initials}</strong> &mdash; ${entry.score}</li>`;
-        });
-        html += "</ul>";
-        table.innerHTML = html;
+        table.innerHTML = data
+          .map(
+            (entry, i) =>
+              `<div class="mg-lb__row"><span><span class="mg-lb__rank">${i + 1}</span><span class="mg-lb__ini">${entry.initials}</span></span><span class="mg-lb__pts">${entry.score}</span></div>`
+          )
+          .join("");
 
         const qualifies =
           finalScore > 0 && (data.length < 5 || finalScore > data[data.length - 1].score);
         if (qualifies) {
-          form.classList.remove("hidden");
-          els.submitBtn.classList.remove("hidden");
+          form.classList.remove("mg-hidden");
+          els.submitBtn.classList.remove("mg-hidden");
           els.submitBtn.onclick = () => submitHighScore(finalScore);
         } else {
-          form.classList.add("hidden");
+          form.classList.add("mg-hidden");
         }
       })
       .catch((err) => console.error("Error fetching high scores:", err));
@@ -227,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Please enter exactly 3 letters for initials.");
       return;
     }
-    els.submitBtn.classList.add("hidden");
+    els.submitBtn.classList.add("mg-hidden");
     fetch("/metaguess/add-high-score/", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
@@ -235,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((r) => r.json())
       .then(() => {
-        document.getElementById("new-high-score-form").classList.add("hidden");
+        document.getElementById("new-high-score-form").classList.add("mg-hidden");
         showHighScores(finalScore);
       })
       .catch((err) => console.error("Error submitting high score:", err));
