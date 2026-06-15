@@ -22,3 +22,6 @@ local.sqlite3
 
 # Superpowers brainstorm artifacts
 .superpowers/
+
+# Training venv (dev/train-only — TF is not a runtime dep)
+.venv-train/

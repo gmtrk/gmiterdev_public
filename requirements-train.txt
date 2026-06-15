@@ -1,0 +1,15 @@
+# Dev/train-only — NOT a runtime dependency. Used to train + export the MNIST model.
+# Install into an isolated env: python3.12 -m venv .venv-train && .venv-train/bin/pip install -r requirements-train.txt
+#
+# Version notes (macOS arm64 tested):
+#   - tensorflow 2.19.0 pins protobuf<6; tensorflow-decision-forests 1.12.0 requires tensorflow==2.19.0
+#   - ydf must be <=0.11.0 (>=0.12.0 requires protobuf>=6 which conflicts with tensorflow 2.19)
+#   - setuptools must be <71 so that pkg_resources is available (tensorflow-hub depends on it)
+#   - tensorflow-decision-forests is a transitive dep of tensorflowjs (unconditionally imported)
+#   - TF_USE_LEGACY_KERAS is NOT required; save_keras_model works with Keras 3 on this stack
+tensorflow==2.19.0
+tensorflowjs==4.22.0
+tensorflow-decision-forests==1.12.0
+tf-keras==2.19.0
+ydf==0.11.0
+setuptools<71
