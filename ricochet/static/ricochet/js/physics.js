@@ -139,6 +139,13 @@ export function buildWorld(state) {
     paddleE: E_PADDLE,
     kick: KICK,
     maxSpeed: MAX_SPEED,
+    // Per-run, live-tunable feel constants. Seeded from config so the default
+    // behaviour is unchanged, but stepPhysics reads these off the world (not the
+    // module constants) so the debug panel can retune them live. spawnRate is the
+    // baseline balls/sec the main spawn tick reads.
+    gravity: GRAVITY,
+    drag: DRAG,
+    spawnRate: 4,
     globalValueMult: 1,
     goldenChance: GOLDEN.chance,
     baseCapacity: BASE_CAPACITY,
@@ -258,10 +265,13 @@ function _resolvePegsNear(world, pool, i) {
 }
 
 function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
-  // gravity + drag
-  pool.vy[i] += GRAVITY * dt;
-  pool.vx[i] *= DRAG;
-  pool.vy[i] *= DRAG;
+  // gravity + drag — read off the world (seeded from GRAVITY/DRAG in buildWorld)
+  // so the debug panel can retune them live without touching module constants.
+  const gravity = world.gravity != null ? world.gravity : GRAVITY;
+  const drag = world.drag != null ? world.drag : DRAG;
+  pool.vy[i] += gravity * dt;
+  pool.vx[i] *= drag;
+  pool.vy[i] *= drag;
   pool.x[i] += pool.vx[i] * dt;
   pool.y[i] += pool.vy[i] * dt;
 

@@ -29,6 +29,7 @@ import {
 } from './offline.js';
 import { motionProfile } from './motion.js';
 import { qualityCeiling } from './quality.js';
+import { setupDebug } from './debug.js';
 
 const SAVE_KEY = 'ricochet:save';
 const AUTOSAVE_INTERVAL = 5; // seconds
@@ -427,8 +428,10 @@ function step(dt) {
   run.now += dt;
   world.now = run.now;
 
-  // 1) spawn tick (normal balls + golden roll), then specials (bounded by cap)
-  spawnTick(world, dt, run.spawnRate);
+  // 1) spawn tick (normal balls + golden roll), then specials (bounded by cap).
+  //    Spawn rate is read off the world each step (seeded in buildWorld, kept in
+  //    sync with run.spawnRate) so the debug panel's spawn-rate slider applies live.
+  spawnTick(world, dt, world.spawnRate != null ? world.spawnRate : run.spawnRate);
   spawnSpecialsTick(state, world);
 
   // 2) physics (both pools, block runtime, golden/break counters into world.counters).
@@ -535,6 +538,26 @@ window.addEventListener('pagehide', saveNow);
 // here so the unlock grants and seeds the starter pack instantly.
 window.__ricochet = window.__ricochet || {};
 window.__ricochet.unlockSpecial = (typeName) => unlockSpecialAndSeed(state, world, typeName);
+
+// --- debug overlay (hidden by default; toggled by ` or the 🛠 button) -------
+// onStateChange re-derives the world from the (mutated) state and refreshes every
+// host surface so debug grants/upgrade tweaks/unlock toggles apply live.
+setupDebug(state, world, {
+  formatNumber,
+  updateHUD,
+  refreshShop,
+  onStateChange: () => {
+    applyUpgradeEffects(world, state);
+    rebuildColliders(world); // budget changes may free/limit placement room
+    refreshShop();
+    refreshCoresTab();
+    updateHUD(buildHudAdapter(state, world, run), hudEls);
+    persistSave();
+  },
+  // route special unlocks through the real unlock+seed path so the pool actually
+  // spawns the starter pack immediately (matches the in-game shop behaviour)
+  unlockSpecial: (type) => unlockSpecialAndSeed(state, world, type),
+});
 
 const loop = createLoop({ step, render, onFrameTime });
 loop.start();
