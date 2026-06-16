@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buyUpgrade } from './ui.js';
-import { UPGRADES } from './config.js';
+import { buyUpgrade, coresShopRows } from './ui.js';
+import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost } from './economy.js';
 
 // buyUpgrade(world, state, id, applyEffects) -> boolean (true if bought).
@@ -54,4 +54,42 @@ test('buyUpgrade: unknown id returns false and changes nothing', () => {
   const ok = buyUpgrade({}, state, 'no-such-upgrade', () => {});
   assert.equal(ok, false);
   assert.equal(state.credits, 1e9);
+});
+
+test('coresShopRows returns one row per Cores upgrade with its group', () => {
+  const state = { cores: 0, coresShop: {} };
+  const rows = coresShopRows(state);
+  assert.equal(rows.length, CORES_UPGRADES.length);
+  const groups = new Set(rows.map((r) => r.group));
+  // The four authored Cores-shop groups must all be representable.
+  for (const g of groups) {
+    assert.ok(['power', 'headstart', 'unlocks', 'offline'].includes(g), `unexpected group ${g}`);
+  }
+});
+
+test('coresShopRows reports current level and next-level cost from state.coresShop', () => {
+  const def = CORES_UPGRADES[0];
+  const state = { cores: 0, coresShop: { [def.id]: 3 } };
+  const rows = coresShopRows(state);
+  const row = rows.find((r) => r.id === def.id);
+  assert.equal(row.level, 3);
+  assert.equal(row.cost, upgradeCost(def, 3));
+});
+
+test('coresShopRows marks affordability against state.cores', () => {
+  const def = CORES_UPGRADES[0];
+  const cost = upgradeCost(def, 0);
+  const poor = coresShopRows({ cores: cost - 1, coresShop: {} }).find((r) => r.id === def.id);
+  const rich = coresShopRows({ cores: cost, coresShop: {} }).find((r) => r.id === def.id);
+  assert.equal(poor.affordable, false);
+  assert.equal(rich.affordable, true);
+});
+
+test('coresShopRows flags a maxed upgrade as not affordable', () => {
+  const capped = CORES_UPGRADES.find((u) => u.max != null);
+  if (!capped) return; // no capped cores upgrade in config; nothing to assert
+  const state = { cores: 1e12, coresShop: { [capped.id]: capped.max } };
+  const row = coresShopRows(state).find((r) => r.id === capped.id);
+  assert.equal(row.maxed, true);
+  assert.equal(row.affordable, false);
 });

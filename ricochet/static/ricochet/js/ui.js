@@ -1,6 +1,6 @@
 // UI: HUD (throttled ~6Hz), Credits/Place shop rows, buy handler.
 // buyUpgrade is pure (state transition); updateHUD/renderShop touch the DOM.
-import { UPGRADES } from './config.js';
+import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost, upgradeEffect } from './economy.js';
 import { formatNumber } from './numfmt.js';
 
@@ -75,4 +75,28 @@ export function renderShop(tab, { container, state, onBuy }) {
     row.addEventListener('click', () => onBuy(def.id));
     container.append(row);
   }
+}
+
+// --- Cores shop -----------------------------------------------------------
+// Pure row model for the Cores tab. One row per CORES_UPGRADES entry, carrying its
+// group (power/headstart/unlocks/offline), current level, next-level cost, whether
+// it's maxed, and whether it's affordable against state.cores. The renderShop('cores')
+// DOM builder consumes these rows. Exported per the integration contract so Phase 7
+// can import it (MUST-HONOR: authored & exported here before use).
+export function coresShopRows(state) {
+  return CORES_UPGRADES.map((def) => {
+    const level = (state.coresShop && state.coresShop[def.id]) || 0;
+    const maxed = def.max != null && level >= def.max;
+    const cost = upgradeCost(def, level);
+    const affordable = !maxed && state.cores >= cost;
+    return {
+      id: def.id,
+      label: def.label,
+      group: def.group,
+      level,
+      cost,
+      maxed,
+      affordable,
+    };
+  });
 }
