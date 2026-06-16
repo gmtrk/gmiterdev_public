@@ -10,14 +10,24 @@
 {% endblock %}
 
 {% block content %}
+<!-- pixelation filter for the fish portrait (keeps the original detailed SVG, renders it blocky) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="ud-pixelate" x="0" y="0" width="100%" height="100%">
+    <feFlood x="1" y="1" width="1" height="1"/>
+    <feComposite width="2" height="2"/>
+    <feTile result="grid"/>
+    <feComposite in="SourceGraphic" in2="grid" operator="in"/>
+    <feMorphology operator="dilate" radius="1"/>
+  </filter>
+</svg>
 <div class="ud-wrap">
   <div class="ud-dbox pixframe">
-    <img class="ud-portrait" src="{% static 'img/fish_pixel.svg' %}" alt="">
+    <img class="ud-portrait" src="{% static 'img/favicon.svg' %}" alt="">
     <div class="ud-lines" id="ud-lines"></div>
   </div>
 
   <div class="ud-menu">
-    <a class="ud-mrow ud-sel" href="/mnist">
+    <a class="ud-mrow" href="/mnist">
       <span class="ud-heart"><span class="ud-soul"></span></span>
       <span class="ud-preview pixframe"><span class="ud-seven">7</span></span>
       <span class="ud-btn"><span class="ud-ico">✦</span> MNIST PLAYGROUND</span>

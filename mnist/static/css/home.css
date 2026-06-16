@@ -10,7 +10,7 @@ body.ud-home {
 
 /* dialogue box */
 .ud-dbox { display: flex; gap: 22px; align-items: flex-start; margin-top: 24px; padding: 18px 22px; }
-.ud-portrait { flex: 0 0 80px; width: 80px; height: 80px; image-rendering: pixelated; }
+.ud-portrait { flex: 0 0 auto; width: 88px; height: 88px; filter: url(#ud-pixelate); }
 .ud-lines { flex: 1; min-height: 80px; font-size: 24px; line-height: 1.35; padding-top: 4px; white-space: pre-wrap; }
 .ud-lines b { color: #ff0000; }                 /* the name = SOUL red */
 .ud-caret { display: inline-block; width: 12px; color: var(--ud-txt); animation: ud-blink 1s steps(1) infinite; }
@@ -20,7 +20,7 @@ body.ud-home {
 .ud-menu { display: flex; flex-direction: column; gap: 18px; margin-top: 34px; }
 .ud-mrow { display: flex; align-items: center; gap: 16px; cursor: pointer; text-decoration: none; }
 .ud-heart { position: relative; width: 21px; height: 18px; flex: 0 0 21px; opacity: 0; transform: translateX(-6px); transition: .12s; }
-.ud-mrow:hover .ud-heart, .ud-mrow.ud-sel .ud-heart { opacity: 1; transform: none; }
+.ud-mrow:hover .ud-heart { opacity: 1; transform: none; }
 
 .ud-preview { flex: 0 0 70px; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
 .ud-preview.pixframe { border-width: 11px; border-image: var(--ud-frame) 27.6% fill / 11px repeat; }
@@ -32,7 +32,7 @@ body.ud-home {
   border: 3px solid var(--ud-btn); color: var(--ud-btn); background: #000;
   padding: 12px 18px; border-radius: 3px; font-size: 26px; letter-spacing: .03em; transition: .12s;
 }
-.ud-mrow:hover .ud-btn, .ud-mrow.ud-sel .ud-btn { background: var(--ud-btn); color: #000; }
+.ud-mrow:hover .ud-btn { background: var(--ud-btn); color: #000; }
 .ud-ico { font-size: 24px; }
 .ud-desc { flex: 1; color: var(--ud-dim); font-size: 20px; }
 .ud-pts { color: var(--ud-save); }
