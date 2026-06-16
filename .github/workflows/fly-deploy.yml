@@ -1,0 +1,23 @@
+name: Fly Deploy
+
+# Auto-deploy to Fly.io on every push to master.
+# Requires the repo secret FLY_API_TOKEN (an app-scoped Fly deploy token).
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    name: Deploy app to Fly.io
+    runs-on: ubuntu-latest
+    # Never run two deploys at once; a newer push supersedes an in-flight one.
+    concurrency:
+      group: fly-deploy
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
