@@ -302,7 +302,7 @@ function runOfflineOnLoad() {
 }
 runOfflineOnLoad();
 
-setupTabs({
+const tabs = setupTabs({
   tabButtons: Array.from(document.querySelectorAll('[data-tab]')),
   panels: Array.from(document.querySelectorAll('[data-panel]')),
   onSelect: (name) => {
@@ -310,6 +310,9 @@ setupTabs({
     else if (name === 'cores') refreshCoresTab();
   },
 });
+// Arena editing (placement + paddle drag) is gated to the Place tab so clicking
+// the arena on Credits/Cores/Scores can't silently mutate the blueprint.
+const isPlaceActive = () => tabs.getActive() === 'place';
 setupPlacement({
   canvas,
   world,
@@ -317,8 +320,9 @@ setupPlacement({
   toolButtons: Array.from(document.querySelectorAll('[data-tool]')),
   presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
   onChange: refreshShop,
+  isActive: isPlaceActive,
 });
-setupPaddleDrag({ canvas, world, state, onChange: () => {} });
+setupPaddleDrag({ canvas, world, state, onChange: () => {}, isActive: isPlaceActive });
 setupQualityToggle(window.__ricochetSetLowQuality, runtime.lowQuality);
 
 // Module-scope so onBigBangClicked (Phase 7) can call leaderboard.offerOnBigBang().

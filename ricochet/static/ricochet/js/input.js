@@ -120,11 +120,16 @@ function eventToVirtual(canvas, world, ev) {
 }
 
 // Wire the Place tab: tool selection, click/drag placement & removal, preset
-// buttons. `deps` = { canvas, world, state, toolButtons, presetButtons, onChange }.
-// onChange() is called after any mutation so the caller re-syncs colliders +
-// refreshes the shop. Sets touch-action:none on the canvas (kills scroll-vs-drag).
+// buttons. `deps` = { canvas, world, state, toolButtons, presetButtons, onChange,
+// isActive }. onChange() is called after any mutation so the caller re-syncs
+// colliders + refreshes the shop. `isActive()` gates canvas placement to the
+// Place tab — when it returns false, arena clicks are ignored (so clicking the
+// arena on the Credits/Cores/Scores tabs can't silently mutate the blueprint).
+// Defaults to always-active for headless/test callers. Sets touch-action:none on
+// the canvas (kills scroll-vs-drag).
 export function setupPlacement(deps) {
-  const { canvas, world, state, toolButtons, presetButtons, onChange } = deps;
+  const { canvas, world, state, toolButtons, presetButtons, onChange, isActive } = deps;
+  const placeActive = typeof isActive === 'function' ? isActive : () => true;
   canvas.style.touchAction = 'none';
   let tool = 'peg'; // 'peg' | 'block' | 'remove'
   let painting = false;
@@ -137,6 +142,7 @@ export function setupPlacement(deps) {
   }
 
   function actAt(x, y) {
+    if (!placeActive()) return; // only the Place tab may edit the arena
     let changed = false;
     if (tool === 'remove') changed = removeTopmost(world, state.placed, x, y);
     else changed = tryPlace(world, state.placed, tool, x, y);
@@ -147,6 +153,7 @@ export function setupPlacement(deps) {
   }
 
   canvas.addEventListener('pointerdown', (ev) => {
+    if (!placeActive()) return; // ignore arena clicks outside the Place tab
     painting = true;
     canvas.setPointerCapture(ev.pointerId);
     const { x, y } = eventToVirtual(canvas, world, ev);
@@ -175,10 +182,14 @@ export function setupPlacement(deps) {
   }
 }
 
-// Wire the draggable paddle. `deps` = { canvas, world, state, onChange }.
+// Wire the draggable paddle. `deps` = { canvas, world, state, onChange, isActive }.
 // The paddle moves horizontally in virtual coords; y/width come from world.paddle.
+// `isActive()` gates the grab to the Place tab (same rationale as setupPlacement):
+// a Credits/Cores/Scores-tab arena click must not start a paddle drag. Defaults to
+// always-active for headless/test callers.
 export function setupPaddleDrag(deps) {
-  const { canvas, world, state, onChange } = deps;
+  const { canvas, world, state, onChange, isActive } = deps;
+  const placeActive = typeof isActive === 'function' ? isActive : () => true;
   let dragging = false;
 
   function near(x, y) {
@@ -196,6 +207,7 @@ export function setupPaddleDrag(deps) {
   }
 
   canvas.addEventListener('pointerdown', (ev) => {
+    if (!placeActive()) return; // only the Place tab may grab the paddle
     const { x, y } = eventToVirtual(canvas, world, ev);
     if (near(x, y)) {
       dragging = true;
@@ -212,16 +224,24 @@ export function setupPaddleDrag(deps) {
   canvas.addEventListener('pointercancel', stop);
 }
 
-// Wire the right-panel tabs (Credits / Cores / Place). `deps` = { tabButtons,
-// panels, onSelect }. onSelect(name) lets the caller (re)render the active tab.
+// Wire the right-panel tabs (Credits / Cores / Place / Scores). `deps` =
+// { tabButtons, panels, onSelect, initial }. onSelect(name) lets the caller
+// (re)render the active tab. Returns { getActive() } so callers (placement /
+// paddle drag) can gate canvas interactions to the active tab.
 export function setupTabs(deps) {
-  const { tabButtons, panels, onSelect } = deps;
+  const { tabButtons, panels, onSelect, initial } = deps;
+  // Seed from the markup's pre-selected tab (rc-tab--active) or `initial`.
+  let active = initial
+    || (tabButtons.find((b) => b.classList.contains('rc-tab--active')) || {}).dataset?.tab
+    || (tabButtons[0] && tabButtons[0].dataset.tab);
   for (const btn of tabButtons) {
     btn.addEventListener('click', () => {
       const name = btn.dataset.tab;
+      active = name;
       for (const b of tabButtons) b.classList.toggle('rc-tab--active', b.dataset.tab === name);
       for (const p of panels) p.hidden = p.dataset.panel !== name;
       onSelect(name);
     });
   }
+  return { getActive: () => active };
 }
