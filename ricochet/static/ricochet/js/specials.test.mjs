@@ -266,3 +266,17 @@ test('makeSpecialEmit.balls FIZZLES (no spawn) when the arena is at/over the sub
   emit.balls(6, 0, 0);
   assert.equal(w.normal.count, before, 'fizzled — owned capacity is protected');
 });
+
+test('cap-exempt emitted balls are NORMAL and do NOT grow the special pool (no cascade)', () => {
+  const w = freshWorld();
+  spawnSpecial(w, SPLITTER, 100, 100);
+  spawnSpecial(w, SPLITTER, 105, 100);
+  const sp = w.special;
+  const specialCountBefore = sp.count;
+  const normalCountBefore = w.normal.count;
+  const emit = makeSpecialEmit(w, () => {});
+  resolveClack(w, 0, 1, emit);
+  assert.ok(w.normal.count > normalCountBefore, 'at least one ball emitted into the normal pool');
+  assert.equal(w.normal.type[normalCountBefore], NORMAL, 'emitted balls are NORMAL type');
+  assert.equal(sp.count, specialCountBefore, 'special pool count unchanged — no cascade into specials');
+});
