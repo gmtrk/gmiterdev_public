@@ -8,10 +8,12 @@ def main_view(request):
     # Get or create visit counts for each app
     mnist_visits, _ = AppVisit.objects.get_or_create(app_name='mnist')
     metaguess_visits, _ = AppVisit.objects.get_or_create(app_name='metaguess')
+    ricochet_visits, _ = AppVisit.objects.get_or_create(app_name='ricochet')
 
     # Pass the visit counts to the template
     context = {
         'mnist_visits': mnist_visits.visit_count,
         'metaguess_visits': metaguess_visits.visit_count,
+        'ricochet_visits': ricochet_visits.visit_count,
     }
     return render(request, 'main.html', context)
