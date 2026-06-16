@@ -83,3 +83,31 @@ test('tryPlace: peg refused if it overlaps a block footprint (cross-type)', () =
   const ok = tryPlace(world, placed, 'peg', 405, 820); // inside the block AABB
   assert.equal(ok, false);
 });
+
+test('removeTopmost: removes the newest peg under the cursor', () => {
+  const world = makeWorld({ pegs: 5, blocks: 5 });
+  const placed = makePlaced();
+  placed.pegs.push({ x: 200, y: 400 }); // older, same spot
+  placed.pegs.push({ x: 200, y: 400 }); // newer, same spot
+  const ok = removeTopmost(world, placed, 201, 401);
+  assert.equal(ok, true);
+  assert.equal(placed.pegs.length, 1); // only the newer one removed
+});
+
+test('removeTopmost: prefers a block over a peg at the same point', () => {
+  const world = makeWorld({ pegs: 5, blocks: 5 });
+  const placed = makePlaced();
+  placed.pegs.push({ x: 400, y: 820 });
+  placed.blocks.push({ x: 400, y: 820, level: 9, respawnAt: null, golden: false });
+  const ok = removeTopmost(world, placed, 400, 820);
+  assert.equal(ok, true);
+  assert.equal(placed.blocks.length, 0);
+  assert.equal(placed.pegs.length, 1); // peg survives — block removed first
+});
+
+test('removeTopmost: returns false when nothing is under the cursor', () => {
+  const world = makeWorld({ pegs: 5, blocks: 5 });
+  const placed = makePlaced();
+  placed.pegs.push({ x: 200, y: 400 });
+  assert.equal(removeTopmost(world, placed, 900, 900), false);
+});
