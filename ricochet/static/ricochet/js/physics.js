@@ -57,3 +57,22 @@ export function swapRemove(pool, i) {
   }
   pool.count = last;
 }
+
+export function clampSpeed(vx, vy, maxSpeed) {
+  const sp2 = vx * vx + vy * vy;
+  const max2 = maxSpeed * maxSpeed;
+  if (sp2 > max2) {
+    const s = maxSpeed / Math.sqrt(sp2);
+    return { vx: vx * s, vy: vy * s };
+  }
+  return { vx, vy };
+}
+
+export function reflectWalls(x, y, vx, vy, r, W, H, eWall, hasFloor) {
+  let hitWall = false;
+  if (x - r < 0) { x = r; vx = -vx * eWall; hitWall = true; }
+  else if (x + r > W) { x = W - r; vx = -vx * eWall; hitWall = true; }
+  if (y - r < 0) { y = r; vy = -vy * eWall; hitWall = true; }
+  else if (hasFloor && y + r > H) { y = H - r; vy = -vy * eWall; hitWall = true; }
+  return { x, y, vx, vy, hitWall };
+}

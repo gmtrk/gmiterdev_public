@@ -86,3 +86,56 @@ test('swapRemove carries special-only fields (charge/clackCooldown/envHits) on a
   assert.ok(Math.abs(p.clackCooldown[0] - 0.3) < 1e-6);
   assert.equal(p.envHits[0], 3);
 });
+
+import { clampSpeed, reflectWalls } from './physics.js';
+import { ARENA_W, ARENA_H, BALL_RADIUS, E_WALL, MAX_SPEED } from './config.js';
+
+test('clampSpeed leaves sub-max velocities untouched', () => {
+  const r = clampSpeed(10, -20, MAX_SPEED);
+  assert.equal(r.vx, 10);
+  assert.equal(r.vy, -20);
+});
+
+test('clampSpeed scales an over-max velocity down to exactly MAX_SPEED', () => {
+  // velocity (1000, 0) has speed 1000 > MAX_SPEED (378)
+  const r = clampSpeed(1000, 0, MAX_SPEED);
+  const sp = Math.hypot(r.vx, r.vy);
+  assert.ok(Math.abs(sp - MAX_SPEED) < 1e-3, `speed was ${sp}`);
+  assert.ok(r.vx > 0 && Math.abs(r.vy) < 1e-6);
+});
+
+test('reflectWalls reflects and clamps off the left wall', () => {
+  // ball center x=2, r=6 -> penetrates left wall (x-r = -4 < 0)
+  const r = reflectWalls(2, 750, -10, 0, BALL_RADIUS, ARENA_W, ARENA_H, E_WALL, true);
+  assert.equal(r.hitWall, true);
+  assert.equal(r.x, BALL_RADIUS);            // clamped to r
+  assert.ok(Math.abs(r.vx - (10 * E_WALL)) < 1e-5); // vx flips and *= eWall -> +9.2
+});
+
+test('reflectWalls reflects off the ceiling', () => {
+  const r = reflectWalls(500, 2, 0, -30, BALL_RADIUS, ARENA_W, ARENA_H, E_WALL, true);
+  assert.equal(r.hitWall, true);
+  assert.equal(r.y, BALL_RADIUS);
+  assert.ok(Math.abs(r.vy - (30 * E_WALL)) < 1e-5);
+});
+
+test('reflectWalls with hasFloor reflects off the bottom; without floor it does not', () => {
+  const withFloor = reflectWalls(500, ARENA_H + 1, 0, 40, BALL_RADIUS, ARENA_W, ARENA_H, E_WALL, true);
+  assert.equal(withFloor.hitWall, true);
+  assert.equal(withFloor.y, ARENA_H - BALL_RADIUS);
+  assert.ok(withFloor.vy < 0);
+
+  const noFloor = reflectWalls(500, ARENA_H + 1, 0, 40, BALL_RADIUS, ARENA_W, ARENA_H, E_WALL, false);
+  assert.equal(noFloor.hitWall, false);
+  assert.equal(noFloor.y, ARENA_H + 1); // untouched, will leak out the bottom
+  assert.equal(noFloor.vy, 40);
+});
+
+test('reflectWalls leaves an interior ball untouched', () => {
+  const r = reflectWalls(500, 750, 5, 5, BALL_RADIUS, ARENA_W, ARENA_H, E_WALL, true);
+  assert.equal(r.hitWall, false);
+  assert.equal(r.x, 500);
+  assert.equal(r.y, 750);
+  assert.equal(r.vx, 5);
+  assert.equal(r.vy, 5);
+});
