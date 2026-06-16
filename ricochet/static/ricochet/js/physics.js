@@ -361,7 +361,33 @@ export function stepPhysics(world, dt, now, emit = NOOP_EMIT, resolveClack = nul
   _specialClackPass(world, dt, now, emit, resolveClack);
 }
 
-// Placeholder body filled in Task 2.8 (clack pass + cooldown decay). Defined once.
 function _specialClackPass(world, dt, now, emit, resolveClack) {
-  /* special-vs-special clack debounce implemented in Task 2.8 */
+  const sp = world.special;
+  const n = sp.count;
+  // decay cooldowns first
+  for (let i = 0; i < n; i++) {
+    if (sp.clackCooldown[i] > 0) {
+      sp.clackCooldown[i] -= dt;
+      if (sp.clackCooldown[i] < 0) sp.clackCooldown[i] = 0;
+    }
+  }
+  // O(k^2) pair scan: resolve an elastic bounce + debounced clack
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const dx = sp.x[i] - sp.x[j];
+      const dy = sp.y[i] - sp.y[j];
+      const sum = sp.radius[i] + sp.radius[j];
+      if (dx * dx + dy * dy >= sum * sum) continue;
+      // elastic separation: treat j as the collider for i
+      const ri = resolveCircleCircle(
+        sp.x[i], sp.y[i], sp.vx[i], sp.vy[i], sp.radius[i],
+        sp.x[j], sp.y[j], sp.radius[j], world.eCollider, 0, world.maxSpeed,
+      );
+      sp.x[i] = ri.x; sp.y[i] = ri.y; sp.vx[i] = ri.vx; sp.vy[i] = ri.vy;
+      // debounced clack: only when both cooldowns are clear
+      if (resolveClack && sp.clackCooldown[i] <= 0 && sp.clackCooldown[j] <= 0) {
+        resolveClack(world, i, j, emit);
+      }
+    }
+  }
 }

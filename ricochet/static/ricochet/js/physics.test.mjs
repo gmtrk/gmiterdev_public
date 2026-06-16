@@ -459,3 +459,69 @@ test('respawn pass reactivates a block at full BLOCK_LEVELS once respawnAt <= no
   stepPhysics(world, DT, 3); // now == respawnAt
   assert.equal(world.blocks.level[0], BLOCK_LEVELS);
 });
+
+import { CLACK_COOLDOWN, PEG_RADIUS as PR } from './config.js';
+
+test('special pool env integration: a special ball hitting a peg increments its envHits and counters.peg, but NOT goldenBonus', () => {
+  const s = makeState();
+  s.placed.pegs = [{ x: 500, y: 300 }];
+  s.placed.blocks = [];
+  const world = buildWorld(s);
+  spawnSpecial(world, TYPE_BURSTER, 506, 300); // overlapping peg
+  world.special.vx[0] = -10;
+  stepPhysics(world, DT, 0);
+  assert.equal(world.counters.peg, 1);
+  assert.equal(world.special.envHits[0], 1);
+  assert.equal(world.counters.goldenBonus, 0); // specials never score golden
+});
+
+test('special envHits is zeroed at the start of each step', () => {
+  const world = buildWorld(makeEmptyState());
+  spawnSpecial(world, TYPE_CLACKER, 500, 100);
+  world.special.envHits[0] = 7;
+  stepPhysics(world, DT, 0); // no colliders -> no env hits this step
+  assert.equal(world.special.envHits[0], 0);
+});
+
+test('clack pass fires resolveClack for an overlapping special pair when cooldowns are clear', () => {
+  const world = buildWorld(makeEmptyState());
+  spawnSpecial(world, TYPE_CLACKER, 500, 100);
+  spawnSpecial(world, TYPE_CLACKER, 505, 100); // dist 5 < 2*BALL_RADIUS=12 -> overlap
+  let calls = 0;
+  const resolveClack = (w, i, j, emit) => { calls++; };
+  const emit = { credits() {}, balls() {} };
+  stepPhysics(world, DT, 0, emit, resolveClack);
+  assert.equal(calls, 1);
+});
+
+test('clack pass is debounced: a still-overlapping pair on cooldown does not fire again next step', () => {
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  spawnSpecial(world, TYPE_CLACKER, 500, 100);
+  spawnSpecial(world, TYPE_CLACKER, 505, 100);
+  let calls = 0;
+  // resolveClack sets the cooldown (mirrors specials.resolveClack contract)
+  const resolveClack = (w, i, j) => { calls++; w.special.clackCooldown[i] = CLACK_COOLDOWN; w.special.clackCooldown[j] = CLACK_COOLDOWN; };
+  stepPhysics(world, DT, 0, undefined, resolveClack); // first contact fires
+  // pin them in place so they stay overlapping
+  world.special.x[0] = 500; world.special.y[0] = 100; world.special.vx[0] = 0; world.special.vy[0] = 0;
+  world.special.x[1] = 505; world.special.y[1] = 100; world.special.vx[1] = 0; world.special.vy[1] = 0;
+  stepPhysics(world, DT, DT, undefined, resolveClack); // still overlapping, on cooldown -> no fire
+  assert.equal(calls, 1);
+});
+
+test('clackCooldown decays by dt each step', () => {
+  const world = buildWorld(makeEmptyState());
+  spawnSpecial(world, TYPE_CLACKER, 500, 100);
+  world.special.clackCooldown[0] = CLACK_COOLDOWN;
+  stepPhysics(world, DT, 0);
+  assert.ok(Math.abs(world.special.clackCooldown[0] - (CLACK_COOLDOWN - DT)) < 1e-6, `cd ${world.special.clackCooldown[0]}`);
+});
+
+test('stepPhysics runs without a resolveClack (null) — clack bookkeeping is a no-op', () => {
+  const world = buildWorld(makeEmptyState());
+  spawnSpecial(world, TYPE_CLACKER, 500, 100);
+  spawnSpecial(world, TYPE_CLACKER, 505, 100);
+  // no emit, no resolveClack passed
+  assert.doesNotThrow(() => stepPhysics(world, DT, 0));
+});
