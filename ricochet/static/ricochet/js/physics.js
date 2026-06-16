@@ -7,6 +7,11 @@ import {
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
+// tickClackCooldowns is the single tested implementation of the per-step clack
+// cooldown decay; _specialClackPass delegates to it. specials.js imports physics
+// bindings only inside functions, and this import is likewise only used at call
+// time, so the cycle is eval-safe.
+import { tickClackCooldowns } from './specials.js';
 
 export const FLAG_GOLDEN = 1;
 export const FLAG_CAP_EXEMPT = 2;
@@ -364,13 +369,8 @@ export function stepPhysics(world, dt, now, emit = NOOP_EMIT, resolveClack = nul
 function _specialClackPass(world, dt, now, emit, resolveClack) {
   const sp = world.special;
   const n = sp.count;
-  // decay cooldowns first
-  for (let i = 0; i < n; i++) {
-    if (sp.clackCooldown[i] > 0) {
-      sp.clackCooldown[i] -= dt;
-      if (sp.clackCooldown[i] < 0) sp.clackCooldown[i] = 0;
-    }
-  }
+  // decay cooldowns first (single tested implementation in specials.js)
+  tickClackCooldowns(sp, dt);
   // O(k^2) pair scan: resolve an elastic bounce + debounced clack
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {

@@ -88,9 +88,13 @@ export function presetPositions(name, world, placed) {
 }
 
 // Replace the placed pegs with a one-click preset (auto-filled to budget).
-// Existing blocks/paddle are untouched. Caller re-syncs colliders.
+// Existing blocks/paddle are untouched. Caller re-syncs colliders. Preset rows
+// stack downward by a fixed pitch, so with a large budget the lowest rows can
+// run past ARENA_H — filter every position through inBounds (peg half-extents)
+// so no peg lands out of the arena.
 export function applyPreset(name, world, placed) {
-  const positions = presetPositions(name, world, placed);
+  const r = world.pegRadius;
+  const positions = presetPositions(name, world, placed).filter((p) => inBounds(p.x, p.y, r, r));
   placed.pegs = positions.map((p) => ({ x: p.x, y: p.y }));
 }
 

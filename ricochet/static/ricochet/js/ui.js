@@ -144,10 +144,11 @@ export function showModal({ title, body, confirmLabel = 'OK', cancelLabel, onCon
 // Render rows for the requested tab into `container`. `onBuy(id)` is the click
 // handler the caller wires (it calls buyUpgrade + refreshes). Affordable rows
 // get the 'rc-row--afford' class.
-export function renderShop(tab, { container, state, onBuy, rows, cores }) {
+export function renderShop(tab, { container, state, onBuy, rows }) {
   if (tab === 'cores') {
-    // Cores tab: render the pure coresShopRows model. `rows` is coresShopRows(state),
-    // `cores` is the spendable balance, `onBuy(id)` routes to buyCoresUpgrade.
+    // Cores tab: render the pure coresShopRows model. `rows` is coresShopRows(state)
+    // (which already encodes affordability against state.cores); `onBuy(id)` routes
+    // to buyCoresUpgrade.
     container.replaceChildren();
     for (const r of rows) {
       const row = document.createElement('button');

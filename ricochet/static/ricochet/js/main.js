@@ -241,7 +241,6 @@ function refreshCoresTab() {
   renderShop('cores', {
     container: coresRowsEl,
     rows: coresShopRows(state),
-    cores: state.cores,
     onBuy: (id) => {
       if (buyCoresUpgrade(world, state, id)) {
         persistSave();

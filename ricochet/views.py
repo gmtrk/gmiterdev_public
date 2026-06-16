@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -30,7 +31,9 @@ def add_high_score(request):
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid JSON body"}, status=400)
     initials = str(data.get("initials", "")).upper()[:3]
-    if len(initials) != 3 or not initials.isalpha():
+    # Strict ASCII A-Z only (matches the client regex /^[A-Z]{3}$/). str.isalpha()
+    # accepts Unicode letters (e.g. "ÉÀÜ"), which we reject here.
+    if not re.fullmatch(r"[A-Z]{3}", initials):
         return JsonResponse({"error": "Initials must be exactly 3 letters"}, status=400)
     try:
         cores = int(data.get("cores", 0))

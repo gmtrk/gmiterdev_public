@@ -157,6 +157,18 @@ def test_add_high_score_rejects_non_alpha_initials(client):
     assert RicochetScore.objects.count() == 0
 
 
+def test_add_high_score_rejects_unicode_letter_initials(client):
+    # str.isalpha() would accept these accented letters; the strict ASCII regex
+    # (matching the client /^[A-Z]{3}$/) must reject them.
+    resp = client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "ÉÀÜ", "cores": 10}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    assert RicochetScore.objects.count() == 0
+
+
 def test_add_high_score_rejects_non_integer_cores(client):
     resp = client.post(
         "/ricochet/add-high-score/",
