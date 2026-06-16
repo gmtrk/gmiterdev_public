@@ -2,12 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   tickClackCooldowns,
+  resolveClack,
+  CLACKER_CLACK_CREDITS,
 } from './specials.js';
-import { buildWorld, spawnSpecial, CLACKER } from './physics.js';
+import { buildWorld, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
 import { defaultSave } from './save.js';
 import {
   CLACK_COOLDOWN,
   DT,
+  BURSTER as BURSTER_CFG,
 } from './config.js';
 
 // Build a fresh, real world from the default save (REAL buildWorld/spawnSpecial).
@@ -29,4 +32,104 @@ test('tickClackCooldowns decrements each live special toward zero and clamps at 
   tickClackCooldowns(sp, 1);
   assert.equal(sp.clackCooldown[0], 0);
   assert.equal(sp.clackCooldown[1], 0);
+});
+
+// Spy emit implementing the canonical { credits(n), balls(count, x, y) } shape.
+function spyEmit() {
+  const calls = { credits: 0, balls: [] };
+  return {
+    credits: (n) => { calls.credits += n; },
+    balls: (count, x, y) => { calls.balls.push({ count, x, y }); },
+    _calls: calls,
+  };
+}
+
+test('resolveClack is gated: no fire while either special is on cooldown', () => {
+  const w = freshWorld();
+  spawnSpecial(w, CLACKER, 100, 100);
+  spawnSpecial(w, CLACKER, 110, 100);
+  const sp = w.special;
+  sp.clackCooldown[1] = 0.1; // j still cooling down
+  const emit = spyEmit();
+  const fired = resolveClack(w, 0, 1, emit);
+  assert.equal(fired, false);
+  assert.equal(emit._calls.credits, 0);
+  assert.equal(sp.clackCooldown[0], 0); // untouched because the clack did not fire
+});
+
+test('Clacker clack emits credits and sets CLACK_COOLDOWN on BOTH specials', () => {
+  const w = freshWorld();
+  spawnSpecial(w, CLACKER, 100, 100);
+  spawnSpecial(w, CLACKER, 110, 100);
+  const sp = w.special;
+  const emit = spyEmit();
+  const fired = resolveClack(w, 0, 1, emit);
+  assert.equal(fired, true);
+  assert.equal(emit._calls.credits, 2 * CLACKER_CLACK_CREDITS); // both ends are Clackers
+  // clackCooldown is a Float32Array, so compare against the float32-rounded value.
+  assert.equal(sp.clackCooldown[0], Math.fround(CLACK_COOLDOWN));
+  assert.equal(sp.clackCooldown[1], Math.fround(CLACK_COOLDOWN));
+});
+
+test('Splitter clack emits one balls() call of 1-2 cap-exempt balls at the contact midpoint', () => {
+  const w = freshWorld();
+  spawnSpecial(w, SPLITTER, 100, 200);
+  spawnSpecial(w, SPLITTER, 140, 260);
+  const emit = spyEmit();
+  const fired = resolveClack(w, 0, 1, emit);
+  assert.equal(fired, true);
+  assert.equal(emit._calls.balls.length, 1, 'exactly one balls() emit');
+  const b = emit._calls.balls[0];
+  assert.ok(b.count >= 1 && b.count <= 2, `count was ${b.count}`);
+  assert.equal(b.x, 120, 'spawned at midpoint x');
+  assert.equal(b.y, 230, 'spawned at midpoint y');
+  assert.equal(emit._calls.credits, 0, 'Splitter pays no direct credits');
+});
+
+test('Burster clack adds chargePerClack toward the threshold (no burst yet)', () => {
+  const w = freshWorld();
+  spawnSpecial(w, BURSTER, 100, 100);
+  spawnSpecial(w, BURSTER, 110, 100);
+  const sp = w.special;
+  const emit = spyEmit();
+  const fired = resolveClack(w, 0, 1, emit);
+  assert.equal(fired, true);
+  assert.equal(sp.charge[0], BURSTER_CFG.chargePerClack);
+  assert.equal(sp.charge[1], BURSTER_CFG.chargePerClack);
+  assert.equal(emit._calls.balls.length, 0, 'clack alone does not burst below threshold');
+});
+
+test('mixed-type clack applies each special power independently (Clacker+Burster)', () => {
+  const w = freshWorld();
+  spawnSpecial(w, CLACKER, 100, 100);
+  spawnSpecial(w, BURSTER, 110, 100);
+  const sp = w.special;
+  const emit = spyEmit();
+  resolveClack(w, 0, 1, emit);
+  assert.equal(emit._calls.credits, CLACKER_CLACK_CREDITS, 'only the Clacker end pays credits');
+  assert.equal(sp.charge[1], BURSTER_CFG.chargePerClack, 'only the Burster end charges');
+});
+
+test('a sustained overlap fires at most once per CLACK_COOLDOWN when stepped by dt', () => {
+  const w = freshWorld();
+  spawnSpecial(w, CLACKER, 500, 50);
+  spawnSpecial(w, CLACKER, 502, 50); // overlapping and held in contact for the test
+  const sp = w.special;
+  const emit = spyEmit();
+  let clacks = 0;
+  // Simulate the per-step pass: tick cooldowns, then attempt one clack on the
+  // still-overlapping pair. Run for exactly one CLACK_COOLDOWN window.
+  const stepsPerWindow = Math.round(CLACK_COOLDOWN / DT);
+  for (let k = 0; k < stepsPerWindow; k++) {
+    tickClackCooldowns(sp, DT);
+    if (resolveClack(w, 0, 1, emit)) clacks++;
+  }
+  assert.equal(clacks, 1, 'exactly one clack across one cooldown window');
+  // Run a second, full window: the cooldown elapses, so exactly one more fires.
+  for (let k = 0; k < stepsPerWindow; k++) {
+    tickClackCooldowns(sp, DT);
+    if (resolveClack(w, 0, 1, emit)) clacks++;
+  }
+  assert.equal(clacks, 2, 'a second clack fires only after the cooldown elapses');
+  assert.equal(emit._calls.credits, 2 * (2 * CLACKER_CLACK_CREDITS), 'two clacks total, both Clacker ends each window');
 });
