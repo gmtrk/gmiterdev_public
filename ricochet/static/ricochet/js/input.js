@@ -109,3 +109,119 @@ export function applyBlueprint(world, placed, blueprint) {
   }));
   placed.paddle = { x: clamped.paddle.x, width: clamped.paddle.width };
 }
+
+// --- DOM wiring ----------------------------------------------------------
+// Convert a pointer event on the canvas to virtual arena coordinates.
+function eventToVirtual(canvas, world, ev) {
+  const rect = canvas.getBoundingClientRect();
+  const px = (ev.clientX - rect.left) / rect.width;
+  const py = (ev.clientY - rect.top) / rect.height;
+  return { x: px * world.W, y: py * world.H };
+}
+
+// Wire the Place tab: tool selection, click/drag placement & removal, preset
+// buttons. `deps` = { canvas, world, state, toolButtons, presetButtons, onChange }.
+// onChange() is called after any mutation so the caller re-syncs colliders +
+// refreshes the shop. Sets touch-action:none on the canvas (kills scroll-vs-drag).
+export function setupPlacement(deps) {
+  const { canvas, world, state, toolButtons, presetButtons, onChange } = deps;
+  canvas.style.touchAction = 'none';
+  let tool = 'peg'; // 'peg' | 'block' | 'remove'
+  let painting = false;
+
+  for (const btn of toolButtons) {
+    btn.addEventListener('click', () => {
+      tool = btn.dataset.tool;
+      for (const b of toolButtons) b.classList.toggle('rc-tool--active', b === btn);
+    });
+  }
+
+  function actAt(x, y) {
+    let changed = false;
+    if (tool === 'remove') changed = removeTopmost(world, state.placed, x, y);
+    else changed = tryPlace(world, state.placed, tool, x, y);
+    if (changed) {
+      rebuildColliders(world);
+      onChange();
+    }
+  }
+
+  canvas.addEventListener('pointerdown', (ev) => {
+    painting = true;
+    canvas.setPointerCapture(ev.pointerId);
+    const { x, y } = eventToVirtual(canvas, world, ev);
+    actAt(x, y);
+  });
+  canvas.addEventListener('pointermove', (ev) => {
+    if (!painting) return;
+    const { x, y } = eventToVirtual(canvas, world, ev);
+    actAt(x, y);
+  });
+  const stop = (ev) => {
+    painting = false;
+    if (canvas.hasPointerCapture && canvas.hasPointerCapture(ev.pointerId)) {
+      canvas.releasePointerCapture(ev.pointerId);
+    }
+  };
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);
+
+  for (const btn of presetButtons) {
+    btn.addEventListener('click', () => {
+      applyPreset(btn.dataset.preset, world, state.placed);
+      rebuildColliders(world);
+      onChange();
+    });
+  }
+}
+
+// Wire the draggable paddle. `deps` = { canvas, world, state, onChange }.
+// The paddle moves horizontally in virtual coords; y/width come from world.paddle.
+export function setupPaddleDrag(deps) {
+  const { canvas, world, state, onChange } = deps;
+  let dragging = false;
+
+  function near(x, y) {
+    return (
+      Math.abs(x - world.paddle.x) <= world.paddle.w / 2 + 30 &&
+      Math.abs(y - world.paddle.y) <= world.paddle.h / 2 + 30
+    );
+  }
+  function moveTo(x) {
+    const half = world.paddle.w / 2;
+    const clamped = Math.max(half, Math.min(world.W - half, x));
+    world.paddle.x = clamped;
+    state.placed.paddle.x = clamped;
+    onChange();
+  }
+
+  canvas.addEventListener('pointerdown', (ev) => {
+    const { x, y } = eventToVirtual(canvas, world, ev);
+    if (near(x, y)) {
+      dragging = true;
+      moveTo(x);
+    }
+  });
+  canvas.addEventListener('pointermove', (ev) => {
+    if (!dragging) return;
+    const { x } = eventToVirtual(canvas, world, ev);
+    moveTo(x);
+  });
+  const stop = () => { dragging = false; };
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);
+}
+
+// Wire the right-panel tabs (Credits / Cores / Place). `deps` = { tabButtons,
+// panels, onSelect }. onSelect(name) lets the caller (re)render the active tab.
+export function setupTabs(deps) {
+  const { tabButtons, panels, onSelect } = deps;
+  for (const btn of tabButtons) {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.tab;
+      for (const b of tabButtons) b.classList.toggle('rc-tab--active', b.dataset.tab === name);
+      for (const p of panels) p.hidden = p.dataset.panel !== name;
+      onSelect(name);
+    });
+  }
+}
