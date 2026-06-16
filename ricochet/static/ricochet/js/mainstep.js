@@ -26,6 +26,7 @@ export function buildHudAdapter(state, world, run) {
   return {
     credits: state.credits,
     creditsPerSec: run.creditsPerSec,
+    cores: state.cores,
     ballCount: world.normal.count,
     capacity: world.baseCapacity,
     comboBonus: run.comboBonus,

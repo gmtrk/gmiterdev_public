@@ -72,8 +72,8 @@ test('spawnTick: spawns x within the spawn band and y = SPAWN_Y', () => {
   assert.equal(seen[0].y, 30); // SPAWN_Y = 30
 });
 
-test('buildHudAdapter returns exactly the contract shape', () => {
-  const state = { credits: 1234.5 };
+test('buildHudAdapter returns the contract shape (plus cores for the Cores HUD stat)', () => {
+  const state = { credits: 1234.5, cores: 17 };
   const world = {
     normal: { count: 42 },
     baseCapacity: 7,
@@ -82,10 +82,11 @@ test('buildHudAdapter returns exactly the contract shape', () => {
   const run = { creditsPerSec: 88, comboBonus: 3.5, comboCapBonus: 9 };
   const a = buildHudAdapter(state, world, run);
   assert.deepEqual(Object.keys(a).sort(), [
-    'ballCount', 'capacity', 'ceiling', 'comboBonus', 'comboCapBonus', 'creditsPerSec', 'credits',
+    'ballCount', 'capacity', 'ceiling', 'comboBonus', 'comboCapBonus', 'cores', 'creditsPerSec', 'credits',
   ].sort());
   assert.equal(a.credits, 1234.5);
   assert.equal(a.creditsPerSec, 88);
+  assert.equal(a.cores, 17);
   assert.equal(a.ballCount, 42);
   assert.equal(a.capacity, 7);
   assert.equal(a.comboBonus, 3.5);

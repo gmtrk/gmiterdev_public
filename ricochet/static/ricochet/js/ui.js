@@ -54,6 +54,8 @@ export function buySpecialUnlock(state, id, grantUnlock) {
 export function updateHUD(adapter, els) {
   els.credits.textContent = formatNumber(adapter.credits);
   els.creditsPerSec.textContent = formatNumber(adapter.creditsPerSec) + '/s';
+  // Cores is an optional HUD node (some template variants omit it); guard it.
+  if (els.cores) els.cores.textContent = formatNumber(adapter.cores);
   els.balls.textContent =
     formatNumber(adapter.ballCount) + ' / ' + formatNumber(adapter.capacity);
   els.saturation.textContent =

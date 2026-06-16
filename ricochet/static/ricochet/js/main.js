@@ -131,6 +131,7 @@ if (hudContainer && !hudSaturation) {
 const hudEls = {
   credits: $('rc-credits'),
   creditsPerSec: $('rc-cps'),
+  cores: $('rc-cores'),
   balls: $('rc-balls'),
   saturation: hudSaturation,
   combo: $('rc-combo'),
@@ -262,9 +263,14 @@ function onBigBangClicked() {
       persistSave();
       refreshShop();
       refreshCoresTab();
+      // Immediate HUD refresh so the new Cores total shows at once (the throttled
+      // render-loop HUD would otherwise lag up to ~166ms).
+      updateHUD(buildHudAdapter(state, world, run), hudEls);
+      // Offer the leaderboard submit AFTER cores are granted, so canSubmit() sees
+      // the freshly-bumped state.lifetimeCores.
+      leaderboard.offerOnBigBang();
     },
   });
-  leaderboard.offerOnBigBang();
 }
 const bigBangBtn = $('big-bang-btn');
 if (bigBangBtn) bigBangBtn.addEventListener('click', onBigBangClicked);
