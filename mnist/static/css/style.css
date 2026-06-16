@@ -23,3 +23,68 @@
   font-weight: 400;
   font-style: normal;
 }
+
+/* ============================================================
+   Undertale/Deltarune theme — shared primitives (site-wide)
+   ============================================================ */
+@font-face {
+  font-family: "Determination Mono";
+  src: url("../fonts/determinationmonoweb-webfont.woff2") format("woff2"),
+       url("../fonts/determinationmonoweb-webfont.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --ud-soul: #ff0000;     /* SOUL red */
+  --ud-txt:  #ffffff;
+  --ud-dim:  #9a9a8a;
+  --ud-btn:  #ffae00;     /* battle-menu orange */
+  --ud-save: #ffe000;     /* save-point yellow */
+  --ud-frame: url("../img/textbox.gif");
+}
+
+/* Deltarune textbox.gif as a 9-slice border-image.
+   Plain white border is the graceful fallback if the gif fails to load. */
+.pixframe {
+  background: #000;
+  border: 13px solid #fff;
+  border-image: var(--ud-frame) 27.6% fill / 13px repeat;
+}
+
+/* Pixel SOUL heart, drawn with box-shadow (no image). 21x18 at 3px pixels. */
+.ud-soul {
+  position: absolute; top: 0; left: 0; width: 3px; height: 3px; background: transparent;
+  box-shadow:
+    3px 0 0 0 var(--ud-soul),6px 0 0 0 var(--ud-soul),12px 0 0 0 var(--ud-soul),15px 0 0 0 var(--ud-soul),
+    0 3px 0 0 var(--ud-soul),3px 3px 0 0 var(--ud-soul),6px 3px 0 0 var(--ud-soul),9px 3px 0 0 var(--ud-soul),12px 3px 0 0 var(--ud-soul),15px 3px 0 0 var(--ud-soul),18px 3px 0 0 var(--ud-soul),
+    0 6px 0 0 var(--ud-soul),3px 6px 0 0 var(--ud-soul),6px 6px 0 0 var(--ud-soul),9px 6px 0 0 var(--ud-soul),12px 6px 0 0 var(--ud-soul),15px 6px 0 0 var(--ud-soul),18px 6px 0 0 var(--ud-soul),
+    3px 9px 0 0 var(--ud-soul),6px 9px 0 0 var(--ud-soul),9px 9px 0 0 var(--ud-soul),12px 9px 0 0 var(--ud-soul),15px 9px 0 0 var(--ud-soul),
+    6px 12px 0 0 var(--ud-soul),9px 12px 0 0 var(--ud-soul),12px 12px 0 0 var(--ud-soul),
+    9px 15px 0 0 var(--ud-soul);
+}
+.ud-sw { position: relative; width: 21px; height: 18px; display: inline-block; }
+
+/* Header logo (site-wide) */
+.ud-header { background: #000; padding: 22px 30px 18px; }
+.ud-logo {
+  display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+  color: var(--ud-txt); font-family: "Determination Mono", ui-monospace, monospace;
+  font-size: 32px; letter-spacing: .04em;
+}
+
+/* Save-point footer (site-wide) */
+.ud-footer {
+  background: #000; color: var(--ud-save); margin-top: 40px;
+  padding: 22px 30px; font-family: "Determination Mono", ui-monospace, monospace;
+}
+.ud-save { display: flex; align-items: center; gap: 12px; font-size: 22px; }
+.ud-save a { color: var(--ud-save); text-decoration: none; }
+.ud-save a:hover { text-decoration: underline; }
+.ud-star { font-size: 26px; animation: ud-pulse 1.4s ease-in-out infinite; }
+.ud-copy { color: var(--ud-dim); font-size: 16px; margin-top: 8px; }
+
+@keyframes ud-pulse { 0%,100% { opacity:.55; transform:scale(.92); } 50% { opacity:1; transform:scale(1.08); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ud-star { animation: none; opacity: 1; }
+}
