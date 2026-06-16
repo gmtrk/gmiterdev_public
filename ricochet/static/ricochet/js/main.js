@@ -1,8 +1,10 @@
 import { migrate, deserialize, serialize } from './save.js';
-import { buildWorld, rebuildColliders, stepPhysics } from './physics.js';
+import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
 import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo } from './economy.js';
+import { specialSpawnPlan, unlockSpecial, SPECIAL_TYPES } from './specials.js';
 import {
   DT, SURFACE_BASE, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
+  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
@@ -169,13 +171,59 @@ setupPaddleDrag({ canvas, world, state, onChange: () => {} });
 const hudGate = makeThrottle(166); // ~6 Hz
 const shopGate = makeThrottle(500); // refresh affordability twice per second
 
+// --- special spawning ---------------------------------------------------
+// Map save-key type names to the physics.js type constants.
+const SPECIAL_TYPE_CONST = { clacker: CLACKER, splitter: SPLITTER, burster: BURSTER };
+
+// Count live specials per type from world.special (indices are not stable, so we
+// recount each tick rather than caching).
+function liveSpecialCounts(world) {
+  const counts = { clacker: 0, splitter: 0, burster: 0 };
+  const sp = world.special;
+  for (let i = 0; i < sp.count; i++) {
+    if (sp.type[i] === CLACKER) counts.clacker++;
+    else if (sp.type[i] === SPLITTER) counts.splitter++;
+    else if (sp.type[i] === BURSTER) counts.burster++;
+  }
+  return counts;
+}
+
+// Spawn specials for this tick, bounded by per-type capacity and SPECIAL_CAP.
+function spawnSpecialsTick(state, world) {
+  const live = liveSpecialCounts(world);
+  const plan = specialSpawnPlan(state.specials, live, SPECIAL_CAP);
+  for (const t of SPECIAL_TYPES) {
+    for (let k = 0; k < plan[t]; k++) {
+      const x = SPAWN_MARGIN + Math.random() * (ARENA_W - 2 * SPAWN_MARGIN);
+      spawnSpecial(world, SPECIAL_TYPE_CONST[t], x, SPAWN_Y);
+    }
+  }
+}
+
+// Called by the Credits-shop unlock handler with a save-key type name: unlock the
+// special and immediately seed its starter pack so the heartbeat is instant
+// (clamped against the global cap; the spawn tick keeps it bounded thereafter).
+function unlockSpecialAndSeed(state, world, typeName) {
+  const granted = unlockSpecial(state.specials, typeName);
+  if (granted <= 0) return;
+  const live = liveSpecialCounts(world);
+  const liveTotal = live.clacker + live.splitter + live.burster;
+  const globalFree = Math.max(0, SPECIAL_CAP - liveTotal);
+  const toSpawn = Math.min(granted, globalFree);
+  for (let k = 0; k < toSpawn; k++) {
+    const x = SPAWN_MARGIN + Math.random() * (ARENA_W - 2 * SPAWN_MARGIN);
+    spawnSpecial(world, SPECIAL_TYPE_CONST[typeName], x, SPAWN_Y);
+  }
+}
+
 // --- the fixed-timestep step ---
 function step(dt) {
   run.now += dt;
   world.now = run.now;
 
-  // 1) spawn tick (normal balls + golden roll)
+  // 1) spawn tick (normal balls + golden roll), then specials (bounded by cap)
   spawnTick(world, dt, run.spawnRate);
+  spawnSpecialsTick(state, world);
 
   // 2) physics (both pools, block runtime, golden/break counters into world.counters)
   stepPhysics(world, dt, run.now);
@@ -239,6 +287,12 @@ function saveNow() {
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
 window.addEventListener('pagehide', saveNow);
+
+// Expose the special-unlock buy action for the Credits-shop unlock handler.
+// When the shop surfaces "unlock Clacker/Splitter/Burster", its onBuy routes
+// here so the unlock grants and seeds the starter pack instantly.
+window.__ricochet = window.__ricochet || {};
+window.__ricochet.unlockSpecial = (typeName) => unlockSpecialAndSeed(state, world, typeName);
 
 const loop = createLoop({ step, render, onFrameTime });
 loop.start();
