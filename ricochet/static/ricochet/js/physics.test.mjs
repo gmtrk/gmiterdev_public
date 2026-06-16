@@ -403,3 +403,59 @@ test('FINITE LIFETIME: a ball launched at MAX_SPEED through an empty no-floor ar
   assert.equal(world.normal.count, 0, `ball never drained in ${steps} steps`);
   assert.ok(steps < LIMIT, 'lifetime exceeded the bound (energy not bounded by drag)');
 });
+
+function makeBlockState(level, golden) {
+  const s = makeState();
+  s.placed.pegs = [];
+  s.placed.blocks = [{ x: 500, y: 500, level, respawnAt: 0, golden: !!golden }];
+  return s;
+}
+
+test('block chip: a contact decrements level, counts counters.block, no break bonus above level 1', () => {
+  const world = buildWorld(makeBlockState(9, false));
+  // ball overlapping the top edge of the block (half-height BLOCK_H/2 = 14)
+  spawnNormal(world, 500, 500 - world.blockH / 2 - BALL_RADIUS + 2, 0);
+  world.normal.vy[0] = 50; // moving down into the block
+  stepPhysics(world, DT, 1);
+  assert.equal(world.counters.block, 1);
+  assert.equal(world.blocks.level[0], 8);
+  assert.equal(world.counters.breakBonus, 0);
+});
+
+test('block break: chipping the final level deactivates the block, sets respawnAt, adds BLOCK_BREAK_BONUS', () => {
+  const world = buildWorld(makeBlockState(1, false));
+  spawnNormal(world, 500, 500 - world.blockH / 2 - BALL_RADIUS + 2, 0);
+  world.normal.vy[0] = 50;
+  const now = 10;
+  stepPhysics(world, DT, now);
+  assert.equal(world.counters.block, 1);
+  assert.equal(world.blocks.level[0], 0);
+  assert.ok(Math.abs(world.blocks.respawnAt[0] - (now + RESPAWN_DELAY)) < 1e-9);
+  assert.equal(world.counters.breakBonus, BLOCK_BREAK_BONUS);
+});
+
+test('golden block break also folds GOLDEN.bonus into goldenBonus', () => {
+  const world = buildWorld(makeBlockState(1, true));
+  spawnNormal(world, 500, 500 - world.blockH / 2 - BALL_RADIUS + 2, 0);
+  world.normal.vy[0] = 50;
+  stepPhysics(world, DT, 5);
+  assert.equal(world.counters.breakBonus, BLOCK_BREAK_BONUS);
+  assert.equal(world.counters.goldenBonus, GOLDEN.bonus);
+});
+
+test('inactive (level 0) block does not collide until it respawns', () => {
+  const world = buildWorld(makeBlockState(0, false));
+  world.blocks.respawnAt[0] = 100; // far in the future
+  spawnNormal(world, 500, 500, 0); // dead center, would overlap if active
+  world.normal.vy[0] = 50;
+  stepPhysics(world, DT, 1); // now=1 < respawnAt 100
+  assert.equal(world.counters.block, 0);
+  assert.equal(world.blocks.level[0], 0);
+});
+
+test('respawn pass reactivates a block at full BLOCK_LEVELS once respawnAt <= now', () => {
+  const world = buildWorld(makeBlockState(0, false));
+  world.blocks.respawnAt[0] = 3;
+  stepPhysics(world, DT, 3); // now == respawnAt
+  assert.equal(world.blocks.level[0], BLOCK_LEVELS);
+});

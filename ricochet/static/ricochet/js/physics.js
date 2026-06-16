@@ -293,9 +293,41 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   }
 }
 
-// Placeholder body filled in Task 2.7 (block runtime). Defined once.
 function _resolveBlocksFor(world, pool, i, now, isSpecial) {
-  /* block narrow-phase + runtime implemented in Task 2.7 */
+  const b = world.blocks;
+  const hw = world.blockW / 2;
+  const hh = world.blockH / 2;
+  for (let j = 0; j < b.count; j++) {
+    if (b.level[j] <= 0) continue; // inactive (awaiting respawn)
+    const r = resolveCircleAABB(
+      pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
+      b.xs[j], b.ys[j], hw, hh, world.eCollider, world.kick, world.maxSpeed,
+    );
+    if (!r.hit) continue;
+    pool.x[i] = r.x; pool.y[i] = r.y; pool.vx[i] = r.vx; pool.vy[i] = r.vy;
+    b.level[j]--;
+    world.counters.block++;
+    if (isSpecial) pool.envHits[i]++;
+    const golden = b.golden[j] === 1;
+    if (golden && !isSpecial) world.counters.goldenBonus += GOLDEN.bonus;
+    if (b.level[j] <= 0) {
+      b.level[j] = 0;
+      b.respawnAt[j] = now + RESPAWN_DELAY;
+      world.counters.breakBonus += BLOCK_BREAK_BONUS;
+    }
+    return; // one block contact per step per ball (matches sequential ordering)
+  }
+}
+
+function _respawnBlocks(world, now) {
+  const b = world.blocks;
+  for (let j = 0; j < b.count; j++) {
+    if (b.level[j] <= 0 && b.respawnAt[j] <= now) {
+      b.level[j] = BLOCK_LEVELS;
+      b.respawnAt[j] = 0;
+      b.golden[j] = Math.random() < world.goldenChance ? 1 : 0;
+    }
+  }
 }
 
 function _runPool(world, pool, dt, now, isSpecial) {
@@ -319,6 +351,8 @@ export function stepPhysics(world, dt, now, emit = NOOP_EMIT, resolveClack = nul
   world.counters.block = 0;
   world.counters.goldenBonus = 0;
   world.counters.breakBonus = 0;
+
+  _respawnBlocks(world, now);
 
   _runPool(world, world.normal, dt, now, false);
   _runPool(world, world.special, dt, now, true);
