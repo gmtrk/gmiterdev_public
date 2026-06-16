@@ -231,3 +231,103 @@ export function resolveCircleAABB(bx, by, vx, vy, br, ax, ay, aw, ah, e, kick, m
   const c = clampSpeed(vx, vy, maxSpeed);
   return { x: bx, y: by, vx: c.vx, vy: c.vy, hit: true };
 }
+
+// Single module-scope peg narrow-phase helper. Resolves the nearest peg this
+// ball overlaps (grid broad-phase); returns true on a hit. Authored once.
+function _resolvePegsNear(world, pool, i) {
+  let hit = false;
+  world.grid.forEachNeighbor(pool.x[i], pool.y[i], (pi) => {
+    const cx = world.pegs.xs[pi];
+    const cy = world.pegs.ys[pi];
+    const r = resolveCircleCircle(
+      pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
+      cx, cy, world.pegs.r, world.eCollider, world.kick, world.maxSpeed,
+    );
+    if (r.hit) {
+      pool.x[i] = r.x; pool.y[i] = r.y; pool.vx[i] = r.vx; pool.vy[i] = r.vy;
+      hit = true;
+    }
+  });
+  return hit;
+}
+
+function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
+  // gravity + drag
+  pool.vy[i] += GRAVITY * dt;
+  pool.vx[i] *= DRAG;
+  pool.vy[i] *= DRAG;
+  pool.x[i] += pool.vx[i] * dt;
+  pool.y[i] += pool.vy[i] * dt;
+
+  // walls
+  const w = reflectWalls(
+    pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
+    world.W, world.H, world.eWall, world.hasFloor,
+  );
+  pool.x[i] = w.x; pool.y[i] = w.y; pool.vx[i] = w.vx; pool.vy[i] = w.vy;
+  if (w.hitWall) {
+    world.counters.wall++;
+    if (isSpecial) pool.envHits[i]++;
+    if (!isSpecial && (pool.flags[i] & FLAG_GOLDEN)) world.counters.goldenBonus += GOLDEN.bonus;
+  }
+
+  // pegs (grid broad-phase + single helper)
+  if (_resolvePegsNear(world, pool, i)) {
+    world.counters.peg++;
+    if (isSpecial) pool.envHits[i]++;
+    if (!isSpecial && (pool.flags[i] & FLAG_GOLDEN)) world.counters.goldenBonus += GOLDEN.bonus;
+  }
+
+  // blocks (narrow-phase + block runtime) — filled in Task 2.7
+  _resolveBlocksFor(world, pool, i, now, isSpecial);
+
+  // paddle
+  const pa = world.paddle;
+  const pr = resolveCircleAABB(
+    pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
+    pa.x, pa.y, pa.w / 2, pa.h / 2, world.eCollider, world.kick, world.maxSpeed,
+  );
+  if (pr.hit) {
+    pool.x[i] = pr.x; pool.y[i] = pr.y; pool.vx[i] = pr.vx; pool.vy[i] = pr.vy;
+    if (isSpecial) pool.envHits[i]++;
+  }
+}
+
+// Placeholder body filled in Task 2.7 (block runtime). Defined once.
+function _resolveBlocksFor(world, pool, i, now, isSpecial) {
+  /* block narrow-phase + runtime implemented in Task 2.7 */
+}
+
+function _runPool(world, pool, dt, now, isSpecial) {
+  if (isSpecial) {
+    for (let i = 0; i < pool.count; i++) pool.envHits[i] = 0;
+  }
+  let i = 0;
+  while (i < pool.count) {
+    _integrateAndCollide(world, pool, i, dt, now, isSpecial);
+    if (pool.y[i] > world.H + world.leakMargin) {
+      swapRemove(pool, i); // do NOT advance i; swapped-in element occupies slot i
+    } else {
+      i++;
+    }
+  }
+}
+
+export function stepPhysics(world, dt, now, emit = NOOP_EMIT, resolveClack = null) {
+  world.counters.wall = 0;
+  world.counters.peg = 0;
+  world.counters.block = 0;
+  world.counters.goldenBonus = 0;
+  world.counters.breakBonus = 0;
+
+  _runPool(world, world.normal, dt, now, false);
+  _runPool(world, world.special, dt, now, true);
+
+  // special-vs-special clack pass implemented in Task 2.8
+  _specialClackPass(world, dt, now, emit, resolveClack);
+}
+
+// Placeholder body filled in Task 2.8 (clack pass + cooldown decay). Defined once.
+function _specialClackPass(world, dt, now, emit, resolveClack) {
+  /* special-vs-special clack debounce implemented in Task 2.8 */
+}

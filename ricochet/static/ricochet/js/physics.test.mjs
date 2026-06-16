@@ -313,3 +313,93 @@ test('spawnSpecial refuses once special count >= SPECIAL_CAP', () => {
   spawnSpecial(world, TYPE_CLACKER, 1, 1);
   assert.equal(world.special.count, SPECIAL_CAP);
 });
+
+import { stepPhysics } from './physics.js';
+import { DT, GRAVITY, DRAG, RESPAWN_DELAY, BLOCK_BREAK_BONUS, GOLDEN } from './config.js';
+
+// state with NO colliders so a ball just integrates and leaks
+function makeEmptyState() {
+  const s = makeState();
+  s.placed.pegs = [];
+  s.placed.blocks = [];
+  return s;
+}
+
+test('stepPhysics zeroes counters at the start of each step', () => {
+  const world = buildWorld(makeEmptyState());
+  world.counters.wall = 99; world.counters.peg = 99; world.counters.block = 99;
+  world.counters.goldenBonus = 99; world.counters.breakBonus = 99;
+  stepPhysics(world, DT, 0);
+  assert.deepEqual(world.counters, { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 });
+});
+
+test('stepPhysics integrates gravity and drag on a free-falling normal ball', () => {
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  const i = spawnNormal(world, 500, 100, 0);
+  assert.equal(i, 0);
+  stepPhysics(world, DT, 0);
+  // vy gained gravity*dt then *= drag ; y advanced by the new vy*dt
+  const expectVy = (0 + GRAVITY * DT) * DRAG;
+  assert.ok(Math.abs(world.normal.vy[0] - expectVy) < 1e-2, `vy ${world.normal.vy[0]}`);
+  assert.ok(world.normal.y[0] > 100);
+});
+
+test('stepPhysics counts a wall bounce into counters.wall', () => {
+  const world = buildWorld(makeEmptyState());
+  spawnNormal(world, 3, 100, 0);          // near left wall (x-r < 0 after no move)
+  world.normal.vx[0] = -50;               // driving into the wall
+  stepPhysics(world, DT, 0);
+  assert.equal(world.counters.wall, 1);
+});
+
+test('stepPhysics resolves a peg hit via the grid and counts counters.peg', () => {
+  const s = makeState();
+  s.placed.pegs = [{ x: 500, y: 300 }];
+  s.placed.blocks = [];
+  const world = buildWorld(s);
+  // ball placed overlapping the peg so the narrow-phase fires this step
+  spawnNormal(world, 506, 300, 0); // dist 6 < (6+7)=13 -> overlap
+  world.normal.vx[0] = -10;
+  stepPhysics(world, DT, 0);
+  assert.equal(world.counters.peg, 1);
+  // ball was pushed out and reflected to the right (kick + reflect)
+  assert.ok(world.normal.vx[0] > 0, `vx ${world.normal.vx[0]}`);
+});
+
+test('stepPhysics golden ball peg contact adds GOLDEN.bonus to counters.goldenBonus', () => {
+  const s = makeState();
+  s.placed.pegs = [{ x: 500, y: 300 }];
+  s.placed.blocks = [];
+  const world = buildWorld(s);
+  spawnNormal(world, 506, 300, FLAG_GOLDEN);
+  world.normal.vx[0] = -10;
+  stepPhysics(world, DT, 0);
+  assert.equal(world.counters.peg, 1);
+  assert.equal(world.counters.goldenBonus, GOLDEN.bonus);
+});
+
+test('stepPhysics despawns a leaked ball and frees the owned slot (no floor)', () => {
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  spawnNormal(world, 500, ARENA_H + world.leakMargin + 10, 0);
+  assert.equal(world.normal.count, 1);
+  stepPhysics(world, DT, 0);
+  assert.equal(world.normal.count, 0); // swap-removed past leak margin
+});
+
+test('FINITE LIFETIME: a ball launched at MAX_SPEED through an empty no-floor arena drains within a bounded number of steps', () => {
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  spawnNormal(world, 500, 750, 0);
+  world.normal.vx[0] = MAX_SPEED * 0.7;
+  world.normal.vy[0] = -MAX_SPEED * 0.7; // launched upward — must still come down and leak
+  let steps = 0;
+  const LIMIT = 6000; // 100 sim-seconds at dt=1/60 is a generous bound
+  while (world.normal.count > 0 && steps < LIMIT) {
+    stepPhysics(world, DT, steps * DT);
+    steps++;
+  }
+  assert.equal(world.normal.count, 0, `ball never drained in ${steps} steps`);
+  assert.ok(steps < LIMIT, 'lifetime exceeded the bound (energy not bounded by drag)');
+});
