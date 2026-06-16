@@ -8,6 +8,7 @@ venv/
 *.log
 /staticfiles/
 local.sqlite3
+db.sqlite3
 
 # Local environment / secrets
 .env
@@ -22,6 +23,10 @@ local.sqlite3
 
 # Superpowers brainstorm artifacts
 .superpowers/
+
+# AI-assisted dev scaffolding — kept local, not committed to the public repo
+/CLAUDE.md
+/docs/superpowers/
 
 # Training venv (dev/train-only — TF is not a runtime dep)
 .venv-train/
