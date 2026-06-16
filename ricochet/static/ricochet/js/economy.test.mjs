@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeEventMult, creditsFromCounters, updateCombo, upgradeCost, upgradeEffect } from './economy.js';
-import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES } from './config.js';
+import { computeEventMult, creditsFromCounters, updateCombo, upgradeCost, upgradeEffect, applyUpgradeEffects } from './economy.js';
+import { buildWorld } from './physics.js';
+import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES, BASE_CAPACITY, GOLDEN, KICK, ARENA_W } from './config.js';
 
 test('computeEventMult is 1 + sum of bonuses when under the cap', () => {
   assert.equal(computeEventMult(2, 3, 1), 1 + 6);
@@ -85,4 +86,118 @@ test('marginal ROI of globalValueMult lever is monotonically decreasing', () => 
     assert.ok(roi < prevRoi, `ROI must strictly decrease at level ${level}: ${roi} !< ${prevRoi}`);
     prevRoi = roi;
   }
+});
+
+function freshState() {
+  return {
+    version: 1,
+    credits: 0,
+    cores: 0,
+    lifetimeCores: 0,
+    upgrades: {},
+    specials: {
+      clacker: { unlocked: false, capacity: 0 },
+      splitter: { unlocked: false, capacity: 0 },
+      burster: { unlocked: false, capacity: 0 },
+    },
+    coresShop: {},
+    placed: { pegs: [], blocks: [], paddle: { x: ARENA_W / 2, width: 120 } },
+    stats: { recentEarnRate: 0, lastSaveTime: 0, lastSubmittedCores: 0 },
+  };
+}
+
+test('applyUpgradeEffects sets baseline derived stats from an empty save', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  assert.equal(world.globalValueMult, 1, 'no upgrades -> mult 1');
+  assert.equal(world.baseCapacity, BASE_CAPACITY);
+  assert.ok(Math.abs(world.goldenChance - GOLDEN.chance) < 1e-12);
+  assert.equal(world.kick, KICK);
+  assert.ok(world.budgets.pegs >= 0);
+  assert.ok(world.budgets.blocks >= 0);
+});
+
+test('buying globalValueMult levels raises world.globalValueMult (Credits shop)', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  const before = world.globalValueMult;
+  state.upgrades.globalValueMult = 4; // +0.25*4 = +1.0
+  applyUpgradeEffects(world, state);
+  assert.ok(Math.abs(world.globalValueMult - (before + 1.0)) < 1e-9);
+});
+
+test('Cores power mult compounds multiplicatively into globalValueMult', () => {
+  const state = freshState();
+  state.upgrades.globalValueMult = 4;   // credits side -> base 2.0
+  state.coresShop.globalValueMult = 1;  // cores mul -> (1+0.5)^1 = 1.5
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  // (1 + 0.25*4) * (1.5) = 2.0 * 1.5 = 3.0
+  assert.ok(Math.abs(world.globalValueMult - 3.0) < 1e-9);
+});
+
+test('buying ballCapacity and Cores baseCapacity raises world.baseCapacity', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  state.upgrades.ballCapacity = 3;   // +3
+  state.coresShop.baseCapacity = 2;  // +2*2 = +4
+  applyUpgradeEffects(world, state);
+  assert.equal(world.baseCapacity, BASE_CAPACITY + 3 + 4);
+});
+
+test('buying goldenChance (credits + cores) raises world.goldenChance', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  state.upgrades.goldenChance = 2;   // +0.0025*2 = +0.005
+  state.coresShop.goldenChance = 1;  // +0.005
+  applyUpgradeEffects(world, state);
+  assert.ok(Math.abs(world.goldenChance - (GOLDEN.chance + 0.005 + 0.005)) < 1e-12);
+});
+
+test('buying budgets/paddle/kick raises the matching derived stats', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  const pegB = world.budgets.pegs;
+  const blockB = world.budgets.blocks;
+  const paddleW = world.paddle.w;
+  const kick = world.kick;
+  state.upgrades.pegBudget = 2;     // +8
+  state.upgrades.blockBudget = 3;   // +3
+  state.upgrades.paddleWidth = 1;   // +20
+  state.upgrades.pegKick = 2;       // +20
+  applyUpgradeEffects(world, state);
+  assert.equal(world.budgets.pegs, pegB + 8);
+  assert.equal(world.budgets.blocks, blockB + 3);
+  assert.equal(world.paddle.w, paddleW + 20);
+  assert.equal(world.kick, kick + 20);
+});
+
+test('buying Cores startCreditsMult raises world.startCreditsMult above 1 (multiplicative)', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  assert.equal(world.startCreditsMult, 1, 'unbought head-start multiplier is 1x');
+  state.coresShop.startCreditsMult = 2; // mul, step 1 -> (1+1)^2 = 4
+  applyUpgradeEffects(world, state);
+  assert.ok(world.startCreditsMult > 1, 'buying the cores level increases the start multiplier');
+  assert.ok(Math.abs(world.startCreditsMult - 4) < 1e-9);
+});
+
+test('buying Cores offline levels makes world.offline*Add non-zero', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  assert.equal(world.offlineEfficiencyAdd, 0, 'unbought offline efficiency add is 0');
+  assert.equal(world.offlineCapAdd, 0, 'unbought offline cap add is 0');
+  state.coresShop.offlineEfficiencyAdd = 3; // add, step 0.05 -> 0.15
+  state.coresShop.offlineCapAdd = 2;        // add, step 3600 -> 7200
+  applyUpgradeEffects(world, state);
+  assert.ok(world.offlineEfficiencyAdd > 0, 'offline efficiency add becomes non-zero');
+  assert.ok(world.offlineCapAdd > 0, 'offline cap add becomes non-zero');
+  assert.ok(Math.abs(world.offlineEfficiencyAdd - 0.15) < 1e-9);
+  assert.equal(world.offlineCapAdd, 7200);
 });

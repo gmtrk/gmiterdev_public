@@ -20,6 +20,7 @@ export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLife
 export const PRESTIGE = { coreScale: 1e9, coreK: 1, minCredits: 1e9 };
 export const STARTING_CREDITS = 50; // cold-open grant
 export const BASE_CAPACITY = 3;     // starting ball slots before upgrades
+export const PEG_BUDGET_BASE = 12, BLOCK_BUDGET_BASE = 2, PADDLE_WIDTH_BASE = 120;
 
 // Credits shop. effectKind 'add' = additive per level (diminishing ROI vs geometric cost);
 // 'mul' reserved per contract but Credits levers are additive. max? caps repeatable levels.

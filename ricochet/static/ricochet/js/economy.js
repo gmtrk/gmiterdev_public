@@ -1,4 +1,7 @@
-import { EVENT_CAP } from './config.js';
+import {
+  EVENT_CAP, SURFACE_BASE, BASE_CAPACITY, GOLDEN, KICK,
+  UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE, PADDLE_WIDTH_BASE,
+} from './config.js';
 
 export function computeEventMult(comboBonus, goldenBonus, breakBonus, cap = EVENT_CAP) {
   const sum = comboBonus + goldenBonus + breakBonus;
@@ -34,4 +37,69 @@ export function upgradeEffect(def, level) {
     return (1 + def.effectStep) ** level;
   }
   return def.effectStep * level;
+}
+
+function _level(map, id) {
+  const v = map && map[id];
+  return typeof v === 'number' ? v : 0;
+}
+
+function _def(table, id) {
+  return table.find((d) => d.id === id);
+}
+
+export function applyUpgradeEffects(world, state) {
+  const up = state.upgrades || {};
+  const cs = state.coresShop || {};
+
+  // globalValueMult = (1 + credits-add) * cores-power-mult
+  const valueDef = _def(UPGRADES, 'globalValueMult');
+  const creditsValue = 1 + upgradeEffect(valueDef, _level(up, 'globalValueMult'));
+  const coresValueDef = _def(CORES_UPGRADES, 'globalValueMult');
+  const coresValue = upgradeEffect(coresValueDef, _level(cs, 'globalValueMult'));
+  world.globalValueMult = creditsValue * coresValue;
+
+  // baseCapacity = BASE_CAPACITY + credits add + cores add
+  const capDef = _def(UPGRADES, 'ballCapacity');
+  const coresCapDef = _def(CORES_UPGRADES, 'baseCapacity');
+  world.baseCapacity =
+    BASE_CAPACITY +
+    upgradeEffect(capDef, _level(up, 'ballCapacity')) +
+    upgradeEffect(coresCapDef, _level(cs, 'baseCapacity'));
+
+  // goldenChance = GOLDEN.chance + credits add + cores add
+  const goldDef = _def(UPGRADES, 'goldenChance');
+  const coresGoldDef = _def(CORES_UPGRADES, 'goldenChance');
+  world.goldenChance =
+    GOLDEN.chance +
+    upgradeEffect(goldDef, _level(up, 'goldenChance')) +
+    upgradeEffect(coresGoldDef, _level(cs, 'goldenChance'));
+
+  // placement budgets
+  const pegBudgetDef = _def(UPGRADES, 'pegBudget');
+  const blockBudgetDef = _def(UPGRADES, 'blockBudget');
+  world.budgets.pegs = PEG_BUDGET_BASE + upgradeEffect(pegBudgetDef, _level(up, 'pegBudget'));
+  world.budgets.blocks = BLOCK_BUDGET_BASE + upgradeEffect(blockBudgetDef, _level(up, 'blockBudget'));
+
+  // paddle width
+  const paddleDef = _def(UPGRADES, 'paddleWidth');
+  world.paddle.w = PADDLE_WIDTH_BASE + upgradeEffect(paddleDef, _level(up, 'paddleWidth'));
+
+  // peg/paddle kick
+  const kickDef = _def(UPGRADES, 'pegKick');
+  world.kick = KICK + upgradeEffect(kickDef, _level(up, 'pegKick'));
+
+  // Cores head-start: starting-credits multiplier (multiplicative; 1 when unbought).
+  // reinitFreshRun (Phase 7) reads world.startCreditsMult to scale the cold-open grant.
+  const startMultDef = _def(CORES_UPGRADES, 'startCreditsMult');
+  world.startCreditsMult = upgradeEffect(startMultDef, _level(cs, 'startCreditsMult'));
+
+  // Cores offline levers (additive; 0 when unbought). coresOfflineBonuses (Phase 7)
+  // reads world.offlineEfficiencyAdd / world.offlineCapAdd.
+  const offEffDef = _def(CORES_UPGRADES, 'offlineEfficiencyAdd');
+  const offCapDef = _def(CORES_UPGRADES, 'offlineCapAdd');
+  world.offlineEfficiencyAdd = upgradeEffect(offEffDef, _level(cs, 'offlineEfficiencyAdd'));
+  world.offlineCapAdd = upgradeEffect(offCapDef, _level(cs, 'offlineCapAdd'));
+
+  return world;
 }
