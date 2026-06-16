@@ -4,6 +4,24 @@ import { CLACKER, SPLITTER, BURSTER, NORMAL } from './physics.js';
 const FT_LIFE = 0.9;          // floating-text lifetime (seconds)
 const FT_RISE = 40;           // px/sec upward drift
 
+// Compose an rgba() string from a base color + alpha. Accepts '#rgb', '#rrggbb',
+// or an existing 'rgb(...)'/'rgba(...)' string (falls back to a translucent black
+// if the format is unrecognised). Used for the per-frame trail fade.
+export function withAlpha(color, alpha) {
+  const a = Math.max(0, Math.min(1, alpha));
+  if (typeof color === 'string' && color[0] === '#') {
+    let hex = color.slice(1);
+    if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+  }
+  return `rgba(0,0,0,${a})`;
+}
+
 // --- pure helpers (Node-testable) ---
 
 export function bucketRadius(r) {
@@ -189,10 +207,20 @@ const FLAG_GOLDEN = 1;
 
 export function draw(ctx, world, atlas, view) {
   const P = view.PALETTE;
+  const motion = view.motion || { trails: true, trailAlpha: 0.18, particles: true, particleScale: 1, shake: true };
+  const W = world.W;
+  const H = world.H;
+  const bg = P.bg ?? P.BG ?? '#0a0a16';
 
-  // background
-  ctx.fillStyle = P.bg;
-  ctx.fillRect(0, 0, world.W, world.H);
+  // background: trails -> translucent fade (motion blur); else hard-clear + solid repaint.
+  if (motion.trails) {
+    ctx.fillStyle = withAlpha(bg, motion.trailAlpha);
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+  }
 
   // pegs
   ctx.fillStyle = P.peg;
@@ -247,9 +275,10 @@ export function draw(ctx, world, atlas, view) {
     }
   }
 
-  // particles
+  // particles (gated on the motion profile; the charge-ring above is information,
+  // not motion, so it stays unconditional)
   ctx.fillStyle = P.ballYellow;
-  if (view.particles) {
+  if (motion.particles && view.particles) {
     view.particles.forEach((p) => {
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
       ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);

@@ -13,7 +13,7 @@ import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './
 import { createLoop, adaptCeiling } from './gameloop.js';
 import { spawnTick, buildHudAdapter } from './mainstep.js';
 import { formatNumber } from './numfmt.js';
-import { updateHUD, renderShop, buyUpgrade, coresShopRows, showModal } from './ui.js';
+import { updateHUD, renderShop, buyUpgrade, coresShopRows, showModal, setupQualityToggle } from './ui.js';
 import { setupPlacement, setupPaddleDrag, setupTabs } from './input.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
@@ -24,6 +24,8 @@ import {
   computeOffline,
   grantOffline,
 } from './offline.js';
+import { motionProfile } from './motion.js';
+import { qualityCeiling } from './quality.js';
 
 const SAVE_KEY = 'ricochet:save';
 const AUTOSAVE_INTERVAL = 5; // seconds
@@ -38,6 +40,32 @@ const world = buildWorld(state);
 applyUpgradeEffects(world, state);
 if (!world.ceiling) world.ceiling = CEILING_DESKTOP;
 world.now = 0;
+
+// --- reduced-motion + quality runtime state ---
+// Reduced-motion is a live media query; quality is a user toggle persisted in localStorage.
+const reducedMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+const runtime = {
+  reducedMotion: reducedMotionMQ.matches,
+  lowQuality: localStorage.getItem('ricochet:lowQuality') === 'true',
+};
+reducedMotionMQ.addEventListener('change', (e) => { runtime.reducedMotion = e.matches; });
+function currentMotion() {
+  return motionProfile({ reducedMotion: runtime.reducedMotion, lowQuality: runtime.lowQuality });
+}
+// Apply the quality clamp to the live ceiling whenever the toggle changes.
+// Derive from the DESIGN target (not the already-lowered live ceiling) so toggling
+// high quality back ON restores the full ceiling instead of pinning the lowered value.
+const designCeiling = world.targetCeiling != null ? world.targetCeiling : (world.ceiling || CEILING_DESKTOP);
+world.targetCeiling = designCeiling; // persist the design target on the world for restores
+function applyQuality() {
+  world.ceiling = qualityCeiling(world.targetCeiling, runtime.lowQuality);
+}
+window.__ricochetSetLowQuality = (on) => {
+  runtime.lowQuality = on;
+  localStorage.setItem('ricochet:lowQuality', String(on));
+  applyQuality();
+};
+applyQuality();
 
 // --- transient run object (not persisted) ---
 const run = {
@@ -272,6 +300,7 @@ setupPlacement({
   onChange: refreshShop,
 });
 setupPaddleDrag({ canvas, world, state, onChange: () => {} });
+setupQualityToggle(window.__ricochetSetLowQuality, runtime.lowQuality);
 
 // Module-scope so onBigBangClicked (Phase 7) can call leaderboard.offerOnBigBang().
 const leaderboard = setupLeaderboard(state);
@@ -390,6 +419,8 @@ function step(dt) {
 
 // --- render ---
 function render() {
+  const motion = currentMotion();
+  view.motion = motion;
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);

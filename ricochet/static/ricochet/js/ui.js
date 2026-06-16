@@ -36,6 +36,18 @@ export function updateHUD(adapter, els) {
   els.combo.textContent = '×' + comboMult.toFixed(1);
 }
 
+// --- Quality toggle -------------------------------------------------------
+// Wire the "Low quality (perf)" checkbox (#quality-toggle). Sets the box to the
+// initial state, then calls onChange(checked) whenever the user toggles it.
+// No-op if the control is absent (headless / template variant).
+export function setupQualityToggle(onChange, initial) {
+  if (typeof document === 'undefined') return;
+  const el = document.getElementById('quality-toggle');
+  if (!el) return;
+  el.checked = !!initial;
+  el.addEventListener('change', () => { onChange(el.checked); });
+}
+
 // --- Modal ----------------------------------------------------------------
 // Minimal confirm/notice modal. Builds (once) a single overlay element and
 // reuses it. Accepts { title, body, confirmLabel, cancelLabel, onConfirm }.
