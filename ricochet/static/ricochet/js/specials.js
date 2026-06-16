@@ -110,3 +110,30 @@ export function makeSpecialEmit(world, addCredits) {
     },
   };
 }
+
+// Ordered roster — also the spawn priority when the global cap is the binding
+// constraint. Keys match the save-shape `state.specials` keys.
+export const SPECIAL_TYPES = ['clacker', 'splitter', 'burster'];
+
+// Decide how many of each special type may spawn this tick.
+// Bounded by (a) per-type capacity headroom and (b) the global cap so that
+// total live (existing + planned) never exceeds cap.
+// saveSpecials = { clacker:{unlocked,capacity}, ... }; liveCounts = live counts.
+export function specialSpawnPlan(saveSpecials, liveCounts, cap) {
+  const plan = { clacker: 0, splitter: 0, burster: 0 };
+  let liveTotal = 0;
+  for (const t of SPECIAL_TYPES) liveTotal += liveCounts[t] || 0;
+  let globalFree = cap - liveTotal;
+  if (globalFree <= 0) return plan;
+  for (const t of SPECIAL_TYPES) {
+    if (globalFree <= 0) break;
+    const c = saveSpecials[t];
+    if (!c || !c.unlocked) continue;
+    const typeFree = c.capacity - (liveCounts[t] || 0);
+    if (typeFree <= 0) continue;
+    const grant = typeFree < globalFree ? typeFree : globalFree;
+    plan[t] = grant;
+    globalFree -= grant;
+  }
+  return plan;
+}

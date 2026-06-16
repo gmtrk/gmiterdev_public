@@ -7,6 +7,8 @@ import {
   tryBurst,
   CLACKER_CLACK_CREDITS,
   makeSpecialEmit,
+  SPECIAL_TYPES,
+  specialSpawnPlan,
 } from './specials.js';
 import {
   buildWorld,
@@ -23,6 +25,7 @@ import {
   CLACK_COOLDOWN,
   DT,
   RESERVED_OWNED,
+  SPECIAL_CAP,
   BURSTER as BURSTER_CFG,
 } from './config.js';
 
@@ -279,4 +282,56 @@ test('cap-exempt emitted balls are NORMAL and do NOT grow the special pool (no c
   assert.ok(w.normal.count > normalCountBefore, 'at least one ball emitted into the normal pool');
   assert.equal(w.normal.type[normalCountBefore], NORMAL, 'emitted balls are NORMAL type');
   assert.equal(sp.count, specialCountBefore, 'special pool count unchanged — no cascade into specials');
+});
+
+test('SPECIAL_TYPES is the roster in spawn-priority order', () => {
+  assert.deepEqual(SPECIAL_TYPES, ['clacker', 'splitter', 'burster']);
+});
+
+test('specialSpawnPlan respects per-type capacity headroom and locked types', () => {
+  const cfg = {
+    clacker: { unlocked: true, capacity: 4 },
+    splitter: { unlocked: true, capacity: 4 },
+    burster: { unlocked: false, capacity: 0 },
+  };
+  const live = { clacker: 2, splitter: 4, burster: 0 };
+  const plan = specialSpawnPlan(cfg, live, SPECIAL_CAP);
+  assert.equal(plan.clacker, 2, 'room for 2 more clackers (4-2)');
+  assert.equal(plan.splitter, 0, 'splitter already at capacity');
+  assert.equal(plan.burster, 0, 'burster locked');
+});
+
+test('specialSpawnPlan never lets the SUM of (live + plan) exceed the cap', () => {
+  const cfg = {
+    clacker: { unlocked: true, capacity: 100 },
+    splitter: { unlocked: true, capacity: 100 },
+    burster: { unlocked: true, capacity: 100 },
+  };
+  const live = { clacker: 0, splitter: 0, burster: 0 };
+  const plan = specialSpawnPlan(cfg, live, SPECIAL_CAP);
+  const total = plan.clacker + plan.splitter + plan.burster;
+  assert.ok(total <= SPECIAL_CAP, `planned ${total} > cap ${SPECIAL_CAP}`);
+});
+
+test('specialSpawnPlan accounts for ALREADY-LIVE specials against the global cap', () => {
+  const cfg = {
+    clacker: { unlocked: true, capacity: SPECIAL_CAP },
+    splitter: { unlocked: true, capacity: SPECIAL_CAP },
+    burster: { unlocked: true, capacity: SPECIAL_CAP },
+  };
+  const live = { clacker: SPECIAL_CAP - 1, splitter: 0, burster: 0 };
+  const plan = specialSpawnPlan(cfg, live, SPECIAL_CAP);
+  const total = plan.clacker + plan.splitter + plan.burster;
+  assert.equal(total, 1, 'only one global slot remains');
+});
+
+test('specialSpawnPlan returns all zeros when the pool is globally full', () => {
+  const cfg = {
+    clacker: { unlocked: true, capacity: SPECIAL_CAP },
+    splitter: { unlocked: false, capacity: 0 },
+    burster: { unlocked: false, capacity: 0 },
+  };
+  const live = { clacker: SPECIAL_CAP, splitter: 0, burster: 0 };
+  const plan = specialSpawnPlan(cfg, live, SPECIAL_CAP);
+  assert.deepEqual(plan, { clacker: 0, splitter: 0, burster: 0 });
 });
