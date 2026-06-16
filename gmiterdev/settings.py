@@ -37,7 +37,15 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured('SECRET_KEY environment variable is required in production')
 
-ALLOWED_HOSTS = ['gmiterdev.onrender.com', 'localhost', '127.0.0.1']
+def _split_csv(value):
+    """Parse a comma-separated env var into a clean list (trims whitespace, drops blanks)."""
+    return [item.strip() for item in (value or '').split(',') if item.strip()]
+
+
+# Hosts and CSRF origins are env-driven so the same code runs on Fly, Render, or locally.
+# Local/test default covers localhost; production sets these via fly.toml [env].
+ALLOWED_HOSTS = _split_csv(os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1'))
+CSRF_TRUSTED_ORIGINS = _split_csv(os.getenv('CSRF_TRUSTED_ORIGINS', ''))
 
 
 # Application definition
