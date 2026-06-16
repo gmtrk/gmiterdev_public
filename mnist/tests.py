@@ -14,7 +14,13 @@ pytestmark = pytest.mark.django_db
 def test_home_page_loads(client):
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"My Apps" in resp.content
+    body = resp.content
+    assert b'id="ud-lines"' in body                 # dialogue box typewriter target
+    assert b"MNIST PLAYGROUND" in body              # battle-menu label
+    assert b"METAGUESS" in body                     # battle-menu label
+    assert b'href="/mnist"' in body                 # link to demo 1
+    assert b'href="/metaguess"' in body             # link to demo 2
+    assert b"visits" in body                        # visit-counter wiring
 
 
 def test_mnist_page_loads(client):
