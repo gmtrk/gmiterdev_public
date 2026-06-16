@@ -63,7 +63,7 @@ const view = {
 };
 
 // --- HUD elements (Phase 5 replaces updateHUD; here we paint a minimal credits readout) ---
-const hudCredits = document.getElementById('hud-credits');
+const hudCredits = document.getElementById('rc-credits');
 
 function updateHudMinimal(adapter) {
   if (hudCredits) hudCredits.textContent = formatNumber(adapter.credits);
