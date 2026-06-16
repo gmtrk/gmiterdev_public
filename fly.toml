@@ -19,4 +19,4 @@ primary_region = "fra"
   memory = "512mb"
 
 [deploy]
-  release_command = "python manage.py migrate --noinput && python manage.py seed_games"
+  release_command = "sh release.sh"
