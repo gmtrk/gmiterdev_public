@@ -18,6 +18,7 @@ import { setupPlacement, setupPaddleDrag, setupTabs } from './input.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
 import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
+import { setupLeaderboard } from './leaderboard.js';
 import {
   updateEarnRate,
   computeOffline,
@@ -223,6 +224,7 @@ function onBigBangClicked() {
       refreshCoresTab();
     },
   });
+  leaderboard.offerOnBigBang();
 }
 const bigBangBtn = $('big-bang-btn');
 if (bigBangBtn) bigBangBtn.addEventListener('click', onBigBangClicked);
@@ -270,6 +272,9 @@ setupPlacement({
   onChange: refreshShop,
 });
 setupPaddleDrag({ canvas, world, state, onChange: () => {} });
+
+// Module-scope so onBigBangClicked (Phase 7) can call leaderboard.offerOnBigBang().
+const leaderboard = setupLeaderboard(state);
 
 const hudGate = makeThrottle(166); // ~6 Hz
 const shopGate = makeThrottle(500); // refresh affordability twice per second
