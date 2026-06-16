@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let score = 0;
   let personalBest = 0;
   let busy = false;
+  let scoreSubmitted = false;
 
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -207,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startGame() {
     score = 0;
+    scoreSubmitted = false;
     els.score.textContent = score;
     els.gameOver.classList.add("mg-hidden");
     if (deck.length < 2) {
@@ -265,12 +267,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const qualifies =
           finalScore > 0 && (data.length < 5 || finalScore > data[data.length - 1].score);
-        if (qualifies) {
+        if (qualifies && !scoreSubmitted) {
           form.classList.remove("mg-hidden");
           els.submitBtn.classList.remove("mg-hidden");
           els.submitBtn.onclick = () => submitHighScore(finalScore);
         } else {
           form.classList.add("mg-hidden");
+          els.submitBtn.classList.add("mg-hidden");
         }
       })
       .catch((err) => console.error("Error fetching high scores:", err));
@@ -290,6 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((r) => r.json())
       .then(() => {
+        scoreSubmitted = true;
         id("new-high-score-form").classList.add("mg-hidden");
         showHighScores(finalScore);
       })
