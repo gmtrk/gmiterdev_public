@@ -258,6 +258,7 @@ function onBigBangClicked() {
     cancelLabel: 'Cancel',
     onConfirm: () => {
       performBigBang(state);             // grant cores; reset run; persist partition keeps coresShop + blueprint
+      state.stats.runEarnings = 0;       // runEarnings is per-run; the new run starts fresh
       applyUpgradeEffects(world, state); // re-derive world.budgets + world.startCreditsMult from the post-reset state
       reinitFreshRun(world, state);      // re-seed credits + blueprint clamped to the (now re-derived) budgets + head-start
       persistSave();
@@ -322,6 +323,21 @@ setupQualityToggle(window.__ricochetSetLowQuality, runtime.lowQuality);
 
 // Module-scope so onBigBangClicked (Phase 7) can call leaderboard.offerOnBigBang().
 const leaderboard = setupLeaderboard(state);
+
+// ---- Share stat-card ----
+// Renders the live arena + headline numbers (lifetime cores + the run stats
+// tracked in step()) into a downloadable PNG. lifetimeCores lives on `state`,
+// the rest on `state.stats`, so assemble the headline object exportStatCard reads.
+const statCardBtn = $('rc-statcard-btn');
+if (statCardBtn) {
+  statCardBtn.addEventListener('click', () => {
+    exportStatCard(
+      canvas,
+      { ...state.stats, lifetimeCores: state.lifetimeCores },
+      view.PALETTE,
+    );
+  });
+}
 
 const hudGate = makeThrottle(166); // ~6 Hz
 const shopGate = makeThrottle(500); // refresh affordability twice per second
@@ -411,6 +427,15 @@ function step(dt) {
   const gained = creditsFromCounters(c, SURFACE_BASE, world.globalValueMult, eventMult);
   state.credits += gained;
   run.creditsPerSec = gained / dt;
+
+  // 4b) lightweight stat-card tracking (headline numbers for exportStatCard):
+  //   runEarnings    = credits gained this run (reset on Big Bang)
+  //   biggestBallCount = max world.normal.count seen
+  //   peakCombo      = max comboBonus reached
+  const st = state.stats;
+  st.runEarnings = (st.runEarnings || 0) + gained;
+  if (world.normal.count > (st.biggestBallCount || 0)) st.biggestBallCount = world.normal.count;
+  if (run.comboBonus > (st.peakCombo || 0)) st.peakCombo = run.comboBonus;
 
   // FX feed (legible spectacle on notable hits only)
   if (c.block > 0 || c.goldenBonus > 0) {

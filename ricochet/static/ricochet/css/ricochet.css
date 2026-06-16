@@ -228,6 +228,21 @@ body.rc-body {
   cursor: pointer;
 }
 
+.rc-statcard-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--rc-magenta);
+  border-radius: 8px;
+  color: var(--rc-magenta);
+  font: inherit;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
 @media (max-width: 800px) {
   body.rc-body {
     overflow: auto;
