@@ -139,3 +139,63 @@ test('reflectWalls leaves an interior ball untouched', () => {
   assert.equal(r.vx, 5);
   assert.equal(r.vy, 5);
 });
+
+import { resolveCircleCircle, resolveCircleAABB } from './physics.js';
+import { PEG_RADIUS, E_COLLIDER, KICK, BLOCK_H } from './config.js';
+
+test('resolveCircleCircle: no overlap -> hit:false, velocity unchanged', () => {
+  // ball at (100,0) r6, peg at (0,0) r7 -> dist 100 >> 13, no overlap
+  const r = resolveCircleCircle(100, 0, -5, 0, BALL_RADIUS, 0, 0, PEG_RADIUS, E_COLLIDER, KICK, MAX_SPEED);
+  assert.equal(r.hit, false);
+  assert.equal(r.vx, -5);
+  assert.equal(r.vy, 0);
+});
+
+test('resolveCircleCircle: overlapping peg separates, reflects, kicks, clamps', () => {
+  // ball (10,0) r6 moving vx=-100 into peg (0,0) r7. dist=10 < 13 -> overlap, n=(1,0)
+  const r = resolveCircleCircle(10, 0, -100, 0, BALL_RADIUS, 0, 0, PEG_RADIUS, E_COLLIDER, KICK, MAX_SPEED);
+  assert.equal(r.hit, true);
+  // separate: penetration = (6+7) - 10 = 3, push +3 along n -> x = 13
+  assert.ok(Math.abs(r.x - 13) < 1e-4, `x was ${r.x}`);
+  // reflect: v -= (1+0.9)(v.n)n ; v.n = -100 ; -> vx = -100 - 1.9*(-100) = 90
+  // kick: vx += KICK*n.x = 90 + 60 = 150
+  assert.ok(Math.abs(r.vx - 150) < 1e-4, `vx was ${r.vx}`);
+  assert.ok(Math.abs(r.vy) < 1e-6);
+});
+
+test('resolveCircleCircle TUNNELING: a MAX_SPEED ball overlapping a PEG_RADIUS peg registers a hit', () => {
+  // place the ball already overlapping (post-integration position) at distance < r+pegR
+  // ball (8,0) r6 moving at full MAX_SPEED toward peg (0,0) r7 ; dist 8 < 13
+  const r = resolveCircleCircle(8, 0, -MAX_SPEED, 0, BALL_RADIUS, 0, 0, PEG_RADIUS, E_COLLIDER, KICK, MAX_SPEED);
+  assert.equal(r.hit, true);
+  // outgoing speed must be clamped to MAX_SPEED
+  assert.ok(Math.hypot(r.vx, r.vy) <= MAX_SPEED + 1e-3, `speed ${Math.hypot(r.vx, r.vy)}`);
+});
+
+test('resolveCircleAABB: ball overlapping the left edge -> hit:true, reflects off the -x normal', () => {
+  // MUST-HONOR: overlapping geometry. box center ax=84, half-extents aw=64, ah=14 -> left edge at 20.
+  // ball (16,10) r5 ; closest point (20,10) ; dist 4 < 5 -> hit ; n=(-1,0)
+  const r = resolveCircleAABB(16, 10, 50, 0, 5, 84, 10, 64, 14, E_COLLIDER, 0, MAX_SPEED);
+  assert.equal(r.hit, true);
+  // separate: penetration = 5 - 4 = 1, push -1 along n.x(-1) -> x = 16 - 1 = 15
+  assert.ok(Math.abs(r.x - 15) < 1e-4, `x was ${r.x}`);
+  // reflect (no kick for blocks, kick arg=0): v.n = 50*(-1) = -50 ; vx = 50 - 1.9*(-50)*(-1) = 50 - 95 = -45
+  assert.ok(Math.abs(r.vx - (-45)) < 1e-4, `vx was ${r.vx}`);
+});
+
+test('resolveCircleAABB: non-overlapping box -> hit:false, velocity unchanged', () => {
+  const r = resolveCircleAABB(0, 0, 10, 0, 5, 200, 200, 32, 14, E_COLLIDER, 0, MAX_SPEED);
+  assert.equal(r.hit, false);
+  assert.equal(r.vx, 10);
+  assert.equal(r.vy, 0);
+});
+
+test('resolveCircleAABB TUNNELING: a MAX_SPEED ball overlapping a thin block (half-height BLOCK_H/2) registers a hit', () => {
+  // thin block: center (500,500), half-extents (32, BLOCK_H/2=14).
+  // ball approaching from above already overlapping: (500, 500 - 14 - 6 + 2) r6 = (500,482), dist to top edge 4 < 6
+  const halfH = BLOCK_H / 2;
+  const r = resolveCircleAABB(500, 500 - halfH - 6 + 2, 0, MAX_SPEED, BALL_RADIUS, 500, 500, 32, halfH, E_COLLIDER, 0, MAX_SPEED);
+  assert.equal(r.hit, true);
+  assert.ok(r.vy < 0, `vy should reflect upward, was ${r.vy}`);
+  assert.ok(Math.hypot(r.vx, r.vy) <= MAX_SPEED + 1e-3);
+});

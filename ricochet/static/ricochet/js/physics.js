@@ -76,3 +76,55 @@ export function reflectWalls(x, y, vx, vy, r, W, H, eWall, hasFloor) {
   else if (hasFloor && y + r > H) { y = H - r; vy = -vy * eWall; hitWall = true; }
   return { x, y, vx, vy, hitWall };
 }
+
+export function resolveCircleCircle(bx, by, vx, vy, br, cx, cy, cr, e, kick, maxSpeed) {
+  const dx = bx - cx;
+  const dy = by - cy;
+  const sum = br + cr;
+  const dist2 = dx * dx + dy * dy;
+  if (dist2 >= sum * sum) return { x: bx, y: by, vx, vy, hit: false };
+  let dist = Math.sqrt(dist2);
+  let nx, ny;
+  if (dist > 1e-9) { nx = dx / dist; ny = dy / dist; }
+  else { nx = 0; ny = -1; dist = 0; } // exact overlap: push straight up
+  const pen = sum - dist;
+  bx += nx * pen;
+  by += ny * pen;
+  const vn = vx * nx + vy * ny;
+  vx -= (1 + e) * vn * nx;
+  vy -= (1 + e) * vn * ny;
+  vx += kick * nx;
+  vy += kick * ny;
+  const c = clampSpeed(vx, vy, maxSpeed);
+  return { x: bx, y: by, vx: c.vx, vy: c.vy, hit: true };
+}
+
+export function resolveCircleAABB(bx, by, vx, vy, br, ax, ay, aw, ah, e, kick, maxSpeed) {
+  // ax,ay = box center ; aw,ah = half-extents
+  const cxp = Math.max(ax - aw, Math.min(bx, ax + aw));
+  const cyp = Math.max(ay - ah, Math.min(by, ay + ah));
+  const dx = bx - cxp;
+  const dy = by - cyp;
+  const dist2 = dx * dx + dy * dy;
+  if (dist2 >= br * br) return { x: bx, y: by, vx, vy, hit: false };
+  let dist = Math.sqrt(dist2);
+  let nx, ny;
+  if (dist > 1e-9) { nx = dx / dist; ny = dy / dist; }
+  else {
+    // center inside box: pick the smallest-penetration axis as the normal
+    const px = aw - Math.abs(bx - ax);
+    const py = ah - Math.abs(by - ay);
+    if (px < py) { nx = Math.sign(bx - ax) || 1; ny = 0; dist = -px; }
+    else { nx = 0; ny = Math.sign(by - ay) || -1; dist = -py; }
+  }
+  const pen = br - dist;
+  bx += nx * pen;
+  by += ny * pen;
+  const vn = vx * nx + vy * ny;
+  vx -= (1 + e) * vn * nx;
+  vy -= (1 + e) * vn * ny;
+  vx += kick * nx;
+  vy += kick * ny;
+  const c = clampSpeed(vx, vy, maxSpeed);
+  return { x: bx, y: by, vx: c.vx, vy: c.vy, hit: true };
+}
