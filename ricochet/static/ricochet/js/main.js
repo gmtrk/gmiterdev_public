@@ -182,6 +182,14 @@ if (tabBody && !shopContainer) {
   const placePanel = document.createElement('div');
   placePanel.dataset.panel = 'place';
   placePanel.hidden = true;
+  const placeHint = document.createElement('p');
+  placeHint.className = 'rc-place-hint';
+  placeHint.textContent =
+    'Pick a tool, then click or drag in the arena to place it. The auto-fill '
+    + 'buttons lay out peg patterns. Drag the paddle at the bottom to move it.';
+  const toolHead = document.createElement('p');
+  toolHead.className = 'rc-place-subhead';
+  toolHead.textContent = 'Tools';
   const toolRow = document.createElement('div');
   toolRow.className = 'rc-toolrow';
   for (const [tool, label] of [['peg', 'Peg'], ['block', 'Block'], ['remove', 'Remove']]) {
@@ -192,6 +200,9 @@ if (tabBody && !shopContainer) {
     b.textContent = label;
     toolRow.append(b);
   }
+  const presetHead = document.createElement('p');
+  presetHead.className = 'rc-place-subhead';
+  presetHead.textContent = 'Auto-fill pegs';
   const presetRow = document.createElement('div');
   presetRow.className = 'rc-presetrow';
   for (const [preset, label] of [['triangle', 'Triangle'], ['diamond', 'Diamond'], ['funnel', 'Funnel']]) {
@@ -202,7 +213,7 @@ if (tabBody && !shopContainer) {
     b.textContent = label;
     presetRow.append(b);
   }
-  placePanel.append(toolRow, presetRow);
+  placePanel.append(placeHint, toolHead, toolRow, presetHead, presetRow);
 
   tabBody.append(creditsPanel, coresPanel, placePanel);
 }
@@ -323,8 +334,13 @@ const tabs = setupTabs({
   onSelect: (name) => {
     if (name === 'credits') refreshShop();
     else if (name === 'cores') refreshCoresTab();
+    // Arena cursor affordance: only the Place tab edits the arena.
+    canvas.classList.toggle('rc-canvas--place', name === 'place');
   },
 });
+// Reflect the initially-active tab on the canvas cursor (onSelect only fires on
+// a click, so seed the crosshair class from the starting tab here).
+canvas.classList.toggle('rc-canvas--place', tabs.getActive() === 'place');
 // Arena editing (placement + paddle drag) is gated to the Place tab so clicking
 // the arena on Credits/Cores/Scores can't silently mutate the blueprint.
 const isPlaceActive = () => tabs.getActive() === 'place';
