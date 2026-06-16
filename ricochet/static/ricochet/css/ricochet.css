@@ -158,3 +158,23 @@ body.rc-body {
     flex: 1 1 auto;
   }
 }
+
+/* --- Mobile stacking & touch (Phase 9) --- */
+/* Belt-and-suspenders: input.js sets this on the canvas, but pin it in CSS too
+   so scroll-vs-drag can never hijack the arena on touch devices. */
+#ricochet-canvas { touch-action: none; }
+
+@media (max-width: 820px) {
+  /* Stack HUD -> arena -> panel. The HUD lives in the topbar (above .rc-page),
+     so it is already first; here we lock arena-before-panel order explicitly. */
+  .rc-page {
+    flex-direction: column;
+  }
+  .rc-arena  { order: 0; }
+  .rc-panel  { order: 1; }
+  /* keep the perf toggle reachable / tappable on small screens */
+  #quality-toggle {
+    min-width: 24px;
+    min-height: 24px;
+  }
+}
