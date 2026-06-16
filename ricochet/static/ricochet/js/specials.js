@@ -137,3 +137,21 @@ export function specialSpawnPlan(saveSpecials, liveCounts, cap) {
   }
   return plan;
 }
+
+// Starter pack: how many of a type are granted the instant it's unlocked, so the
+// tiny pool actually clacks right away (spec §6 "unlock-with-starter").
+export const UNLOCK_STARTER = 4;
+
+// Unlock a special type on the save: flip the flag, ensure capacity covers the
+// starter pack, and return how many to spawn immediately (0 if already unlocked).
+export function unlockSpecial(saveSpecials, type) {
+  if (!SPECIAL_TYPES.includes(type)) {
+    throw new Error(`unknown special type: ${type}`);
+  }
+  const c = saveSpecials[type];
+  if (!c) throw new Error(`unknown special type: ${type}`);
+  if (c.unlocked) return 0;
+  c.unlocked = true;
+  if (c.capacity < UNLOCK_STARTER) c.capacity = UNLOCK_STARTER;
+  return UNLOCK_STARTER;
+}

@@ -9,6 +9,8 @@ import {
   makeSpecialEmit,
   SPECIAL_TYPES,
   specialSpawnPlan,
+  unlockSpecial,
+  UNLOCK_STARTER,
 } from './specials.js';
 import {
   buildWorld,
@@ -334,4 +336,36 @@ test('specialSpawnPlan returns all zeros when the pool is globally full', () => 
   const live = { clacker: SPECIAL_CAP, splitter: 0, burster: 0 };
   const plan = specialSpawnPlan(cfg, live, SPECIAL_CAP);
   assert.deepEqual(plan, { clacker: 0, splitter: 0, burster: 0 });
+});
+
+test('UNLOCK_STARTER grants 3-4 of the type', () => {
+  assert.ok(UNLOCK_STARTER >= 3 && UNLOCK_STARTER <= 4, `was ${UNLOCK_STARTER}`);
+});
+
+test('unlockSpecial flips unlocked, lifts capacity to cover the starter, returns the starter count', () => {
+  const cfg = {
+    clacker: { unlocked: false, capacity: 0 },
+    splitter: { unlocked: false, capacity: 0 },
+    burster: { unlocked: false, capacity: 0 },
+  };
+  const granted = unlockSpecial(cfg, 'clacker');
+  assert.equal(cfg.clacker.unlocked, true);
+  assert.ok(cfg.clacker.capacity >= UNLOCK_STARTER, 'capacity covers the starter pack');
+  assert.equal(granted, UNLOCK_STARTER);
+});
+
+test('unlockSpecial on an already-unlocked type is idempotent and grants nothing', () => {
+  const cfg = {
+    clacker: { unlocked: true, capacity: 6 },
+    splitter: { unlocked: false, capacity: 0 },
+    burster: { unlocked: false, capacity: 0 },
+  };
+  const granted = unlockSpecial(cfg, 'clacker');
+  assert.equal(granted, 0, 'no double-grant');
+  assert.equal(cfg.clacker.capacity, 6, 'capacity untouched');
+});
+
+test('unlockSpecial throws on an unknown type', () => {
+  const cfg = { clacker: { unlocked: false, capacity: 0 } };
+  assert.throws(() => unlockSpecial(cfg, 'magnet'), /unknown special/i);
 });
