@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buyUpgrade, coresShopRows } from './ui.js';
+import { buyUpgrade, coresShopRows, statCardLines } from './ui.js';
 import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost } from './economy.js';
 
@@ -92,4 +92,29 @@ test('coresShopRows flags a maxed upgrade as not affordable', () => {
   const row = coresShopRows(state).find((r) => r.id === capped.id);
   assert.equal(row.maxed, true);
   assert.equal(row.affordable, false);
+});
+
+test('statCardLines formats the four headline numbers', () => {
+  const lines = statCardLines({
+    lifetimeCores: 1234,
+    peakCombo: 9,
+    biggestBallCount: 4500,
+    runEarnings: 4.5e15,
+  });
+  assert.deepEqual(lines, [
+    'Lifetime Cores  1.2K',
+    'Peak Combo  x10',
+    'Most Balls  4.5K',
+    'Run Earnings  4.5Qa',
+  ]);
+});
+
+test('statCardLines is resilient to missing stats (treats as 0)', () => {
+  const lines = statCardLines({});
+  assert.deepEqual(lines, [
+    'Lifetime Cores  0',
+    'Peak Combo  x1',
+    'Most Balls  0',
+    'Run Earnings  0',
+  ]);
 });

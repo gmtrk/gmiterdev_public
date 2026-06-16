@@ -190,3 +190,77 @@ export function coresShopRows(state) {
     };
   });
 }
+
+// --- Stat-card export -----------------------------------------------------
+// Build the four headline lines for the stat-card. Peak combo is shown as the
+// player-facing multiplier (comboMult = 1 + comboBonus). Pure + node-tested.
+export function statCardLines(stats) {
+  const cores = formatNumber(stats.lifetimeCores || 0);
+  const combo = 1 + (stats.peakCombo || 0);
+  const balls = formatNumber(stats.biggestBallCount || 0);
+  const earnings = formatNumber(stats.runEarnings || 0);
+  return [
+    `Lifetime Cores  ${cores}`,
+    `Peak Combo  x${combo}`,
+    `Most Balls  ${balls}`,
+    `Run Earnings  ${earnings}`,
+  ];
+}
+
+// Render a shareable stat-card: the live arena snapshot + headline numbers +
+// the gmiter•dev wordmark, then download or copy it. `arenaCanvas` is the live
+// game canvas; `stats` is the headline-numbers object (see statCardLines).
+// `palette` is the live view.PALETTE object (lowercase keys: bg/ballCyan/peg).
+export function exportStatCard(arenaCanvas, stats, palette, mode = 'download') {
+  const W = 900;
+  const H = 1200;
+  const card = document.createElement('canvas');
+  card.width = W;
+  card.height = H;
+  const ctx = card.getContext('2d');
+
+  // Background.
+  ctx.fillStyle = palette.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Arena snapshot (scaled to fit the upper region, preserving aspect ratio).
+  const pad = 40;
+  const arenaMaxW = W - pad * 2;
+  const arenaMaxH = 760;
+  const scale = Math.min(arenaMaxW / arenaCanvas.width, arenaMaxH / arenaCanvas.height);
+  const aw = arenaCanvas.width * scale;
+  const ah = arenaCanvas.height * scale;
+  ctx.drawImage(arenaCanvas, (W - aw) / 2, pad, aw, ah);
+
+  // Headline numbers.
+  const lines = statCardLines(stats);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = palette.ballCyan;
+  ctx.font = "bold 38px 'Courier New', monospace";
+  let y = pad + arenaMaxH + 70;
+  for (const line of lines) {
+    ctx.fillText(line, W / 2, y);
+    y += 56;
+  }
+
+  // gmiter•dev wordmark.
+  ctx.fillStyle = palette.peg;
+  ctx.font = "bold 30px 'Courier New', monospace";
+  ctx.fillText('gmiter•dev', W / 2, H - 36);
+
+  if (mode === 'copy' && navigator.clipboard && window.ClipboardItem) {
+    card.toBlob((blob) => {
+      navigator.clipboard
+        .write([new window.ClipboardItem({ 'image/png': blob })])
+        .catch((err) => console.error('Stat-card copy failed:', err));
+    });
+    return card;
+  }
+
+  // Default: download.
+  const link = document.createElement('a');
+  link.download = 'ricochet-stat-card.png';
+  link.href = card.toDataURL('image/png');
+  link.click();
+  return card;
+}
