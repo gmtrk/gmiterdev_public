@@ -1,8 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeEventMult, creditsFromCounters, updateCombo, upgradeCost, upgradeEffect, applyUpgradeEffects } from './economy.js';
+import {
+  computeEventMult, creditsFromCounters, updateCombo, upgradeCost, upgradeEffect,
+  applyUpgradeEffects, coresFromRun, canPrestige,
+} from './economy.js';
 import { buildWorld } from './physics.js';
-import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES, BASE_CAPACITY, GOLDEN, KICK, ARENA_W } from './config.js';
+import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES, BASE_CAPACITY, GOLDEN, KICK, ARENA_W, PRESTIGE } from './config.js';
 
 test('computeEventMult is 1 + sum of bonuses when under the cap', () => {
   assert.equal(computeEventMult(2, 3, 1), 1 + 6);
@@ -200,4 +203,30 @@ test('buying Cores offline levels makes world.offline*Add non-zero', () => {
   assert.ok(world.offlineCapAdd > 0, 'offline cap add becomes non-zero');
   assert.ok(Math.abs(world.offlineEfficiencyAdd - 0.15) < 1e-9);
   assert.equal(world.offlineCapAdd, 7200);
+});
+
+test('coresFromRun matches the contract anchor values with defaults', () => {
+  assert.equal(coresFromRun(1e9), 1);
+  assert.equal(coresFromRun(1e12), 31);   // floor(sqrt(1000)) = 31
+  assert.equal(coresFromRun(1e15), 1000); // floor(sqrt(1e6)) = 1000
+});
+
+test('coresFromRun floors and is 0 below one core', () => {
+  assert.equal(coresFromRun(0), 0);
+  assert.equal(coresFromRun(5e8), 0); // sqrt(0.5) < 1 -> floor 0
+});
+
+test('coresFromRun honors coreK and coreScale overrides', () => {
+  assert.equal(coresFromRun(4e9, 2, 1e9), 4); // 2*sqrt(4) = 4
+});
+
+test('canPrestige gates at PRESTIGE.minCredits', () => {
+  assert.equal(canPrestige(PRESTIGE.minCredits), true);
+  assert.equal(canPrestige(PRESTIGE.minCredits - 1), false);
+  assert.equal(canPrestige(0), false);
+});
+
+test('canPrestige honors an explicit min override', () => {
+  assert.equal(canPrestige(100, 100), true);
+  assert.equal(canPrestige(99, 100), false);
 });

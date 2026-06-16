@@ -1,6 +1,7 @@
 import {
   EVENT_CAP, SURFACE_BASE, BASE_CAPACITY, GOLDEN, KICK,
   UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE, PADDLE_WIDTH_BASE,
+  PRESTIGE,
 } from './config.js';
 
 export function computeEventMult(comboBonus, goldenBonus, breakBonus, cap = EVENT_CAP) {
@@ -102,4 +103,12 @@ export function applyUpgradeEffects(world, state) {
   world.offlineCapAdd = upgradeEffect(offCapDef, _level(cs, 'offlineCapAdd'));
 
   return world;
+}
+
+export function coresFromRun(runCredits, coreK = PRESTIGE.coreK, coreScale = PRESTIGE.coreScale) {
+  return Math.floor(coreK * Math.sqrt(runCredits / coreScale));
+}
+
+export function canPrestige(runCredits, min = PRESTIGE.minCredits) {
+  return runCredits >= min;
 }
