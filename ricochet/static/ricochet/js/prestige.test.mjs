@@ -3,6 +3,17 @@ import assert from 'node:assert/strict';
 import { coresFromRun } from './economy.js';
 import { PRESTIGE } from './config.js';
 import { projectPrestige, performBigBang } from './prestige.js';
+import { reinitFreshRun } from './prestige.js';
+import { STARTING_CREDITS } from './config.js';
+import { applyUpgradeEffects } from './economy.js';
+import { buildWorld } from './physics.js';
+
+// Build a real world from a state so the clamp reads the actual post-reset budgets.
+function worldFor(state) {
+  const world = buildWorld(state);     // calls applyUpgradeEffects + rebuildColliders
+  applyUpgradeEffects(world, state);   // ensure budgets/baseCapacity are derived
+  return world;
+}
 
 function sampleState() {
   return {
@@ -82,4 +93,33 @@ test('performBigBang preserves stats but clears nothing it should not', () => {
   performBigBang(state);
   assert.equal(state.stats.lastSubmittedCores, 30);
   assert.equal(state.stats.recentEarnRate, 1234);
+});
+
+test('reinitFreshRun seeds starting credits from STARTING_CREDITS + Cores head-start', () => {
+  const state = { ...sampleState(), credits: 0, upgrades: {}, coresShop: {} };
+  const world = worldFor(state);
+  reinitFreshRun(world, state);
+  // With no head-start cores-shop levels, credits == base STARTING_CREDITS.
+  assert.equal(state.credits, STARTING_CREDITS);
+});
+
+test('reinitFreshRun applies the blueprint CLAMPED to current (post-reset) peg budget', () => {
+  // Blueprint has 2 pegs; force a post-reset peg budget of 1 to prove the clamp.
+  const state = { ...sampleState(), credits: 0, upgrades: {}, coresShop: {} };
+  const world = worldFor(state);
+  world.budgets.pegs = 1;          // simulate a tiny post-reset budget
+  world.budgets.blocks = 5;
+  reinitFreshRun(world, state);
+  // Only one peg fits: live colliders are clamped to budget.
+  assert.ok(world.pegs.count <= world.budgets.pegs);
+  assert.equal(world.pegs.count, 1);
+});
+
+test('reinitFreshRun keeps the saved blueprint intact (clamp is on the live world, not the blueprint)', () => {
+  const state = { ...sampleState(), credits: 0, upgrades: {}, coresShop: {} };
+  const world = worldFor(state);
+  world.budgets.pegs = 1;
+  reinitFreshRun(world, state);
+  // The persisted blueprint still has both pegs even though only 1 is live.
+  assert.equal(state.placed.pegs.length, 2);
 });
