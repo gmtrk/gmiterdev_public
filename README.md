@@ -2,7 +2,7 @@
 
 Welcome to the repository for my personal website! This site hosts some interactive web applications that I've developed.
 
-🌐 **Live Site**: [gmiterdev.onrender.com](https://gmiterdev.onrender.com/)
+🌐 **Live Site**: [https://gmiter.fly.dev/](https://gmiter.fly.dev/)
 
 > **Note:** The site is hosted on a free tier, so it may take around **30-50 seconds** to load initially if the server is in a "spun down" state. Thank you for your patience!
 
