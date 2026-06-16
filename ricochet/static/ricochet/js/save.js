@@ -61,9 +61,17 @@ export function serialize(state) {
 }
 
 export function deserialize(str) {
-  const obj = JSON.parse(str);
+  if (str == null) return null;
+  let obj;
+  try {
+    obj = JSON.parse(str);
+  } catch {
+    return null;
+  }
+  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) return obj;
   return {
     ...obj,
+    credits: Number(obj.credits),
     cores: Number(obj.cores),
     lifetimeCores: Number(obj.lifetimeCores),
   };

@@ -66,12 +66,12 @@ test('serialize writes credits/cores/lifetimeCores as strings', () => {
   assert.equal(obj.lifetimeCores, '42');
 });
 
-test('serialize/deserialize round-trip preserves a big exact integer', () => {
+test('deserialize returns credits as a runtime Number (CONTRACT line 21)', () => {
   const s = defaultSave();
-  const big = '9007199254740993'; // 2^53 + 1, not exactly representable as a Number
-  s.credits = big;
+  s.credits = '123456';
   const round = deserialize(serialize(s));
-  assert.equal(round.credits, big);
+  assert.equal(round.credits, 123456);
+  assert.equal(typeof round.credits, 'number');
 });
 
 test('deserialize returns cores/lifetimeCores as numbers from string disk form', () => {
@@ -81,6 +81,13 @@ test('deserialize returns cores/lifetimeCores as numbers from string disk form',
   const round = deserialize(serialize(s));
   assert.equal(round.cores, 12);
   assert.equal(round.lifetimeCores, 412);
+});
+
+test('deserialize guards null/empty/corrupt input so migrate falls back to defaults', () => {
+  assert.equal(deserialize(null), null);
+  assert.equal(deserialize(undefined), null);
+  assert.equal(deserialize('{not json'), null);
+  assert.deepEqual(migrate(deserialize(null)), defaultSave());
 });
 
 test('migrate returns defaultSave for corrupt/unknown input', () => {
