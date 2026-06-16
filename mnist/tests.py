@@ -69,3 +69,12 @@ def test_model_json_is_tfjs_loadable_format():
     assert "batch_input_shape" in text, "model.json is not Keras-2 format (no batch_input_shape)"
     assert '"batch_shape"' not in text, "model.json uses Keras-3 `batch_shape` (not tfjs-loadable)"
     assert "DTypePolicy" not in text, "model.json uses Keras-3 DTypePolicy dtype (not tfjs-loadable)"
+
+
+def test_mnist_page_has_draw_hint(client):
+    """The canvas shows a 'draw a digit' hint prompting first-time visitors."""
+    resp = client.get("/mnist/")
+    assert resp.status_code == 200
+    body = resp.content
+    assert b'id="draw-hint"' in body
+    assert b"draw a digit" in body

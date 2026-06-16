@@ -19,7 +19,15 @@
   .nn-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .nn-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8b95ad; text-align: center; }
   .nn-sub { font-size: 10px; color: #59617a; }
-  .nn-canvas-frame { background: #000; border: 1px solid #2a3142; border-radius: 8px; }
+  .nn-canvas-frame { position: relative; background: #000; border: 1px solid #2a3142; border-radius: 8px; }
+  #draw-hint {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    color: #6b7693; font-size: 12px; letter-spacing: .04em; text-align: center;
+    pointer-events: none; opacity: .65; transition: opacity .25s ease;
+  }
+  #draw-hint .dh-mark { font-size: 22px; line-height: 1; }
+  #draw-hint.hidden { opacity: 0; }
 
   #drawingCanvas { width: 132px; height: 132px; image-rendering: pixelated; display: block; cursor: crosshair; }
   .nn-grid, .nn-composite, #densefield {
@@ -76,7 +84,10 @@
 
       <div class="nn-stage">
         <div class="nn-label">input</div>
-        <div class="nn-canvas-frame"><canvas id="drawingCanvas" width="28" height="28"></canvas></div>
+        <div class="nn-canvas-frame">
+          <canvas id="drawingCanvas" width="28" height="28"></canvas>
+          <div id="draw-hint"><span class="dh-mark">✎</span><span>draw a digit</span></div>
+        </div>
         <div class="nn-sub">28 × 28</div>
       </div>
 

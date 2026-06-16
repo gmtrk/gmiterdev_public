@@ -18,9 +18,11 @@ let block2 = null;
 let dense = null;
 let preds = null;
 let pulses = null;
+let hint = null;
 
 function schedule() {
   pending = true;
+  if (hint) hint.classList.add('hidden');
   if (!scheduled) {
     scheduled = true;
     requestAnimationFrame(frame);
@@ -67,9 +69,13 @@ window.addEventListener('load', async () => {
   dense = createDenseField({ canvas: $('densefield'), cols: 16, lut });
   preds = createPredictions($('predictions'));
   pulses = createPulses();
+  hint = $('draw-hint');
   attachHover($('b1grid'), block1);
   attachHover($('b2grid'), block2);
-  $('clearButton').addEventListener('click', () => { draw.clear(); block1.clear(); block2.clear(); dense.clear(); preds.reset(); });
+  $('clearButton').addEventListener('click', () => {
+    draw.clear(); block1.clear(); block2.clear(); dense.clear(); preds.reset();
+    if (hint) hint.classList.remove('hidden');
+  });
   try {
     model = await loadVizModel();
     console.log('mnist viz: model ready');
