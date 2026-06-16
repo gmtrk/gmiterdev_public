@@ -84,7 +84,11 @@ if (typeof world.spawnRate === 'number') run.spawnRate = world.spawnRate;
 // --- canvas + render setup ---
 const canvas = document.getElementById('ricochet-canvas');
 const ctx = canvas.getContext('2d');
-const dpr = Math.min(window.devicePixelRatio || 1, 2);
+const ATLAS_PALETTE = { ballCyan: '#22e0ff', ballYellow: '#fff14a', peg: '#ff3df0', clacker: '#22e0ff', splitter: '#ff3df0', burster: '#ffb347' };
+function currentDpr() {
+  return Math.min(window.devicePixelRatio || 1, 2);
+}
+let dpr = currentDpr();
 
 function fitCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -92,13 +96,25 @@ function fitCanvas() {
   canvas.height = Math.round(rect.height * dpr);
 }
 fitCanvas();
-window.addEventListener('resize', fitCanvas);
 
-const atlas = buildAtlas(
-  { ballCyan: '#22e0ff', ballYellow: '#fff14a', peg: '#ff3df0', clacker: '#22e0ff', splitter: '#ff3df0', burster: '#ffb347' },
-  [BALL_RADIUS, PEG_RADIUS],
-  dpr,
-);
+// The sprite atlas is rendered at the device pixel ratio; if the DPR changes
+// (e.g. dragging the window between displays) the atlas must be rebuilt or
+// sprites blur/alias. Debounced (~150ms) so a burst of resize events triggers a
+// single refit + at most one atlas rebuild.
+let atlas = buildAtlas(ATLAS_PALETTE, [BALL_RADIUS, PEG_RADIUS], dpr);
+let _resizeTimer = 0;
+window.addEventListener('resize', () => {
+  if (_resizeTimer) clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    _resizeTimer = 0;
+    const ndpr = currentDpr();
+    if (ndpr !== dpr) {
+      dpr = ndpr;
+      atlas = buildAtlas(ATLAS_PALETTE, [BALL_RADIUS, PEG_RADIUS], dpr);
+    }
+    fitCanvas();
+  }, 150);
+});
 
 const floatingText = createFloatingTextPool(64);
 const particles = createParticleRing(512);
@@ -483,8 +499,12 @@ function render() {
 }
 
 // --- adaptive ceiling driven by frame time ---
+// The adaptive max is the QUALITY-CLAMPED design ceiling (not raw CEILING_DESKTOP)
+// so under-budget growth respects the low-quality clamp instead of undoing it
+// within seconds.
 function onFrameTime(ms) {
-  world.ceiling = adaptCeiling(world.ceiling, ms, FRAME_BUDGET_MS, 100, CEILING_DESKTOP);
+  const max = qualityCeiling(world.targetCeiling, runtime.lowQuality);
+  world.ceiling = adaptCeiling(world.ceiling, ms, FRAME_BUDGET_MS, 100, max);
 }
 
 // --- save on tab hide ---
