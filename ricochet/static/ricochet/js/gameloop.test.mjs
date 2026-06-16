@@ -63,3 +63,38 @@ test('createLoop.tick: reports frame time to onFrameTime in ms', () => {
   assert.equal(seen.length, 2);
   assert.equal(seen[1], 16.7);
 });
+
+import { adaptCeiling } from './gameloop.js';
+
+test('adaptCeiling: over budget lowers the ceiling ~10%', () => {
+  const next = adaptCeiling(5000, 20, 8, 100, 5000);
+  assert.ok(next < 5000);
+  assert.equal(next, Math.floor(5000 * 0.9));
+});
+
+test('adaptCeiling: comfortably under budget recovers slowly', () => {
+  const next = adaptCeiling(1000, 4, 8, 100, 5000); // 4ms < 0.75*8=6ms
+  assert.ok(next > 1000);
+  assert.equal(next, Math.floor(1000 * 1.02));
+});
+
+test('adaptCeiling: in the neutral band holds steady', () => {
+  const next = adaptCeiling(1000, 7, 8, 100, 5000); // 6 <= 7 <= 8
+  assert.equal(next, 1000);
+});
+
+test('adaptCeiling: never goes below min', () => {
+  const next = adaptCeiling(100, 50, 8, 100, 5000);
+  assert.equal(next, 100);
+});
+
+test('adaptCeiling: never exceeds max', () => {
+  const next = adaptCeiling(5000, 1, 8, 100, 5000);
+  assert.equal(next, 5000);
+});
+
+test('adaptCeiling: always returns a finite integer', () => {
+  const next = adaptCeiling(1234, 7.3, 8, 100, 5000);
+  assert.ok(Number.isInteger(next));
+  assert.ok(Number.isFinite(next));
+});

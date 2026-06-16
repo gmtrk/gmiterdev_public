@@ -13,6 +13,22 @@ export function advance(acc, frameDt, dt, maxSubsteps) {
   return { steps, acc: rem };
 }
 
+// Pure adaptive-ceiling reducer. Over budget -> shrink fast; well under -> grow
+// slowly; neutral band -> hold. Result is clamped to [min,max] and integral.
+export function adaptCeiling(ceiling, frameMs, budgetMs, min, max) {
+  let next = ceiling;
+  if (frameMs > budgetMs) {
+    next = ceiling * 0.9;
+  } else if (frameMs < budgetMs * 0.75) {
+    next = ceiling * 1.02;
+  }
+  next = Math.floor(next);
+  if (next < min) next = min;
+  if (next > max) next = max;
+  if (!Number.isFinite(next)) next = min;
+  return next;
+}
+
 // Fixed-timestep loop. tick(nowMs) is the rAF callback, exposed for tests.
 export function createLoop({ step, render, onFrameTime }) {
   let acc = 0;
