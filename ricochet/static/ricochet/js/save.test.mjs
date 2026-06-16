@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CURRENT_VERSION, defaultSave, serialize, deserialize } from './save.js';
+import { CURRENT_VERSION, defaultSave, serialize, deserialize, migrate } from './save.js';
 import { STARTING_CREDITS } from './config.js';
 
 test('CURRENT_VERSION is 1', () => {
@@ -81,4 +81,77 @@ test('deserialize returns cores/lifetimeCores as numbers from string disk form',
   const round = deserialize(serialize(s));
   assert.equal(round.cores, 12);
   assert.equal(round.lifetimeCores, 412);
+});
+
+test('migrate returns defaultSave for corrupt/unknown input', () => {
+  const d = defaultSave();
+  assert.deepEqual(migrate(null), d);
+  assert.deepEqual(migrate(undefined), d);
+  assert.deepEqual(migrate(42), d);
+  assert.deepEqual(migrate('garbage'), d);
+  assert.deepEqual(migrate([]), d);
+  assert.deepEqual(migrate({}), d); // empty object has no recognizable fields
+});
+
+test('migrate backfills a missing coresShop from defaults', () => {
+  const partial = {
+    version: 1,
+    credits: '500',
+    cores: 3,
+    lifetimeCores: 9,
+    upgrades: { globalValueMult: 2 },
+    specials: defaultSave().specials,
+    placed: defaultSave().placed,
+    stats: defaultSave().stats,
+    // coresShop intentionally absent
+  };
+  const m = migrate(partial);
+  assert.deepEqual(m.coresShop, {});
+  assert.equal(m.credits, '500');
+  assert.deepEqual(m.upgrades, { globalValueMult: 2 });
+});
+
+test('migrate upgrades a v0-shaped object to v1 and adds coresShop', () => {
+  // v0: no version, no coresShop, but has the core run fields
+  const v0 = {
+    credits: '12345',
+    cores: 2,
+    lifetimeCores: 5,
+    upgrades: { ballCapacity: 4 },
+    specials: defaultSave().specials,
+    placed: defaultSave().placed,
+    stats: { recentEarnRate: 100, lastSaveTime: 111, lastSubmittedCores: 1 },
+  };
+  const m = migrate(v0);
+  assert.equal(m.version, 1);
+  assert.deepEqual(m.coresShop, {});
+  assert.equal(m.credits, '12345');
+  assert.deepEqual(m.upgrades, { ballCapacity: 4 });
+  assert.equal(m.stats.recentEarnRate, 100);
+});
+
+test('migrate carries an existing coresShop unchanged', () => {
+  const s = defaultSave();
+  s.coresShop = { globalValueMult: 3, baseCapacity: 1 };
+  s.cores = 50;
+  const m = migrate(s);
+  assert.deepEqual(m.coresShop, { globalValueMult: 3, baseCapacity: 1 });
+  assert.equal(m.cores, 50);
+});
+
+test('migrate backfills missing stats/specials/placed from defaults', () => {
+  const partial = {
+    version: 1,
+    credits: '7',
+    cores: 0,
+    lifetimeCores: 0,
+    upgrades: {},
+    coresShop: {},
+    // specials, placed, stats all missing
+  };
+  const m = migrate(partial);
+  const d = defaultSave();
+  assert.deepEqual(m.specials, d.specials);
+  assert.deepEqual(m.placed, d.placed);
+  assert.deepEqual(m.stats, d.stats);
 });

@@ -68,3 +68,26 @@ export function deserialize(str) {
     lifetimeCores: Number(obj.lifetimeCores),
   };
 }
+
+export function migrate(obj) {
+  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+    return defaultSave();
+  }
+  // Require at least one recognizable run field; otherwise treat as corrupt.
+  const recognized = ['credits', 'cores', 'upgrades', 'placed', 'specials'];
+  if (!recognized.some((k) => k in obj)) {
+    return defaultSave();
+  }
+  const d = defaultSave();
+  return {
+    version: CURRENT_VERSION,
+    credits: 'credits' in obj ? obj.credits : d.credits,
+    cores: 'cores' in obj ? obj.cores : d.cores,
+    lifetimeCores: 'lifetimeCores' in obj ? obj.lifetimeCores : d.lifetimeCores,
+    upgrades: 'upgrades' in obj ? obj.upgrades : d.upgrades,
+    specials: 'specials' in obj ? obj.specials : d.specials,
+    coresShop: 'coresShop' in obj ? obj.coresShop : d.coresShop,
+    placed: 'placed' in obj ? obj.placed : d.placed,
+    stats: 'stats' in obj ? obj.stats : d.stats,
+  };
+}
