@@ -525,3 +525,38 @@ test('stepPhysics runs without a resolveClack (null) — clack bookkeeping is a 
   // no emit, no resolveClack passed
   assert.doesNotThrow(() => stepPhysics(world, DT, 0));
 });
+
+import { spawnCount, rollGoldenFlag } from './physics.js';
+import { MAX_SPAWNS_PER_TICK } from './config.js';
+
+test('spawnCount accumulates and floors, returning {n, acc} with the remainder kept', () => {
+  // spawnRate=60, dt=1/60 -> +1.0 per tick
+  const r = spawnCount(0.5, 60, DT, 100, MAX_SPAWNS_PER_TICK);
+  assert.equal(r.n, 1);          // floor(0.5 + 1.0) = 1
+  assert.ok(Math.abs(r.acc - 0.5) < 1e-6); // remainder 0.5 carried
+});
+
+test('spawnCount is clamped by free slots', () => {
+  const r = spawnCount(0, 6000, DT, 3, MAX_SPAWNS_PER_TICK); // acc jumps to 100, but only 3 slots
+  assert.equal(r.n, 3);
+  // acc reduced by the number actually spawned (3), not the floored 100
+  assert.ok(Math.abs(r.acc - (100 - 3)) < 1e-3, `acc ${r.acc}`);
+});
+
+test('spawnCount is clamped by MAX_SPAWNS_PER_TICK', () => {
+  const r = spawnCount(0, 6000, DT, 10000, MAX_SPAWNS_PER_TICK);
+  assert.equal(r.n, MAX_SPAWNS_PER_TICK);
+  assert.ok(Math.abs(r.acc - (100 - MAX_SPAWNS_PER_TICK)) < 1e-3);
+});
+
+test('spawnCount with no whole ball accrued returns n:0 and keeps acc', () => {
+  const r = spawnCount(0.2, 6, DT, 100, MAX_SPAWNS_PER_TICK); // +0.1 -> 0.3
+  assert.equal(r.n, 0);
+  assert.ok(Math.abs(r.acc - 0.3) < 1e-6);
+});
+
+test('rollGoldenFlag returns FLAG_GOLDEN when rng < goldenChance, else 0', () => {
+  assert.equal(rollGoldenFlag(0.5, () => 0.1), FLAG_GOLDEN);
+  assert.equal(rollGoldenFlag(0.5, () => 0.9), 0);
+  assert.equal(rollGoldenFlag(0, () => 0.0), 0); // 0 is not < 0
+});

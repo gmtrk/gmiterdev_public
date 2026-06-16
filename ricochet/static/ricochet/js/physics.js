@@ -3,7 +3,7 @@ import {
   CEILING_DESKTOP, RESERVED_OWNED, SPECIAL_CAP, GRID_CELL,
   GRAVITY, DRAG, E_WALL, E_COLLIDER, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
   BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS,
-  GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY,
+  GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -390,4 +390,17 @@ function _specialClackPass(world, dt, now, emit, resolveClack) {
       }
     }
   }
+}
+
+export function spawnCount(acc, spawnRate, dt, freeSlots, maxPerTick) {
+  acc += spawnRate * dt;
+  let n = Math.floor(acc);
+  if (n > freeSlots) n = freeSlots;
+  if (n > maxPerTick) n = maxPerTick;
+  if (n < 0) n = 0;
+  return { n, acc: acc - n };
+}
+
+export function rollGoldenFlag(goldenChance, rng = Math.random) {
+  return rng() < goldenChance ? FLAG_GOLDEN : 0;
 }
