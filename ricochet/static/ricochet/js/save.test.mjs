@@ -83,15 +83,26 @@ test('deserialize returns cores/lifetimeCores as numbers from string disk form',
   assert.equal(round.lifetimeCores, 412);
 });
 
+// The migrate() fallback returns defaultSave() with the runtime numerics coerced
+// to Number (the load boundary, CONTRACT line 21). defaultSave() keeps them as
+// strings on disk, so the expected fallback shape coerces them.
+function defaultRuntimeSave() {
+  const d = defaultSave();
+  d.credits = Number(d.credits);
+  d.cores = Number(d.cores);
+  d.lifetimeCores = Number(d.lifetimeCores);
+  return d;
+}
+
 test('deserialize guards null/empty/corrupt input so migrate falls back to defaults', () => {
   assert.equal(deserialize(null), null);
   assert.equal(deserialize(undefined), null);
   assert.equal(deserialize('{not json'), null);
-  assert.deepEqual(migrate(deserialize(null)), defaultSave());
+  assert.deepEqual(migrate(deserialize(null)), defaultRuntimeSave());
 });
 
 test('migrate returns defaultSave for corrupt/unknown input', () => {
-  const d = defaultSave();
+  const d = defaultRuntimeSave();
   assert.deepEqual(migrate(null), d);
   assert.deepEqual(migrate(undefined), d);
   assert.deepEqual(migrate(42), d);
@@ -114,7 +125,8 @@ test('migrate backfills a missing coresShop from defaults', () => {
   };
   const m = migrate(partial);
   assert.deepEqual(m.coresShop, {});
-  assert.equal(m.credits, '500');
+  // migrate() coerces the runtime numerics to Number (the load boundary).
+  assert.equal(m.credits, 500);
   assert.deepEqual(m.upgrades, { globalValueMult: 2 });
 });
 
@@ -132,7 +144,7 @@ test('migrate upgrades a v0-shaped object to v1 and adds coresShop', () => {
   const m = migrate(v0);
   assert.equal(m.version, 1);
   assert.deepEqual(m.coresShop, {});
-  assert.equal(m.credits, '12345');
+  assert.equal(m.credits, 12345);
   assert.deepEqual(m.upgrades, { ballCapacity: 4 });
   assert.equal(m.stats.recentEarnRate, 100);
 });
@@ -144,6 +156,34 @@ test('migrate carries an existing coresShop unchanged', () => {
   const m = migrate(s);
   assert.deepEqual(m.coresShop, { globalValueMult: 3, baseCapacity: 1 });
   assert.equal(m.cores, 50);
+});
+
+test('migrate coerces credits/cores/lifetimeCores to JS numbers (load boundary, CONTRACT line 21)', () => {
+  // Fresh load: defaultSave keeps strings on disk, but migrate must yield numbers
+  // so `state.credits += gained` adds rather than concatenates.
+  const fresh = migrate(null);
+  assert.equal(typeof fresh.credits, 'number');
+  assert.equal(typeof fresh.cores, 'number');
+  assert.equal(typeof fresh.lifetimeCores, 'number');
+
+  // A migrated save with string-on-disk numerics is coerced too.
+  const m = migrate({
+    version: 1,
+    credits: '50',
+    cores: '3',
+    lifetimeCores: '9',
+    upgrades: {},
+    specials: defaultSave().specials,
+    placed: defaultSave().placed,
+    stats: defaultSave().stats,
+    coresShop: {},
+  });
+  assert.equal(typeof m.credits, 'number');
+  assert.equal(typeof m.cores, 'number');
+  assert.equal(typeof m.lifetimeCores, 'number');
+  assert.equal(m.credits, 50);
+  assert.equal(m.cores, 3);
+  assert.equal(m.lifetimeCores, 9);
 });
 
 test('migrate backfills missing stats/specials/placed from defaults', () => {

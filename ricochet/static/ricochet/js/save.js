@@ -77,17 +77,29 @@ export function deserialize(str) {
   };
 }
 
+// Coerce the runtime numerics to Number: migrate() is the load boundary, and
+// CONTRACT line 21 requires state.credits/cores/lifetimeCores to be JS numbers
+// at runtime (defaultSave keeps strings on-disk, which is fine — they are only
+// serialized again on save). Without this, a fresh load carries credits as the
+// string "50" and `state.credits += gained` would concatenate. Mutates + returns.
+function coerceRuntimeNumerics(save) {
+  save.credits = Number(save.credits);
+  save.cores = Number(save.cores);
+  save.lifetimeCores = Number(save.lifetimeCores);
+  return save;
+}
+
 export function migrate(obj) {
   if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
-    return defaultSave();
+    return coerceRuntimeNumerics(defaultSave());
   }
   // Require at least one recognizable run field; otherwise treat as corrupt.
   const recognized = ['credits', 'cores', 'upgrades', 'placed', 'specials'];
   if (!recognized.some((k) => k in obj)) {
-    return defaultSave();
+    return coerceRuntimeNumerics(defaultSave());
   }
   const d = defaultSave();
-  return {
+  return coerceRuntimeNumerics({
     version: CURRENT_VERSION,
     credits: 'credits' in obj ? obj.credits : d.credits,
     cores: 'cores' in obj ? obj.cores : d.cores,
@@ -97,5 +109,5 @@ export function migrate(obj) {
     coresShop: 'coresShop' in obj ? obj.coresShop : d.coresShop,
     placed: 'placed' in obj ? obj.placed : d.placed,
     stats: 'stats' in obj ? obj.stats : d.stats,
-  };
+  });
 }
