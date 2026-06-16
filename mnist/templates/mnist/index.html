@@ -12,10 +12,15 @@
     background: #080912;
     border: 1px solid #1d2434;
     border-radius: 12px;
-    padding: 22px;
+    padding: 26px;
     overflow-x: auto;
+    /* break out of the narrow centered .container to span the page width */
+    width: 92vw;
+    max-width: 1500px;
+    margin-left: 50%;
+    transform: translateX(-50%);
   }
-  .nn-flow { display: flex; align-items: flex-start; gap: 14px; min-width: max-content; }
+  .nn-flow { display: flex; align-items: flex-start; justify-content: space-around; gap: 24px; }
   .nn-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .nn-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8b95ad; text-align: center; }
   .nn-sub { font-size: 10px; color: #59617a; }
@@ -29,13 +34,13 @@
   #draw-hint .dh-mark { font-size: 22px; line-height: 1; }
   #draw-hint.hidden { opacity: 0; }
 
-  #drawingCanvas { width: 132px; height: 132px; image-rendering: pixelated; display: block; cursor: crosshair; }
+  #drawingCanvas { width: 170px; height: 170px; image-rendering: pixelated; display: block; cursor: crosshair; }
   .nn-grid, .nn-composite, #densefield {
     image-rendering: pixelated; background: #0b0518; border-radius: 4px; display: block;
   }
-  .nn-grid { width: 148px; height: auto; }
-  .nn-composite { width: 54px; height: 54px; }
-  #densefield { width: 132px; height: auto; }
+  .nn-grid { width: 176px; height: auto; }
+  .nn-composite { width: 72px; height: 72px; }
+  #densefield { width: 156px; height: auto; }
 
   .nn-connector { display: flex; align-items: center; justify-content: center; align-self: center; height: 90px; }
   .nn-track { position: relative; width: 40px; height: 2px; background: #1d2434; border-radius: 2px; overflow: hidden; }
@@ -45,10 +50,10 @@
   @keyframes nn-slide { from { left: -10px; opacity: 1; } to { left: 42px; opacity: 1; } }
 
   .pred-row { display: flex; align-items: center; gap: 8px; }
-  .pred-row .pred-digit { width: 14px; text-align: right; color: #cbd2e0; font-size: 13px; }
-  .pred-bar { flex: 1; height: 12px; background: #141a28; border-radius: 6px; overflow: hidden; }
+  .pred-row .pred-digit { width: 16px; text-align: right; color: #cbd2e0; font-size: 15px; }
+  .pred-bar { flex: 1; height: 15px; background: #141a28; border-radius: 8px; overflow: hidden; }
   .pred-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #dd513a, #fca50a); }
-  .pred-row .pred-text { width: 48px; text-align: right; color: #8b95ad; font-size: 12px; }
+  .pred-row .pred-text { width: 52px; text-align: right; color: #8b95ad; font-size: 13px; }
   .pred-row.is-winner .pred-digit, .pred-row.is-winner .pred-text { color: #fca50a; font-weight: 700; }
 
   .nn-legend { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 16px; color: #7b8398; font-size: 10px; }
@@ -121,7 +126,7 @@
 
       <div class="nn-stage">
         <div class="nn-label">prediction</div>
-        <div id="predictions" style="display:flex;flex-direction:column;gap:5px;width:150px">
+        <div id="predictions" style="display:flex;flex-direction:column;gap:6px;width:190px">
           {% for i in "0123456789" %}
           <div class="pred-row" data-pred-row="{{ i }}">
             <span class="pred-digit">{{ i }}</span>

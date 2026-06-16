@@ -64,9 +64,9 @@ function attachHover(canvas, renderer) {
 
 window.addEventListener('load', async () => {
   draw = createDrawCanvas($('drawingCanvas'), schedule);
-  block1 = createStageRenderer({ gridCanvas: $('b1grid'), compositeCanvas: $('b1comp'), cols: 8, gap: 1, lut });
+  block1 = createStageRenderer({ gridCanvas: $('b1grid'), compositeCanvas: $('b1comp'), cols: 4, gap: 1, lut });
   block2 = createStageRenderer({ gridCanvas: $('b2grid'), compositeCanvas: $('b2comp'), cols: 8, gap: 1, lut });
-  dense = createDenseField({ canvas: $('densefield'), cols: 16, lut });
+  dense = createDenseField({ canvas: $('densefield'), cols: 12, lut });
   preds = createPredictions($('predictions'));
   pulses = createPulses();
   hint = $('draw-hint');
