@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buyUpgrade, coresShopRows, statCardLines } from './ui.js';
+import { buyUpgrade, coresShopRows, statCardLines, buySpecialUnlock, specialUnlockDef } from './ui.js';
 import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost } from './economy.js';
+import { unlockSpecial, specialSpawnPlan } from './specials.js';
+import { SPECIAL_CAP } from './config.js';
 
 // buyUpgrade(world, state, id, applyEffects) -> boolean (true if bought).
 // MUST read/write state.credits (NOT world.credits) and state.upgrades, then
@@ -92,6 +94,74 @@ test('coresShopRows flags a maxed upgrade as not affordable', () => {
   const row = coresShopRows(state).find((r) => r.id === capped.id);
   assert.equal(row.maxed, true);
   assert.equal(row.affordable, false);
+});
+
+// --- Special-ball unlocks (reachable in-game via the Credits shop) ---------
+function freshSpecials() {
+  return {
+    clacker: { unlocked: false, capacity: 0 },
+    splitter: { unlocked: false, capacity: 0 },
+    burster: { unlocked: false, capacity: 0 },
+  };
+}
+
+test('UPGRADES exposes special-unlock rows for clacker/splitter/burster', () => {
+  for (const type of ['clacker', 'splitter', 'burster']) {
+    const def = UPGRADES.find((u) => u.unlock === type);
+    assert.ok(def, `missing unlock row for ${type}`);
+    assert.equal(specialUnlockDef(def.id), def);
+  }
+});
+
+test('buySpecialUnlock flips state.specials[type].unlocked true and debits credits', () => {
+  const def = UPGRADES.find((u) => u.unlock === 'clacker');
+  const cost = upgradeCost(def, 0);
+  const state = { credits: cost + 100, upgrades: {}, specials: freshSpecials() };
+  let grantedType = null;
+  // main.js passes unlockSpecialAndSeed; here we use the real unlockSpecial which
+  // flips unlocked + sizes capacity for the starter pack.
+  const ok = buySpecialUnlock(state, def.id, (type) => {
+    grantedType = type;
+    unlockSpecial(state.specials, type);
+  });
+  assert.equal(ok, true);
+  assert.equal(state.specials.clacker.unlocked, true, 'clacker must be unlocked after purchase');
+  assert.ok(state.specials.clacker.capacity > 0, 'starter capacity seeded');
+  assert.equal(grantedType, 'clacker');
+  assert.equal(state.credits, 100, 'cost debited');
+  assert.equal(state.upgrades[def.id], 1, 'row marked owned');
+
+  // ...and the spawn planner now actually schedules clackers (feature is live).
+  const plan = specialSpawnPlan(state.specials, { clacker: 0, splitter: 0, burster: 0 }, SPECIAL_CAP);
+  assert.ok(plan.clacker > 0, 'specialSpawnPlan must schedule clackers after unlock');
+});
+
+test('buySpecialUnlock refuses when unaffordable and changes nothing', () => {
+  const def = UPGRADES.find((u) => u.unlock === 'splitter');
+  const state = { credits: 0, upgrades: {}, specials: freshSpecials() };
+  let granted = 0;
+  const ok = buySpecialUnlock(state, def.id, () => { granted++; });
+  assert.equal(ok, false);
+  assert.equal(state.specials.splitter.unlocked, false);
+  assert.equal(granted, 0);
+  assert.equal(state.credits, 0);
+});
+
+test('buySpecialUnlock refuses a re-buy of an already-unlocked type', () => {
+  const def = UPGRADES.find((u) => u.unlock === 'burster');
+  const state = { credits: 1e9, upgrades: {}, specials: freshSpecials() };
+  state.specials.burster.unlocked = true;
+  let granted = 0;
+  const ok = buySpecialUnlock(state, def.id, () => { granted++; });
+  assert.equal(ok, false);
+  assert.equal(granted, 0);
+  assert.equal(state.credits, 1e9, 'no debit on a refused re-buy');
+});
+
+test('buySpecialUnlock returns false for a non-unlock upgrade id', () => {
+  const state = { credits: 1e9, upgrades: {}, specials: freshSpecials() };
+  const ok = buySpecialUnlock(state, 'globalValueMult', () => {});
+  assert.equal(ok, false);
 });
 
 test('statCardLines formats the four headline numbers', () => {

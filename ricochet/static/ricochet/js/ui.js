@@ -21,6 +21,32 @@ export function buyUpgrade(world, state, id, applyEffects) {
   return true;
 }
 
+// Look up an UPGRADES def by id and return it iff it is a special-unlock row
+// (i.e. carries an `unlock` save-key). Returns undefined otherwise.
+export function specialUnlockDef(id) {
+  const def = UPGRADES.find((u) => u.id === id);
+  return def && def.unlock ? def : undefined;
+}
+
+// Buy a one-shot special-ball unlock. Returns false (no mutation) when the id is
+// not an unlock row, the type is already unlocked, or credits are insufficient.
+// On success: debit credits, mark state.upgrades[id]=1 (so the shop row shows as
+// maxed), call grantUnlock(type) — main.js passes unlockSpecialAndSeed so the
+// pool flips unlocked + seeds its starter pack — and return true.
+export function buySpecialUnlock(state, id, grantUnlock) {
+  const def = specialUnlockDef(id);
+  if (!def) return false;
+  const type = def.unlock;
+  const sp = state.specials && state.specials[type];
+  if (sp && sp.unlocked) return false;
+  const cost = upgradeCost(def, 0);
+  if (state.credits < cost) return false;
+  state.credits -= cost;
+  state.upgrades[id] = 1;
+  grantUnlock(type);
+  return true;
+}
+
 // --- HUD ------------------------------------------------------------------
 // Receives the HUD ADAPTER object (NOT world):
 //   { credits, creditsPerSec, ballCount, capacity, comboBonus, comboCapBonus, ceiling }
@@ -147,7 +173,10 @@ export function renderShop(tab, { container, state, onBuy, rows, cores }) {
   container.replaceChildren();
   for (const def of UPGRADES) {
     const level = state.upgrades[def.id] || 0;
-    const maxed = def.max != null && level >= def.max;
+    const isUnlock = !!def.unlock;
+    // An unlock row is "maxed" (= owned) once the special is unlocked.
+    const unlocked = isUnlock && state.specials && state.specials[def.unlock] && state.specials[def.unlock].unlocked;
+    const maxed = unlocked || (def.max != null && level >= def.max);
     const cost = upgradeCost(def, level);
     const afford = !maxed && state.credits >= cost;
 
@@ -156,22 +185,27 @@ export function renderShop(tab, { container, state, onBuy, rows, cores }) {
     row.className = 'rc-row' + (afford ? ' rc-row--afford' : '');
     row.disabled = maxed;
     row.dataset.upgradeId = def.id;
+    if (def.group) row.dataset.group = def.group;
 
     const label = document.createElement('span');
     label.className = 'rc-row__label';
-    label.textContent = def.label + ' (Lv ' + level + ')';
+    label.textContent = isUnlock ? def.label : def.label + ' (Lv ' + level + ')';
 
     const effect = document.createElement('span');
     effect.className = 'rc-row__effect';
-    const eff = upgradeEffect(def, level);
-    effect.textContent =
-      def.effectKind === 'mul'
-        ? '×' + eff.toFixed(2)
-        : '+' + formatNumber(eff);
+    if (isUnlock) {
+      effect.textContent = unlocked ? 'OWNED' : 'NEW';
+    } else {
+      const eff = upgradeEffect(def, level);
+      effect.textContent =
+        def.effectKind === 'mul'
+          ? '×' + eff.toFixed(2)
+          : '+' + formatNumber(eff);
+    }
 
     const price = document.createElement('span');
     price.className = 'rc-row__cost';
-    price.textContent = maxed ? 'MAX' : formatNumber(cost);
+    price.textContent = maxed ? (isUnlock ? 'OWNED' : 'MAX') : formatNumber(cost);
 
     row.append(label, effect, price);
     row.addEventListener('click', () => onBuy(def.id));

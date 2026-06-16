@@ -13,7 +13,10 @@ import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './
 import { createLoop, adaptCeiling } from './gameloop.js';
 import { spawnTick, buildHudAdapter } from './mainstep.js';
 import { formatNumber } from './numfmt.js';
-import { updateHUD, renderShop, buyUpgrade, coresShopRows, showModal, setupQualityToggle } from './ui.js';
+import {
+  updateHUD, renderShop, buyUpgrade, coresShopRows, showModal, setupQualityToggle,
+  specialUnlockDef, buySpecialUnlock, exportStatCard,
+} from './ui.js';
 import { setupPlacement, setupPaddleDrag, setupTabs } from './input.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
@@ -196,6 +199,15 @@ function refreshShop() {
     container: shopContainer,
     state,
     onBuy: (id) => {
+      // Special-unlock rows route to the unlock+seed path (debits credits,
+      // flips state.specials[type].unlocked, spawns the starter pack) instead
+      // of the generic levelled buyUpgrade.
+      if (specialUnlockDef(id)) {
+        if (buySpecialUnlock(state, id, (type) => unlockSpecialAndSeed(state, world, type))) {
+          refreshShop();
+        }
+        return;
+      }
       if (buyUpgrade(world, state, id, applyUpgradeEffects)) {
         rebuildColliders(world); // budget upgrades may change placement room
         refreshShop();

@@ -32,6 +32,14 @@ export const UPGRADES = [
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1 },
   { id: 'paddleWidth',     label: 'Paddle Width',     group: 'paddle', baseCost: 80,  costGrowth: 1.25, effectKind: 'add', effectStep: 20 },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10 },
+  // Special-ball unlocks. One-shot purchases (max:1, no cost growth): buying
+  // flips state.specials[unlock].unlocked and seeds the starter pack so the type
+  // actually spawns. `unlock` names the save-shape special key. The standard
+  // effectStep/effectKind fields are present (and inert: effectStep 0) so the
+  // shop/config schema stays uniform; the real effect is the unlock side-effect.
+  { id: 'unlockClacker',  label: 'Unlock Clacker',  group: 'specials', unlock: 'clacker',  baseCost: 500,  costGrowth: 1, effectKind: 'add', effectStep: 0, max: 1 },
+  { id: 'unlockSplitter', label: 'Unlock Splitter', group: 'specials', unlock: 'splitter', baseCost: 1500, costGrowth: 1, effectKind: 'add', effectStep: 0, max: 1 },
+  { id: 'unlockBurster',  label: 'Unlock Burster',  group: 'specials', unlock: 'burster',  baseCost: 4000, costGrowth: 1, effectKind: 'add', effectStep: 0, max: 1 },
 ];
 
 // Cores shop. Permanent; survives Big Bang. 'mul' = multiplicative permanent buffs (bounded);
