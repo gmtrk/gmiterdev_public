@@ -8,6 +8,9 @@ import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './
 import { createLoop, adaptCeiling } from './gameloop.js';
 import { spawnTick, buildHudAdapter } from './mainstep.js';
 import { formatNumber } from './numfmt.js';
+import { updateHUD, renderShop, buyUpgrade } from './ui.js';
+import { setupPlacement, setupPaddleDrag, setupTabs } from './input.js';
+import { makeThrottle } from './throttle.js';
 
 const SAVE_KEY = 'ricochet:save';
 const AUTOSAVE_INTERVAL = 5; // seconds
@@ -62,12 +65,109 @@ const view = {
   particles,
 };
 
-// --- HUD elements (Phase 5 replaces updateHUD; here we paint a minimal credits readout) ---
-const hudCredits = document.getElementById('rc-credits');
+// --- UI bootstrap --------------------------------------------------------
+const $ = (id) => document.getElementById(id);
 
-function updateHudMinimal(adapter) {
-  if (hudCredits) hudCredits.textContent = formatNumber(adapter.credits);
+// HUD nodes (resolved once). The template ships CREDITS / PER SEC / BALLS /
+// COMBO; we add a SATURATION stat node so updateHUD's full adapter shape is
+// honoured. The adapter writes ballCount/capacity into `balls`, so the
+// template's separate rc-capacity span is left as a static placeholder.
+const hudContainer = $('rc-hud');
+let hudSaturation = $('rc-saturation');
+if (hudContainer && !hudSaturation) {
+  const stat = document.createElement('span');
+  stat.className = 'rc-hud__stat';
+  stat.append('SAT ');
+  hudSaturation = document.createElement('b');
+  hudSaturation.id = 'rc-saturation';
+  hudSaturation.textContent = '0%';
+  stat.append(hudSaturation);
+  hudContainer.append(stat);
 }
+const hudEls = {
+  credits: $('rc-credits'),
+  creditsPerSec: $('rc-cps'),
+  balls: $('rc-balls'),
+  saturation: hudSaturation,
+  combo: $('rc-combo'),
+};
+
+// Build the right-panel scaffold (Credits shop rows + Place tools/presets)
+// inside the template's empty #rc-tab-body. The Cores panel is authored in
+// Phase 7; we leave a placeholder so the tab toggles cleanly.
+const tabBody = $('rc-tab-body');
+let shopContainer = $('rc-shop-rows');
+if (tabBody && !shopContainer) {
+  const creditsPanel = document.createElement('div');
+  creditsPanel.dataset.panel = 'credits';
+  shopContainer = document.createElement('div');
+  shopContainer.id = 'rc-shop-rows';
+  shopContainer.className = 'rc-shop';
+  creditsPanel.append(shopContainer);
+
+  const coresPanel = document.createElement('div');
+  coresPanel.dataset.panel = 'cores';
+  coresPanel.hidden = true;
+
+  const placePanel = document.createElement('div');
+  placePanel.dataset.panel = 'place';
+  placePanel.hidden = true;
+  const toolRow = document.createElement('div');
+  toolRow.className = 'rc-toolrow';
+  for (const [tool, label] of [['peg', 'Peg'], ['block', 'Block'], ['remove', 'Remove']]) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'rc-tool' + (tool === 'peg' ? ' rc-tool--active' : '');
+    b.dataset.tool = tool;
+    b.textContent = label;
+    toolRow.append(b);
+  }
+  const presetRow = document.createElement('div');
+  presetRow.className = 'rc-presetrow';
+  for (const [preset, label] of [['triangle', 'Triangle'], ['diamond', 'Diamond'], ['funnel', 'Funnel']]) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'rc-preset';
+    b.dataset.preset = preset;
+    b.textContent = label;
+    presetRow.append(b);
+  }
+  placePanel.append(toolRow, presetRow);
+
+  tabBody.append(creditsPanel, coresPanel, placePanel);
+}
+
+function refreshShop() {
+  renderShop('credits', {
+    container: shopContainer,
+    state,
+    onBuy: (id) => {
+      if (buyUpgrade(world, state, id, applyUpgradeEffects)) {
+        rebuildColliders(world); // budget upgrades may change placement room
+        refreshShop();
+      }
+    },
+  });
+}
+refreshShop();
+
+setupTabs({
+  tabButtons: Array.from(document.querySelectorAll('[data-tab]')),
+  panels: Array.from(document.querySelectorAll('[data-panel]')),
+  onSelect: (name) => { if (name === 'credits') refreshShop(); },
+});
+setupPlacement({
+  canvas,
+  world,
+  state,
+  toolButtons: Array.from(document.querySelectorAll('[data-tool]')),
+  presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
+  onChange: refreshShop,
+});
+setupPaddleDrag({ canvas, world, state, onChange: () => {} });
+
+const hudGate = makeThrottle(166); // ~6 Hz
+const shopGate = makeThrottle(500); // refresh affordability twice per second
 
 // --- the fixed-timestep step ---
 function step(dt) {
@@ -122,8 +222,9 @@ function render() {
   draw(ctx, world, atlas, view);
   ctx.restore();
 
-  const adapter = buildHudAdapter(state, world, run);
-  updateHudMinimal(adapter);
+  const ms = performance.now();
+  if (hudGate(ms)) updateHUD(buildHudAdapter(state, world, run), hudEls);
+  if (shopGate(ms)) refreshShop();
 }
 
 // --- adaptive ceiling driven by frame time ---
