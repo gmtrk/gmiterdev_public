@@ -24,3 +24,14 @@ export function updateCombo(comboBonus, scoredThisStep, dt, cfg) {
   if (next > cfg.capBonusStart) next = cfg.capBonusStart;
   return next;
 }
+
+export function upgradeCost(def, level) {
+  return def.baseCost * def.costGrowth ** level;
+}
+
+export function upgradeEffect(def, level) {
+  if (def.effectKind === 'mul') {
+    return (1 + def.effectStep) ** level;
+  }
+  return def.effectStep * level;
+}

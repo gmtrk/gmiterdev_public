@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeEventMult, creditsFromCounters, updateCombo } from './economy.js';
-import { EVENT_CAP, SURFACE_BASE, COMBO } from './config.js';
+import { computeEventMult, creditsFromCounters, updateCombo, upgradeCost, upgradeEffect } from './economy.js';
+import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES } from './config.js';
 
 test('computeEventMult is 1 + sum of bonuses when under the cap', () => {
   assert.equal(computeEventMult(2, 3, 1), 1 + 6);
@@ -52,4 +52,37 @@ test('updateCombo clamps decay at 0 (never negative)', () => {
 test('updateCombo clamps gain at capBonusStart', () => {
   const next = updateCombo(COMBO.capBonusStart, true, 1, COMBO);
   assert.equal(next, COMBO.capBonusStart);
+});
+
+const VALUE_DEF = UPGRADES.find((u) => u.id === 'globalValueMult');
+const CAP_DEF = UPGRADES.find((u) => u.id === 'ballCapacity');
+
+test('upgradeCost is baseCost at level 0 and grows geometrically', () => {
+  assert.equal(upgradeCost(VALUE_DEF, 0), 50);
+  assert.ok(Math.abs(upgradeCost(VALUE_DEF, 1) - 50 * 1.18) < 1e-9);
+  assert.ok(Math.abs(upgradeCost(VALUE_DEF, 3) - 50 * 1.18 ** 3) < 1e-9);
+});
+
+test('upgradeEffect additive: step*level', () => {
+  assert.equal(upgradeEffect(CAP_DEF, 0), 0);
+  assert.equal(upgradeEffect(CAP_DEF, 3), 3);
+  assert.ok(Math.abs(upgradeEffect(VALUE_DEF, 4) - 1.0) < 1e-9); // 0.25*4
+});
+
+test('upgradeEffect multiplicative: (1+step)^level', () => {
+  const mulDef = { id: 'x', effectKind: 'mul', effectStep: 0.5 };
+  assert.equal(upgradeEffect(mulDef, 0), 1);
+  assert.equal(upgradeEffect(mulDef, 1), 1.5);
+  assert.ok(Math.abs(upgradeEffect(mulDef, 2) - 2.25) < 1e-9);
+});
+
+test('marginal ROI of globalValueMult lever is monotonically decreasing', () => {
+  let prevRoi = Infinity;
+  for (let level = 0; level < 25; level++) {
+    const dEffect = upgradeEffect(VALUE_DEF, level + 1) - upgradeEffect(VALUE_DEF, level);
+    const dCost = upgradeCost(VALUE_DEF, level + 1) - upgradeCost(VALUE_DEF, level);
+    const roi = dEffect / dCost;
+    assert.ok(roi < prevRoi, `ROI must strictly decrease at level ${level}: ${roi} !< ${prevRoi}`);
+    prevRoi = roi;
+  }
 });
