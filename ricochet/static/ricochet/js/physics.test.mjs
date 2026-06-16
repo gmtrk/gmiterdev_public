@@ -404,6 +404,28 @@ test('FINITE LIFETIME: a ball launched at MAX_SPEED through an empty no-floor ar
   assert.ok(steps < LIMIT, 'lifetime exceeded the bound (energy not bounded by drag)');
 });
 
+test('PADDLE DRAIN: a ball dropped straight onto the paddle drains (no infinite bounce)', () => {
+  // Regression for the paddle "infinite bounce" trap: resolving the paddle with
+  // the peg KICK exactly replenished the energy restitution+drag removed, so a
+  // ball oscillated on the paddle forever (never leaked). With paddle kick=0 +
+  // restitution<1 + the tangential nudge, it must walk off and drain.
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  const pa = world.paddle;
+  // rest the ball just above the paddle top at the paddle's x, ~zero velocity
+  spawnNormal(world, pa.x, pa.y - pa.h / 2 - BALL_RADIUS - 1, 0);
+  world.normal.vx[0] = 0;
+  world.normal.vy[0] = 0;
+  let steps = 0;
+  const LIMIT = 3000;
+  while (world.normal.count > 0 && steps < LIMIT) {
+    stepPhysics(world, DT, steps * DT);
+    steps++;
+  }
+  assert.equal(world.normal.count, 0, `ball never drained off the paddle in ${steps} steps`);
+  assert.ok(steps < LIMIT, 'paddle bounce trap: ball never drained');
+});
+
 function makeBlockState(level, golden) {
   const s = makeState();
   s.placed.pegs = [];

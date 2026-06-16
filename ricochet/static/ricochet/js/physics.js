@@ -1,7 +1,7 @@
 import {
   DT, ARENA_W, ARENA_H, SPAWN_MARGIN, SPAWN_Y,
   CEILING_DESKTOP, RESERVED_OWNED, SPECIAL_CAP, GRID_CELL,
-  GRAVITY, DRAG, E_WALL, E_COLLIDER, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
+  GRAVITY, DRAG, E_WALL, E_COLLIDER, E_PADDLE, PADDLE_NUDGE, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
   BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS,
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK,
 } from './config.js';
@@ -136,6 +136,7 @@ export function buildWorld(state) {
     hasFloor: false,
     eWall: E_WALL,
     eCollider: E_COLLIDER,
+    paddleE: E_PADDLE,
     kick: KICK,
     maxSpeed: MAX_SPEED,
     globalValueMult: 1,
@@ -286,14 +287,23 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   // blocks (narrow-phase + block runtime) — filled in Task 2.7
   _resolveBlocksFor(world, pool, i, now, isSpecial);
 
-  // paddle
+  // paddle — a strict ENERGY SINK, not a kicker. Resolve with the paddle
+  // restitution (< 1) and ZERO kick (the peg KICK here created a stable limit
+  // cycle: balls oscillated on the paddle forever, banking points). A near-
+  // vertical contact gets a tiny tangential nudge so a perfectly-vertical drop
+  // walks off the edge instead of column-bouncing in place.
   const pa = world.paddle;
   const pr = resolveCircleAABB(
     pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-    pa.x, pa.y, pa.w / 2, pa.h / 2, world.eCollider, world.kick, world.maxSpeed,
+    pa.x, pa.y, pa.w / 2, pa.h / 2, world.paddleE, 0, world.maxSpeed,
   );
   if (pr.hit) {
     pool.x[i] = pr.x; pool.y[i] = pr.y; pool.vx[i] = pr.vx; pool.vy[i] = pr.vy;
+    // Near-vertical contact (mostly horizontal separation impulse, little vx):
+    // nudge tangentially so the ball can walk off the paddle edge and drain.
+    if (Math.abs(pool.vx[i]) < Math.abs(pool.vy[i])) {
+      pool.vx[i] += PADDLE_NUDGE * Math.sign((pool.x[i] - pa.x) || 1);
+    }
     if (isSpecial) pool.envHits[i]++;
   }
 }
