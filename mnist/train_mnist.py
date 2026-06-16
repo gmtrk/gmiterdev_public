@@ -12,9 +12,15 @@ are always known-good.
 
 import os
 
-import numpy as np
-import tensorflow as tf
-import tensorflowjs as tfjs
+# Export in Keras 2 format so the browser's tf.js Layers loader can read it. Keras 3
+# (TF 2.16+) serializes InputLayer as `batch_shape` + DTypePolicy dtype objects, which
+# tfjs-layers cannot deserialize ("InputLayer should be passed batchInputShape"). Must be
+# set before TensorFlow is imported. Requires tf-keras (see requirements-train.txt).
+os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
+
+import numpy as np  # noqa: E402
+import tensorflow as tf  # noqa: E402
+import tensorflowjs as tfjs  # noqa: E402
 
 try:  # works whether run as `python mnist/train_mnist.py` or imported
     from mnist_model import build_model

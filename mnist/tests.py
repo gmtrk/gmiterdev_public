@@ -4,8 +4,6 @@ These assert the rendered pages return 200 and contain expected markers, giving 
 "did I break a page?" signal. See CLAUDE.md for what does/doesn't work without a populated DB.
 """
 
-import json
-import re
 from pathlib import Path
 
 import pytest
@@ -58,25 +56,16 @@ def test_slim_model_artifact():
     assert total < 500 * 1024, f"model weights {total} bytes exceed the 500KB slim budget"
 
 
-def test_browser_tfjs_can_load_model_format():
-    """The browser's tf.js runtime must be >= the converter that produced model.json.
+def test_model_json_is_tfjs_loadable_format():
+    """model.json must be Keras-2 layers-format so the browser's tf.js can load it.
 
-    The model is exported in Keras 3 layers-format; a tf.js runtime older than the
-    converter cannot deserialize it (batch_shape / DTypePolicy), which surfaces in the
-    browser as 'The model failed to load'. This guards that the CDN version stays in sync.
+    Keras 3 (TF 2.16+) serializes InputLayer as `batch_shape` plus DTypePolicy dtype
+    objects, which tfjs-layers cannot deserialize ("InputLayer should be passed
+    batchInputShape") — the browser then shows 'The model failed to load'. The trainer
+    sets TF_USE_LEGACY_KERAS=1 to emit Keras 2. This guards against regressing to Keras 3.
     """
-    base = Path(__file__).resolve().parent
-    model = json.loads((base / "static" / "mnist" / "model" / "model.json").read_text())
-    cm = re.search(r"(\d+)\.(\d+)\.(\d+)", model.get("convertedBy", ""))
-    assert cm, f"could not parse converter version from {model.get('convertedBy')!r}"
-    converter = tuple(int(x) for x in cm.groups())
-
-    template = (base / "templates" / "mnist" / "index.html").read_text()
-    tm = re.search(r"@tensorflow/tfjs@(\d+)\.(\d+)\.(\d+)", template)
-    assert tm, "could not find the tf.js CDN version in index.html"
-    browser = tuple(int(x) for x in tm.groups())
-
-    assert browser >= converter, (
-        f"browser tf.js {browser} is older than the converter {converter} that built "
-        f"model.json; loadLayersModel will reject the newer (Keras 3) topology"
-    )
+    model_dir = Path(__file__).resolve().parent / "static" / "mnist" / "model"
+    text = (model_dir / "model.json").read_text()
+    assert "batch_input_shape" in text, "model.json is not Keras-2 format (no batch_input_shape)"
+    assert '"batch_shape"' not in text, "model.json uses Keras-3 `batch_shape` (not tfjs-loadable)"
+    assert "DTypePolicy" not in text, "model.json uses Keras-3 DTypePolicy dtype (not tfjs-loadable)"
