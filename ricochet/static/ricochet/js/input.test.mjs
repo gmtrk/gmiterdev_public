@@ -139,3 +139,45 @@ test('presetPositions: unknown preset yields an empty array', () => {
   const placed = makePlaced();
   assert.deepEqual(presetPositions('spiral', world, placed), []);
 });
+
+import { applyPreset, applyBlueprint } from './input.js';
+
+test('applyPreset: replaces pegs with the preset, never exceeding budget', () => {
+  const world = makeWorld({ pegs: 10, blocks: 5 });
+  const placed = makePlaced();
+  placed.pegs.push({ x: 100, y: 400 });
+  applyPreset('triangle', world, placed);
+  assert.ok(placed.pegs.length <= 10);
+  assert.ok(placed.pegs.length >= 1);
+});
+
+test('applyBlueprint: clamps pegs/blocks to current budgets', () => {
+  const world = makeWorld({ pegs: 2, blocks: 1 });
+  const placed = makePlaced();
+  const blueprint = {
+    pegs: [{ x: 100, y: 400 }, { x: 300, y: 500 }, { x: 600, y: 600 }],
+    blocks: [
+      { x: 400, y: 820, level: 9, respawnAt: null, golden: false },
+      { x: 600, y: 900, level: 9, respawnAt: null, golden: false },
+    ],
+    paddle: { x: 700, width: 140 },
+  };
+  applyBlueprint(world, placed, blueprint);
+  assert.equal(placed.pegs.length, 2); // clamped from 3 -> 2
+  assert.equal(placed.blocks.length, 1); // clamped from 2 -> 1
+  assert.deepEqual(placed.paddle, { x: 700, width: 140 });
+});
+
+test('applyBlueprint: produces canonical block shapes (fresh copies)', () => {
+  const world = makeWorld({ pegs: 5, blocks: 5 });
+  const placed = makePlaced();
+  const blueprint = {
+    pegs: [],
+    blocks: [{ x: 400, y: 820, level: 9, respawnAt: null, golden: false }],
+    paddle: { x: 500, width: 120 },
+  };
+  applyBlueprint(world, placed, blueprint);
+  const b = placed.blocks[0];
+  assert.deepEqual(Object.keys(b).sort(), ['golden', 'level', 'respawnAt', 'x', 'y']);
+  assert.notEqual(b, blueprint.blocks[0]); // a copy, not the same object
+});

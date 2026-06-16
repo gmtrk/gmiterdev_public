@@ -86,3 +86,26 @@ export function presetPositions(name, world, placed) {
   if (name === 'funnel') return funnelPegs(count);
   return [];
 }
+
+// Replace the placed pegs with a one-click preset (auto-filled to budget).
+// Existing blocks/paddle are untouched. Caller re-syncs colliders.
+export function applyPreset(name, world, placed) {
+  const positions = presetPositions(name, world, placed);
+  placed.pegs = positions.map((p) => ({ x: p.x, y: p.y }));
+}
+
+// Re-apply a saved blueprint into placed.*, CLAMPED to the current world.budgets
+// (Big-Bang reuse path: budgets may have shrunk). Blocks are fresh canonical
+// copies. Caller re-syncs colliders.
+export function applyBlueprint(world, placed, blueprint) {
+  const clamped = clampBlueprintToBudget(blueprint, world.budgets);
+  placed.pegs = clamped.pegs.map((p) => ({ x: p.x, y: p.y }));
+  placed.blocks = clamped.blocks.map((b) => ({
+    x: b.x,
+    y: b.y,
+    level: b.level,
+    respawnAt: b.respawnAt ?? null,
+    golden: !!b.golden,
+  }));
+  placed.paddle = { x: clamped.paddle.x, width: clamped.paddle.width };
+}
