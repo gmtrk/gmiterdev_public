@@ -75,3 +75,14 @@ export function removeTopmost(world, placed, x, y) {
   }
   return false;
 }
+
+// Compute the peg positions for a preset, sized to the remaining peg budget
+// (auto-fill: fill the headroom between placed pegs and the budget).
+export function presetPositions(name, world, placed) {
+  const count = autoFillCount(placed.pegs.length, world.budgets.pegs);
+  if (count <= 0) return [];
+  if (name === 'triangle') return trianglePegs(count);
+  if (name === 'diamond') return diamondPegs(count);
+  if (name === 'funnel') return funnelPegs(count);
+  return [];
+}

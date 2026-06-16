@@ -111,3 +111,31 @@ test('removeTopmost: returns false when nothing is under the cursor', () => {
   placed.pegs.push({ x: 200, y: 400 });
   assert.equal(removeTopmost(world, placed, 900, 900), false);
 });
+
+import { presetPositions } from './input.js';
+
+test('presetPositions: triangle dispatch yields the auto-fill headroom count', () => {
+  const world = makeWorld({ pegs: 12, blocks: 5 });
+  const placed = makePlaced();
+  placed.pegs.push({ x: 100, y: 400 }); // 1 already placed -> headroom 11
+  const pos = presetPositions('triangle', world, placed);
+  assert.equal(pos.length, 11);
+});
+
+test('presetPositions: diamond dispatch respects budget headroom', () => {
+  const world = makeWorld({ pegs: 6, blocks: 5 });
+  const placed = makePlaced();
+  assert.equal(presetPositions('diamond', world, placed).length, 6);
+});
+
+test('presetPositions: funnel dispatch respects budget headroom', () => {
+  const world = makeWorld({ pegs: 8, blocks: 5 });
+  const placed = makePlaced();
+  assert.equal(presetPositions('funnel', world, placed).length, 8);
+});
+
+test('presetPositions: unknown preset yields an empty array', () => {
+  const world = makeWorld({ pegs: 8, blocks: 5 });
+  const placed = makePlaced();
+  assert.deepEqual(presetPositions('spiral', world, placed), []);
+});
