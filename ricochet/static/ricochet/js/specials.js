@@ -87,3 +87,26 @@ export function tryBurst(world, i, emit) {
   special.charge[i] = 0;
   return true;
 }
+
+// Build the per-step emit object passed into resolveClack / tryBurst.
+// - credits(n): forward to the economy accumulator (addCredits) in main.js.
+// - balls(count, x, y): spawn NORMAL, CAP_EXEMPT balls into world.normal via the
+//   REAL spawnNormal, ONLY into the reserved-owned headroom. The request is
+//   clamped to (world.ceiling - RESERVED_OWNED - world.normal.count); it fizzles
+//   to zero when the arena is at/over the sub-ceiling so purchased (owned)
+//   capacity is always protected. Reads live counts each call so spawns within
+//   the same step are accounted for.
+export function makeSpecialEmit(world, addCredits) {
+  return {
+    credits(n) {
+      addCredits(n);
+    },
+    balls(count, x, y) {
+      const sub = (world.ceiling ?? CEILING_DESKTOP) - RESERVED_OWNED;
+      const headroom = sub - world.normal.count;
+      if (headroom <= 0) return; // fizzle
+      const n = count < headroom ? count : headroom;
+      for (let k = 0; k < n; k++) spawnNormal(world, x, y, FLAG_CAP_EXEMPT);
+    },
+  };
+}

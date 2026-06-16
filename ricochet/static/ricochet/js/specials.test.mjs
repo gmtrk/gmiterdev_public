@@ -6,12 +6,23 @@ import {
   chargeBurster,
   tryBurst,
   CLACKER_CLACK_CREDITS,
+  makeSpecialEmit,
 } from './specials.js';
-import { buildWorld, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
+import {
+  buildWorld,
+  spawnSpecial,
+  spawnNormal,
+  CLACKER,
+  SPLITTER,
+  BURSTER,
+  NORMAL,
+  FLAG_CAP_EXEMPT,
+} from './physics.js';
 import { defaultSave } from './save.js';
 import {
   CLACK_COOLDOWN,
   DT,
+  RESERVED_OWNED,
   BURSTER as BURSTER_CFG,
 } from './config.js';
 
@@ -213,4 +224,45 @@ test('accumulating env bounces then a clack crosses the threshold and bursts', (
   assert.equal(tryBurst(w, 0, emit), true);
   const last = emit._calls.balls[emit._calls.balls.length - 1];
   assert.equal(last.count, BURSTER_CFG.ballsPerBurst);
+});
+
+test('makeSpecialEmit.credits forwards to addCredits', () => {
+  const w = freshWorld();
+  let total = 0;
+  const emit = makeSpecialEmit(w, (n) => { total += n; });
+  emit.credits(42);
+  assert.equal(total, 42);
+});
+
+test('makeSpecialEmit.balls spawns cap-exempt NORMAL balls while under ceiling-RESERVED_OWNED', () => {
+  const w = freshWorld();
+  const before = w.normal.count;
+  const emit = makeSpecialEmit(w, () => {});
+  emit.balls(2, 50, 60);
+  assert.equal(w.normal.count, before + 2, 'two balls spawned into the normal pool');
+  // The most-recently spawned balls carry FLAG_CAP_EXEMPT.
+  assert.ok((w.normal.flags[before] & FLAG_CAP_EXEMPT) !== 0);
+  assert.ok((w.normal.flags[before + 1] & FLAG_CAP_EXEMPT) !== 0);
+  assert.equal(w.normal.type[before], NORMAL, 'emitted balls are NORMAL type');
+});
+
+test('makeSpecialEmit.balls clamps the request to the remaining headroom', () => {
+  const w = freshWorld();
+  const sub = w.ceiling - RESERVED_OWNED;
+  // Fill the normal pool to exactly one slot below the sub-ceiling.
+  while (w.normal.count < sub - 1) spawnNormal(w, 0, 0, 0);
+  const before = w.normal.count;
+  const emit = makeSpecialEmit(w, () => {});
+  emit.balls(6, 0, 0);
+  assert.equal(w.normal.count, before + 1, 'clamped to the single free headroom slot');
+});
+
+test('makeSpecialEmit.balls FIZZLES (no spawn) when the arena is at/over the sub-ceiling', () => {
+  const w = freshWorld();
+  const sub = w.ceiling - RESERVED_OWNED;
+  while (w.normal.count < sub) spawnNormal(w, 0, 0, 0); // exactly at the sub-ceiling
+  const before = w.normal.count;
+  const emit = makeSpecialEmit(w, () => {});
+  emit.balls(6, 0, 0);
+  assert.equal(w.normal.count, before, 'fizzled — owned capacity is protected');
 });
