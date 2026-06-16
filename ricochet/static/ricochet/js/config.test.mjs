@@ -110,8 +110,8 @@ test('UPGRADES has the headline globalValueMult + ballCapacity defs the economy 
   assert.equal(cap.costGrowth, 1.30);
 });
 
-test('UPGRADES includes the special-unlock defs', () => {
-  for (const id of ['unlockClacker', 'unlockSplitter', 'unlockBurster']) {
+test('UPGRADES includes the budget/paddle/kick levers the deriver reads', () => {
+  for (const id of ['goldenChance', 'pegBudget', 'blockBudget', 'paddleWidth', 'pegKick']) {
     assert.ok(C.UPGRADES.find((u) => u.id === id), `missing ${id}`);
   }
 });
@@ -135,7 +135,7 @@ test('CORES_UPGRADES is a non-empty array of well-formed, unique-id defs', () =>
 });
 
 test('CORES_UPGRADES includes a permanent global mult + head-start + offline def', () => {
-  assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'coresGlobalMult'), 'missing coresGlobalMult');
+  assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'globalValueMult' && u.group === 'power'), 'missing permanent global mult');
   assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'startCreditsMult'), 'missing startCreditsMult');
-  assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'offlineEfficiency'), 'missing offlineEfficiency');
+  assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'offlineEfficiencyAdd'), 'missing offlineEfficiencyAdd');
 });
