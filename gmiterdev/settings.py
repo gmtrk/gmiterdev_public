@@ -141,7 +141,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'CET'
+# Canonical IANA zone (Central European Time, same DST as the legacy 'CET').
+# 'CET' is a deprecated non-geographic zone that Debian moved to tzdata-legacy, so it's
+# absent from the slim image; a Region/City zone lives in the base tzdata package.
+TIME_ZONE = 'Europe/Warsaw'
 
 USE_I18N = True
 
