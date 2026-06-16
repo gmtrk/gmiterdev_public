@@ -6,6 +6,13 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# System tzdata so Django's TIME_ZONE (CET) resolves against /usr/share/zoneinfo.
+# python:3.12-slim ships an incomplete zoneinfo dir, which otherwise makes Django raise
+# "Incorrect timezone setting: CET" at settings load (both collectstatic and runtime).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Python deps first so this layer caches across code changes.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
