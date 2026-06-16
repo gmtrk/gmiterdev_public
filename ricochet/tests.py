@@ -28,3 +28,8 @@ def test_ricochet_score_ordering_is_cores_desc():
     RicochetScore.objects.create(initials="MID", cores=100)
     ordered = list(RicochetScore.objects.all().values_list("initials", flat=True))
     assert ordered == ["TOP", "MID", "LOW"]
+
+
+def test_ricochet_page_loads(client):
+    resp = client.get("/ricochet/")
+    assert resp.status_code == 200
