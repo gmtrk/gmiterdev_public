@@ -24,8 +24,8 @@ test('cap + grid scalars match the contract', () => {
 });
 
 test('physics scalars match the contract', () => {
-  assert.equal(C.GRAVITY, 1400);
-  assert.equal(C.DRAG, 0.999);
+  assert.equal(C.GRAVITY, 600);
+  assert.equal(C.DRAG, 0.96);
   assert.equal(C.E_WALL, 0.92);
   assert.equal(C.E_COLLIDER, 0.9);
   assert.equal(C.PEG_RADIUS, 7);
@@ -64,7 +64,7 @@ test('burster + offline + prestige scalars match the contract', () => {
 });
 
 test('cold-open + base-capacity scalars match the contract', () => {
-  assert.equal(C.STARTING_CREDITS, 50);
+  assert.equal(C.STARTING_CREDITS, 25);
   assert.equal(C.BASE_CAPACITY, 3);
 });
 

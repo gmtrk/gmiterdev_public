@@ -5,8 +5,12 @@ export const DT = 1 / 60, MAX_SUBSTEPS = 2, FRAME_BUDGET_MS = 8;
 export const ARENA_W = 1000, ARENA_H = 1500;
 export const SPAWN_MARGIN = 40, SPAWN_Y = 30, MAX_SPAWNS_PER_TICK = 8;
 export const CEILING_DESKTOP = 5000, RESERVED_OWNED = 200, SPECIAL_CAP = 96, GRID_CELL = 50;
-export const GRAVITY = 1400, DRAG = 0.999, E_WALL = 0.92, E_COLLIDER = 0.9;
+export const GRAVITY = 600, DRAG = 0.96, E_WALL = 0.92, E_COLLIDER = 0.9;
 export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
+// Paddle is a strict energy sink (NOT a kicker like pegs): restitution < 1 and
+// zero kick, plus a tiny tangential nudge so a vertical drop walks off the edge
+// instead of column-bouncing forever.
+export const E_PADDLE = 0.6, PADDLE_NUDGE = 25;
 // Tunneling invariant: MAX_SPEED*DT < PEG_RADIUS.
 export const MAX_SPEED = 0.9 * PEG_RADIUS / DT;
 export const BLOCK_W = 64, BLOCK_H = 28, BLOCK_LEVELS = 9, RESPAWN_DELAY = 4, BLOCK_BREAK_BONUS = 8;
@@ -18,7 +22,7 @@ export const CLACK_COOLDOWN = 0.2;
 export const BURSTER = { chargePerBounce: 1, chargePerClack: 5, threshold: 60, ballsPerBurst: 6 };
 export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLifeSec: 300 };
 export const PRESTIGE = { coreScale: 1e9, coreK: 1, minCredits: 1e9 };
-export const STARTING_CREDITS = 50; // cold-open grant
+export const STARTING_CREDITS = 25; // cold-open grant (first upgrade affordable after ~10s, not instantly)
 export const BASE_CAPACITY = 3;     // starting ball slots before upgrades
 export const PEG_BUDGET_BASE = 12, BLOCK_BUDGET_BASE = 2, PADDLE_WIDTH_BASE = 120;
 
