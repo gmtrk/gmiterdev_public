@@ -17,3 +17,43 @@ export const NORMAL = 0, CLACKER = 1, SPLITTER = 2, BURSTER = 3;
 export const TYPE_NORMAL = NORMAL, TYPE_CLACKER = CLACKER, TYPE_SPLITTER = SPLITTER, TYPE_BURSTER = BURSTER;
 
 const NOOP_EMIT = { credits() {}, balls() {} };
+
+export function createPool(capacity, isSpecial) {
+  const pool = {
+    capacity,
+    count: 0,
+    x: new Float32Array(capacity),
+    y: new Float32Array(capacity),
+    vx: new Float32Array(capacity),
+    vy: new Float32Array(capacity),
+    radius: new Float32Array(capacity),
+    type: new Uint8Array(capacity),
+    flags: new Uint8Array(capacity),
+    free: [],
+  };
+  if (isSpecial) {
+    pool.charge = new Float32Array(capacity);
+    pool.clackCooldown = new Float32Array(capacity);
+    pool.envHits = new Int32Array(capacity);
+  }
+  return pool;
+}
+
+export function swapRemove(pool, i) {
+  const last = pool.count - 1;
+  if (i !== last) {
+    pool.x[i] = pool.x[last];
+    pool.y[i] = pool.y[last];
+    pool.vx[i] = pool.vx[last];
+    pool.vy[i] = pool.vy[last];
+    pool.radius[i] = pool.radius[last];
+    pool.type[i] = pool.type[last];
+    pool.flags[i] = pool.flags[last];
+    if (pool.charge) {
+      pool.charge[i] = pool.charge[last];
+      pool.clackCooldown[i] = pool.clackCooldown[last];
+      pool.envHits[i] = pool.envHits[last];
+    }
+  }
+  pool.count = last;
+}
