@@ -1,0 +1,70 @@
+import { STARTING_CREDITS, ARENA_W, ARENA_H, BLOCK_LEVELS, PADDLE_WIDTH_BASE } from './config.js';
+
+export const CURRENT_VERSION = 1;
+
+function starterBlueprint() {
+  // Plinko triangle: rows of pegs, widening downward, centered horizontally.
+  const pegs = [];
+  const rows = 4;
+  const startY = ARENA_H * 0.30;
+  const rowGap = 90;
+  const colGap = 90;
+  for (let row = 0; row < rows; row++) {
+    const count = row + 2; // 2,3,4,5 -> 14 pegs total
+    const y = startY + row * rowGap;
+    const width = (count - 1) * colGap;
+    const x0 = ARENA_W / 2 - width / 2;
+    for (let c = 0; c < count; c++) {
+      pegs.push({ x: x0 + c * colGap, y });
+    }
+  }
+  const blockY = ARENA_H * 0.68;
+  const blocks = [
+    { x: ARENA_W / 2 - 110, y: blockY, level: BLOCK_LEVELS, respawnAt: null, golden: false },
+    { x: ARENA_W / 2 + 110, y: blockY, level: BLOCK_LEVELS, respawnAt: null, golden: false },
+  ];
+  const paddle = { x: ARENA_W / 2, width: PADDLE_WIDTH_BASE };
+  return { pegs, blocks, paddle };
+}
+
+export function defaultSave() {
+  return {
+    version: CURRENT_VERSION,
+    credits: String(STARTING_CREDITS),
+    cores: 0,
+    lifetimeCores: 0,
+    upgrades: {},
+    specials: {
+      clacker: { unlocked: false, capacity: 0 },
+      splitter: { unlocked: false, capacity: 0 },
+      burster: { unlocked: false, capacity: 0 },
+    },
+    coresShop: {},
+    placed: starterBlueprint(),
+    stats: { recentEarnRate: 0, lastSaveTime: 0, lastSubmittedCores: 0 },
+  };
+}
+
+export function serialize(state) {
+  const disk = {
+    version: state.version,
+    credits: String(state.credits),
+    cores: String(state.cores),
+    lifetimeCores: String(state.lifetimeCores),
+    upgrades: state.upgrades,
+    specials: state.specials,
+    coresShop: state.coresShop,
+    placed: state.placed,
+    stats: state.stats,
+  };
+  return JSON.stringify(disk);
+}
+
+export function deserialize(str) {
+  const obj = JSON.parse(str);
+  return {
+    ...obj,
+    cores: Number(obj.cores),
+    lifetimeCores: Number(obj.lifetimeCores),
+  };
+}
