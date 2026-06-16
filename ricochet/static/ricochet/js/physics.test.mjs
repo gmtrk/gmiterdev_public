@@ -199,3 +199,117 @@ test('resolveCircleAABB TUNNELING: a MAX_SPEED ball overlapping a thin block (ha
   assert.ok(r.vy < 0, `vy should reflect upward, was ${r.vy}`);
   assert.ok(Math.hypot(r.vx, r.vy) <= MAX_SPEED + 1e-3);
 });
+
+import { buildWorld, rebuildColliders, spawnNormal, spawnSpecial } from './physics.js';
+import { SPAWN_Y, BLOCK_W, BLOCK_LEVELS, SPECIAL_CAP } from './config.js';
+import { Grid } from './grid.js';
+
+// A minimal canonical `state` for world-building tests.
+function makeState() {
+  return {
+    version: 1,
+    credits: 50,
+    cores: 0, lifetimeCores: 0,
+    upgrades: {},
+    specials: { clacker: { unlocked: false, capacity: 0 }, splitter: { unlocked: false, capacity: 0 }, burster: { unlocked: false, capacity: 0 } },
+    coresShop: {},
+    placed: {
+      pegs: [{ x: 100, y: 300 }, { x: 200, y: 400 }],
+      blocks: [{ x: 400, y: 820, level: 9, respawnAt: 0, golden: false }],
+      paddle: { x: 500, width: 120 },
+    },
+    stats: { recentEarnRate: 0, lastSaveTime: 0, lastSubmittedCores: 0 },
+  };
+}
+
+test('buildWorld returns the canonical world shape with both pools and zeroed counters', () => {
+  const state = makeState();
+  const world = buildWorld(state);
+  assert.equal(world.W, ARENA_W);
+  assert.equal(world.H, ARENA_H);
+  assert.equal(world.pegRadius, PEG_RADIUS);
+  assert.equal(world.normal.capacity, world.ceiling > 0 ? world.normal.capacity : world.normal.capacity); // normal pool exists
+  assert.ok(world.normal && world.normal.x instanceof Float32Array);
+  assert.equal(world.special.capacity, SPECIAL_CAP);
+  assert.ok(world.special.charge instanceof Float32Array); // special pool is a special SoA
+  assert.deepEqual(world.counters, { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 });
+  assert.equal(world.blockW, BLOCK_W);
+  assert.equal(world.blockH, BLOCK_H);
+  assert.ok(world.grid instanceof Grid);
+  // colliders synced from state.placed.*
+  assert.equal(world.pegs.count, 2);
+  assert.equal(world.blocks.count, 1);
+  assert.equal(world.blocks.w, BLOCK_W);
+  assert.equal(world.blocks.h, BLOCK_H);
+  // applyUpgradeEffects-derived fields are present (set by economy.js)
+  assert.equal(typeof world.globalValueMult, 'number');
+  assert.equal(typeof world.goldenChance, 'number');
+  assert.equal(typeof world.baseCapacity, 'number');
+  assert.equal(typeof world.budgets.pegs, 'number');
+  assert.equal(typeof world.budgets.blocks, 'number');
+  // world retains a reference to its owning state for rebuildColliders
+  assert.equal(world.state, state);
+});
+
+test('rebuildColliders rewrites pegs/blocks SoA from state.placed and rebuilds the grid', () => {
+  const state = makeState();
+  const world = buildWorld(state);
+  // mutate the blueprint then re-sync
+  state.placed.pegs = [{ x: 10, y: 20 }, { x: 30, y: 40 }, { x: 50, y: 60 }];
+  state.placed.blocks = [
+    { x: 111, y: 222, level: 5, respawnAt: 0, golden: true },
+    { x: 333, y: 444, level: 9, respawnAt: 0, golden: false },
+  ];
+  rebuildColliders(world);
+  assert.equal(world.pegs.count, 3);
+  assert.equal(world.pegs.xs[2], 50);
+  assert.equal(world.pegs.ys[2], 60);
+  assert.equal(world.pegs.r, PEG_RADIUS);
+  assert.equal(world.blocks.count, 2);
+  assert.equal(world.blocks.xs[0], 111);
+  assert.equal(world.blocks.level[0], 5);
+  assert.equal(world.blocks.golden[0], 1);
+  assert.equal(world.blocks.golden[1], 0);
+});
+
+test('spawnNormal inserts into world.normal while count < ceiling and sets fields', () => {
+  const state = makeState();
+  const world = buildWorld(state);
+  world.ceiling = 3;
+  spawnNormal(world, 123, SPAWN_Y, FLAG_GOLDEN);
+  assert.equal(world.normal.count, 1);
+  assert.equal(world.normal.x[0], 123);
+  assert.equal(world.normal.y[0], SPAWN_Y);
+  assert.equal(world.normal.type[0], TYPE_NORMAL);
+  assert.equal(world.normal.flags[0] & FLAG_GOLDEN, FLAG_GOLDEN);
+  assert.equal(world.normal.radius[0], BALL_RADIUS);
+});
+
+test('spawnNormal refuses to insert once count >= ceiling', () => {
+  const state = makeState();
+  const world = buildWorld(state);
+  world.ceiling = 1;
+  spawnNormal(world, 10, 10, 0);
+  spawnNormal(world, 20, 20, 0); // should be rejected
+  assert.equal(world.normal.count, 1);
+});
+
+test('spawnSpecial inserts into world.special with zeroed charge/clackCooldown/envHits', () => {
+  const state = makeState();
+  const world = buildWorld(state);
+  spawnSpecial(world, TYPE_BURSTER, 250, 30);
+  assert.equal(world.special.count, 1);
+  assert.equal(world.special.type[0], TYPE_BURSTER);
+  assert.equal(world.special.x[0], 250);
+  assert.equal(world.special.charge[0], 0);
+  assert.equal(world.special.clackCooldown[0], 0);
+  assert.equal(world.special.envHits[0], 0);
+});
+
+test('spawnSpecial refuses once special count >= SPECIAL_CAP', () => {
+  const state = makeState();
+  const world = buildWorld(state);
+  world.special.count = SPECIAL_CAP;
+  spawnSpecial(world, TYPE_CLACKER, 1, 1);
+  assert.equal(world.special.count, SPECIAL_CAP);
+});
