@@ -1,4 +1,5 @@
-import { PALETTE, BALL_RADIUS, PEG_RADIUS } from './config.js';
+import { PALETTE, BALL_RADIUS, PEG_RADIUS, BURSTER as BURSTER_CFG } from './config.js';
+import { CLACKER, SPLITTER, BURSTER, NORMAL } from './physics.js';
 
 const FT_LIFE = 0.9;          // floating-text lifetime (seconds)
 const FT_RISE = 40;           // px/sec upward drift
@@ -12,6 +13,29 @@ export function bucketRadius(r) {
 
 export function atlasKey(typeName, r) {
   return `${typeName}@${bucketRadius(r)}`;
+}
+
+// Per-type neon hue. Specials get their own palette colors; NORMAL -> cyan.
+// Used ONLY for the Burster charge-ring stroke color — sprite color comes from
+// the per-type atlas, never a runtime drawImage tint.
+export function specialHue(type, palette) {
+  switch (type) {
+    case CLACKER: return palette.clacker;
+    case SPLITTER: return palette.splitter;
+    case BURSTER: return palette.burster;
+    default: return palette.ballCyan;
+  }
+}
+
+// Arc geometry for a Burster's charge ring. frac = charge/threshold clamped to
+// [0,1]; the arc sweeps clockwise from 12 o'clock (-PI/2). Zero threshold -> 0.
+export function chargeRing(charge, threshold) {
+  let frac = threshold > 0 ? charge / threshold : 0;
+  if (frac < 0) frac = 0;
+  else if (frac > 1) frac = 1;
+  const startAngle = -Math.PI / 2;
+  const endAngle = startAngle + frac * Math.PI * 2;
+  return { frac, startAngle, endAngle };
 }
 
 // Pooled floating credit text. Fixed cap; extra spawns overwrite oldest.

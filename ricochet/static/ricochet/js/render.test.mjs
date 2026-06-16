@@ -5,7 +5,11 @@ import {
   atlasKey,
   createFloatingTextPool,
   createParticleRing,
+  specialHue,
+  chargeRing,
 } from './render.js';
+import { CLACKER, SPLITTER, BURSTER, NORMAL } from './physics.js';
+import { PALETTE } from './config.js';
 
 test('bucketRadius rounds to nearest integer, min 1', () => {
   assert.equal(bucketRadius(6), 6);
@@ -79,4 +83,27 @@ test('Particle update advances position by velocity * dt', () => {
   ring.forEach((p) => { px = p.x; py = p.y; });
   assert.ok(Math.abs(px - 5) < 1e-9);
   assert.ok(Math.abs(py - 10) < 1e-9);
+});
+
+test('specialHue maps each special type to its palette color', () => {
+  assert.equal(specialHue(CLACKER, PALETTE), PALETTE.clacker);
+  assert.equal(specialHue(SPLITTER, PALETTE), PALETTE.splitter);
+  assert.equal(specialHue(BURSTER, PALETTE), PALETTE.burster);
+});
+
+test('specialHue falls back to the normal cyan for a NORMAL ball', () => {
+  assert.equal(specialHue(NORMAL, PALETTE), PALETTE.ballCyan);
+});
+
+test('chargeRing returns a clamped fraction and a clockwise arc from 12 o\'clock', () => {
+  const r = chargeRing(30, 60); // half charged
+  assert.equal(r.frac, 0.5);
+  assert.ok(Math.abs(r.startAngle - (-Math.PI / 2)) < 1e-9, 'starts at top (-PI/2)');
+  assert.ok(Math.abs(r.endAngle - (-Math.PI / 2 + Math.PI)) < 1e-9, 'sweeps half a turn');
+});
+
+test('chargeRing clamps frac into [0,1] and guards divide-by-zero', () => {
+  assert.equal(chargeRing(90, 60).frac, 1, 'overcharge clamps to full');
+  assert.equal(chargeRing(-5, 60).frac, 0, 'negative clamps to empty');
+  assert.equal(chargeRing(5, 0).frac, 0, 'zero threshold -> empty (no divide-by-zero)');
 });
