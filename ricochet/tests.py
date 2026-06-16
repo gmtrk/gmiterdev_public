@@ -33,3 +33,30 @@ def test_ricochet_score_ordering_is_cores_desc():
 def test_ricochet_page_loads(client):
     resp = client.get("/ricochet/")
     assert resp.status_code == 200
+
+
+def test_ricochet_page_contains_canvas(client):
+    resp = client.get("/ricochet/")
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    assert 'id="ricochet-canvas"' in html
+    assert '<canvas' in html
+
+
+def test_ricochet_page_loads_main_module(client):
+    resp = client.get("/ricochet/")
+    html = resp.content.decode()
+    assert 'type="module"' in html
+    assert 'ricochet/js/main.js' in html
+
+
+def test_ricochet_page_has_csrf_token(client):
+    resp = client.get("/ricochet/")
+    html = resp.content.decode()
+    assert 'name="csrfmiddlewaretoken"' in html
+
+
+def test_ricochet_page_has_home_logo_link(client):
+    resp = client.get("/ricochet/")
+    html = resp.content.decode()
+    assert 'href="/"' in html

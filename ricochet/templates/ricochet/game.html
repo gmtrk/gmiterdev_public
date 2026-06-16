@@ -1,0 +1,52 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block title %}Ricochet{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'ricochet/css/ricochet.css' %}">
+{% endblock %}
+
+{% block body_class %}rc-body{% endblock %}
+
+{% block header %}
+<header class="rc-topbar">
+  <div class="rc-topbar__inner">
+    <a class="rc-logo" href="{% url 'main' %}">
+      <span class="rc-logo__seg rc-logo__seg--pre">gmiter</span>
+      <span class="rc-logo__circle">R</span>
+      <span class="rc-logo__seg rc-logo__seg--post">dev</span>
+      <span class="rc-logo__game">ricochet</span>
+    </a>
+    <div class="rc-hud" id="rc-hud">
+      <span class="rc-hud__stat">CREDITS&nbsp;<b id="rc-credits">0</b></span>
+      <span class="rc-hud__stat">PER&nbsp;SEC&nbsp;<b id="rc-cps">0</b></span>
+      <span class="rc-hud__stat">CORES&nbsp;<b id="rc-cores">0</b></span>
+      <span class="rc-hud__stat">BALLS&nbsp;<b id="rc-balls">0</b>/<span id="rc-capacity">0</span></span>
+      <span class="rc-hud__stat">COMBO&nbsp;&times;<b id="rc-combo">1</b></span>
+    </div>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="rc-page">
+  <div class="rc-arena">
+    <canvas id="ricochet-canvas" class="rc-canvas" width="1000" height="1500"></canvas>
+  </div>
+  <aside class="rc-panel" id="rc-panel">
+    <div class="rc-tabs" id="rc-tabs">
+      <button class="rc-tab rc-tab--active" data-tab="credits" type="button">Credits</button>
+      <button class="rc-tab" data-tab="cores" type="button">Cores</button>
+      <button class="rc-tab" data-tab="place" type="button">Place</button>
+    </div>
+    <div class="rc-tab-body" id="rc-tab-body"></div>
+  </aside>
+</div>
+
+<script type="module" src="{% static 'ricochet/js/main.js' %}"></script>
+{% endblock %}
