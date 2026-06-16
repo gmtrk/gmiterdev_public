@@ -142,6 +142,92 @@ body.rc-body {
   padding: 14px;
 }
 
+/* --- Leaderboard (Scores tab) + Big-Bang submit affordance --- */
+.rc-hidden { display: none !important; }
+
+.rc-lb__title {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--rc-cyan);
+}
+
+.rc-lb__bigbang {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--rc-magenta);
+  border-radius: 8px;
+  color: var(--rc-magenta);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+}
+
+.rc-lb__table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.rc-lb__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rc-line);
+  font-size: 0.8rem;
+}
+
+.rc-lb__rank {
+  display: inline-block;
+  min-width: 1.8em;
+  color: #9a9ad0;
+}
+
+.rc-lb__ini {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.rc-lb__pts {
+  color: var(--rc-cyan);
+  font-weight: 700;
+}
+
+.rc-lb__form {
+  display: flex;
+  gap: 8px;
+}
+
+.rc-lb__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--rc-bg);
+  border: 1px solid var(--rc-line);
+  border-radius: 8px;
+  color: #e7e7ff;
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.rc-lb__submit {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: var(--rc-cyan);
+  border: 0;
+  border-radius: 8px;
+  color: #0a0a16;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
 @media (max-width: 800px) {
   body.rc-body {
     overflow: auto;
