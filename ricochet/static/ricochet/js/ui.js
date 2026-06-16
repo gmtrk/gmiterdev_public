@@ -208,7 +208,10 @@ export function renderShop(tab, { container, state, onBuy, rows }) {
 
     const price = document.createElement('span');
     price.className = 'rc-row__cost';
-    price.textContent = maxed ? (isUnlock ? 'OWNED' : 'MAX') : formatNumber(cost);
+    // Affordable rows read "BUY <cost>" so the cyan pill clearly invites a click.
+    price.textContent = maxed
+      ? (isUnlock ? 'OWNED' : 'MAX')
+      : (afford ? 'BUY ' + formatNumber(cost) : formatNumber(cost));
 
     row.append(label, effect, price);
     row.addEventListener('click', () => onBuy(def.id));

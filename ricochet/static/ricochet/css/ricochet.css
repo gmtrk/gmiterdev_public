@@ -243,6 +243,187 @@ body.rc-body {
   cursor: pointer;
 }
 
+/* --- Shop rows (Credits + Cores tabs) ------------------------------------ */
+/* renderShop emits <button class="rc-row [rc-row--afford]"> with
+   .rc-row__label / .rc-row__effect / .rc-row__cost children. Give them clear
+   button affordance, a two-line label grid, and a cost chip on the right. */
+.rc-shop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rc-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #18183a 0%, #11112a 100%);
+  border: 1px solid var(--rc-line);
+  border-radius: 10px;
+  color: #e7e7ff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.05s ease;
+}
+
+.rc-row:hover {
+  border-color: var(--rc-cyan);
+  box-shadow: 0 0 14px rgba(34, 224, 255, 0.28);
+}
+
+.rc-row:active {
+  transform: translateY(1px);
+}
+
+.rc-row:focus-visible {
+  outline: 2px solid var(--rc-cyan);
+  outline-offset: 2px;
+}
+
+.rc-row__label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.rc-row__effect {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: #9a9ad0;
+}
+
+.rc-row__cost {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-self: end;
+  padding: 5px 10px;
+  border: 1px solid var(--rc-line);
+  border-radius: 999px;
+  background: rgba(10, 10, 22, 0.6);
+  color: #c8c8ee;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Unaffordable: dim the whole row so it reads as "not yet". */
+.rc-row:not(.rc-row--afford):not([disabled]) {
+  opacity: 0.62;
+}
+
+/* Affordable: light up the cost chip as a glowing cyan BUY pill. */
+.rc-row--afford {
+  border-color: rgba(34, 224, 255, 0.5);
+}
+
+.rc-row--afford .rc-row__cost {
+  background: var(--rc-cyan);
+  border-color: var(--rc-cyan);
+  color: #06121a;
+  box-shadow: 0 0 12px rgba(34, 224, 255, 0.55);
+}
+
+/* Disabled (MAX / OWNED): dashed, muted, not clickable. */
+.rc-row[disabled] {
+  cursor: default;
+  opacity: 0.45;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.rc-row[disabled]:hover {
+  border-color: var(--rc-line);
+  box-shadow: none;
+}
+
+.rc-row[disabled] .rc-row__cost {
+  background: transparent;
+  border-style: dashed;
+  color: #7a7ab0;
+}
+
+/* --- Place tab: tool + preset buttons + instructions --------------------- */
+.rc-toolrow,
+.rc-presetrow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rc-presetrow {
+  margin-bottom: 4px;
+}
+
+.rc-tool,
+.rc-preset {
+  flex: 1 1 0;
+  min-width: 64px;
+  padding: 9px 10px;
+  background: transparent;
+  border: 1px solid var(--rc-line);
+  border-radius: 8px;
+  color: #c8c8ee;
+  font: inherit;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
+}
+
+.rc-tool:hover,
+.rc-preset:hover {
+  border-color: var(--rc-cyan);
+  color: var(--rc-cyan);
+  box-shadow: 0 0 10px rgba(34, 224, 255, 0.22);
+}
+
+.rc-tool:focus-visible,
+.rc-preset:focus-visible {
+  outline: 2px solid var(--rc-cyan);
+  outline-offset: 2px;
+}
+
+/* Unmistakable active tool state: filled + glowing. */
+.rc-tool--active {
+  background: var(--rc-cyan);
+  border-color: var(--rc-cyan);
+  color: #06121a;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(34, 224, 255, 0.5);
+}
+
+.rc-place-hint {
+  margin: 0 0 12px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #9a9ad0;
+}
+
+.rc-place-subhead {
+  margin: 10px 0 6px;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--rc-cyan);
+}
+
+/* Arena cursor affordance while the Place tab is active. */
+.rc-canvas--place {
+  cursor: crosshair;
+}
+
 @media (max-width: 800px) {
   body.rc-body {
     overflow: auto;
