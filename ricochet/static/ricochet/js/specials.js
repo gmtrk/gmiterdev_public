@@ -68,3 +68,22 @@ export function resolveClack(world, i, j, emit, rng = Math.random) {
   }
   return true;
 }
+
+// Add environmental-bounce charge to a Burster. No-op on non-Burster types so
+// stepPhysics can call it unconditionally per live special. The caller passes
+// amount = special.envHits[i] * BURSTER_CFG.chargePerBounce.
+export function chargeBurster(special, i, amount) {
+  if (special.type[i] !== BURSTER) return;
+  special.charge[i] += amount;
+}
+
+// If a Burster has reached its threshold, emit ballsPerBurst cap-exempt NORMAL
+// balls at its position and reset its charge to 0. Returns whether it burst.
+export function tryBurst(world, i, emit) {
+  const special = world.special;
+  if (special.type[i] !== BURSTER) return false;
+  if (special.charge[i] < BURSTER_CFG.threshold) return false;
+  emit.balls(BURSTER_CFG.ballsPerBurst, special.x[i], special.y[i]);
+  special.charge[i] = 0;
+  return true;
+}

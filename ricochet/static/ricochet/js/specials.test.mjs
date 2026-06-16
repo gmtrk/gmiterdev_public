@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   tickClackCooldowns,
   resolveClack,
+  chargeBurster,
+  tryBurst,
   CLACKER_CLACK_CREDITS,
 } from './specials.js';
 import { buildWorld, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
@@ -132,4 +134,83 @@ test('a sustained overlap fires at most once per CLACK_COOLDOWN when stepped by 
   }
   assert.equal(clacks, 2, 'a second clack fires only after the cooldown elapses');
   assert.equal(emit._calls.credits, 2 * (2 * CLACKER_CLACK_CREDITS), 'two clacks total, both Clacker ends each window');
+});
+
+test('chargeBurster only accumulates on a BURSTER, ignores other types', () => {
+  const w = freshWorld();
+  spawnSpecial(w, BURSTER, 100, 100);
+  spawnSpecial(w, CLACKER, 200, 100);
+  const sp = w.special;
+  chargeBurster(sp, 0, BURSTER_CFG.chargePerBounce);
+  chargeBurster(sp, 1, BURSTER_CFG.chargePerBounce); // no-op: not a Burster
+  assert.equal(sp.charge[0], BURSTER_CFG.chargePerBounce);
+  assert.equal(sp.charge[1], 0);
+});
+
+test('chargeBurster charges by envHits * chargePerBounce (the stepPhysics contract)', () => {
+  const w = freshWorld();
+  spawnSpecial(w, BURSTER, 100, 100);
+  const sp = w.special;
+  sp.envHits[0] = 3; // three environmental contacts resolved this step
+  chargeBurster(sp, 0, sp.envHits[0] * BURSTER_CFG.chargePerBounce);
+  assert.equal(sp.charge[0], 3 * BURSTER_CFG.chargePerBounce);
+});
+
+test('tryBurst below threshold does nothing', () => {
+  const w = freshWorld();
+  spawnSpecial(w, BURSTER, 300, 400);
+  const sp = w.special;
+  sp.charge[0] = BURSTER_CFG.threshold - 1;
+  const emit = spyEmit();
+  const burst = tryBurst(w, 0, emit);
+  assert.equal(burst, false);
+  assert.equal(emit._calls.balls.length, 0);
+  assert.equal(sp.charge[0], BURSTER_CFG.threshold - 1, 'charge preserved');
+});
+
+test('tryBurst at/above threshold emits ballsPerBurst at the Burster position and resets charge', () => {
+  const w = freshWorld();
+  spawnSpecial(w, BURSTER, 300, 400);
+  const sp = w.special;
+  sp.charge[0] = BURSTER_CFG.threshold + 7; // overshoot still bursts
+  const emit = spyEmit();
+  const burst = tryBurst(w, 0, emit);
+  assert.equal(burst, true);
+  assert.equal(emit._calls.balls.length, 1);
+  assert.deepEqual(emit._calls.balls[0], {
+    count: BURSTER_CFG.ballsPerBurst, x: 300, y: 400,
+  });
+  assert.equal(sp.charge[0], 0, 'charge resets to 0 after a burst');
+});
+
+test('tryBurst is a no-op on non-Burster types', () => {
+  const w = freshWorld();
+  spawnSpecial(w, CLACKER, 300, 400);
+  const sp = w.special;
+  sp.charge[0] = BURSTER_CFG.threshold + 100; // even with charge, a Clacker never bursts
+  const emit = spyEmit();
+  assert.equal(tryBurst(w, 0, emit), false);
+  assert.equal(emit._calls.balls.length, 0);
+});
+
+test('accumulating env bounces then a clack crosses the threshold and bursts', () => {
+  const w = freshWorld();
+  spawnSpecial(w, BURSTER, 10, 10);
+  spawnSpecial(w, BURSTER, 12, 10);
+  const sp = w.special;
+  const emit = spyEmit();
+  // Drive charge[0] up via env bounces until adding one more would exceed threshold.
+  let bounces = 0;
+  while (sp.charge[0] + BURSTER_CFG.chargePerBounce < BURSTER_CFG.threshold) {
+    chargeBurster(sp, 0, BURSTER_CFG.chargePerBounce);
+    bounces++;
+  }
+  assert.ok(bounces > 0);
+  assert.equal(tryBurst(w, 0, emit), false, 'not yet at threshold');
+  // A single clack pushes both Bursters by chargePerClack -> over threshold.
+  resolveClack(w, 0, 1, emit);
+  assert.ok(sp.charge[0] >= BURSTER_CFG.threshold);
+  assert.equal(tryBurst(w, 0, emit), true);
+  const last = emit._calls.balls[emit._calls.balls.length - 1];
+  assert.equal(last.count, BURSTER_CFG.ballsPerBurst);
 });
