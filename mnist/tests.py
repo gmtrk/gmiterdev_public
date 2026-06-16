@@ -78,3 +78,16 @@ def test_mnist_page_has_draw_hint(client):
     body = resp.content
     assert b'id="draw-hint"' in body
     assert b"draw a digit" in body
+
+
+def test_chrome_has_pixel_logo_and_save_footer(client):
+    """Shared header/footer carry the Undertale pixel logo + save-point email."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    body = resp.content
+    assert b'class="ud-logo"' in body          # pixel logo in the header
+    assert b'class="ud-soul"' in body           # the SOUL-heart dot
+    assert b"gmtrkk@gmail.com" in body          # save-point footer email
+    # MNIST inherits the default footer
+    mnist = client.get("/mnist/")
+    assert b"gmtrkk@gmail.com" in mnist.content
