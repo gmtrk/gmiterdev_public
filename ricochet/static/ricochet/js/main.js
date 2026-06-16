@@ -1,10 +1,13 @@
 import { migrate, deserialize, serialize } from './save.js';
 import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
 import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo } from './economy.js';
-import { specialSpawnPlan, unlockSpecial, SPECIAL_TYPES } from './specials.js';
+import {
+  specialSpawnPlan, unlockSpecial, SPECIAL_TYPES,
+  resolveClack, makeSpecialEmit, chargeBurster, tryBurst,
+} from './specials.js';
 import {
   DT, SURFACE_BASE, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
-  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y,
+  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
@@ -225,8 +228,21 @@ function step(dt) {
   spawnTick(world, dt, run.spawnRate);
   spawnSpecialsTick(state, world);
 
-  // 2) physics (both pools, block runtime, golden/break counters into world.counters)
-  stepPhysics(world, dt, run.now);
+  // 2) physics (both pools, block runtime, golden/break counters into world.counters).
+  //    Supply the special emit + resolveClack so the special-vs-special clack pass
+  //    fires (Clacker credits feed state.credits; Splitter spawns NORMAL cap-exempt
+  //    balls into reserved-owned headroom via makeSpecialEmit).
+  const emit = makeSpecialEmit(world, (n) => { state.credits += n; });
+  stepPhysics(world, dt, run.now, emit, resolveClack);
+
+  // 2b) Burster env-charge/burst pass: this step's environmental bounces
+  //     (world.special.envHits, repopulated each step in stepPhysics) become
+  //     charge; a Burster over threshold bursts cap-exempt NORMAL balls (same emit).
+  const sp = world.special;
+  for (let i = 0; i < sp.count; i++) {
+    chargeBurster(sp, i, sp.envHits[i] * BURSTER_CFG.chargePerBounce);
+    tryBurst(world, i, emit);
+  }
 
   // 3) combo update — scored this step if any surface contact happened
   const c = world.counters;
