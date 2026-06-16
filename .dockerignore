@@ -1,0 +1,33 @@
+# VCS / tooling
+.git
+.gitignore
+.idea
+.vscode
+.DS_Store
+
+# Python envs & caches
+.venv
+.venv-train
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+
+# Secrets & local-only files
+.env
+.env.example
+local.sqlite3
+db.sqlite3
+
+# AI scaffolding / docs (not needed in the image)
+.superpowers
+docs
+*.md
+
+# Node (only used for tooling, not runtime)
+node_modules
+
+# Collectstatic output — regenerated in the image build; never copy stale copies in.
+# NOTE: leading slash = repo root only, so app-level */static/ sources are KEPT.
+/static
+/staticfiles
