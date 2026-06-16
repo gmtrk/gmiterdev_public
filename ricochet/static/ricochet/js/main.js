@@ -1,21 +1,28 @@
 import { migrate, deserialize, serialize } from './save.js';
 import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
-import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo } from './economy.js';
+import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige } from './economy.js';
 import {
   specialSpawnPlan, unlockSpecial, SPECIAL_TYPES,
   resolveClack, makeSpecialEmit, chargeBurster, tryBurst,
 } from './specials.js';
 import {
   DT, SURFACE_BASE, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
-  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG,
+  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
 import { spawnTick, buildHudAdapter } from './mainstep.js';
 import { formatNumber } from './numfmt.js';
-import { updateHUD, renderShop, buyUpgrade } from './ui.js';
+import { updateHUD, renderShop, buyUpgrade, coresShopRows, showModal } from './ui.js';
 import { setupPlacement, setupPaddleDrag, setupTabs } from './input.js';
 import { makeThrottle } from './throttle.js';
+import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
+import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
+import {
+  updateEarnRate,
+  computeOffline,
+  grantOffline,
+} from './offline.js';
 
 const SAVE_KEY = 'ricochet:save';
 const AUTOSAVE_INTERVAL = 5; // seconds
@@ -113,6 +120,15 @@ if (tabBody && !shopContainer) {
   const coresPanel = document.createElement('div');
   coresPanel.dataset.panel = 'cores';
   coresPanel.hidden = true;
+  const coresRows = document.createElement('div');
+  coresRows.id = 'rc-cores-rows';
+  coresRows.className = 'rc-shop';
+  const bigBang = document.createElement('button');
+  bigBang.type = 'button';
+  bigBang.id = 'big-bang-btn';
+  bigBang.className = 'rc-bigbang';
+  bigBang.textContent = 'Big Bang';
+  coresPanel.append(coresRows, bigBang);
 
   const placePanel = document.createElement('div');
   placePanel.dataset.panel = 'place';
@@ -142,6 +158,10 @@ if (tabBody && !shopContainer) {
   tabBody.append(creditsPanel, coresPanel, placePanel);
 }
 
+function persistSave() {
+  try { localStorage.setItem(SAVE_KEY, serialize(state)); } catch (e) { /* storage full/blocked */ }
+}
+
 function refreshShop() {
   renderShop('credits', {
     container: shopContainer,
@@ -156,10 +176,90 @@ function refreshShop() {
 }
 refreshShop();
 
+// ---- Cores tab: render rows + handle buys ----
+const coresRowsEl = $('rc-cores-rows');
+function refreshCoresTab() {
+  if (!coresRowsEl) return;
+  renderShop('cores', {
+    container: coresRowsEl,
+    rows: coresShopRows(state),
+    cores: state.cores,
+    onBuy: (id) => {
+      if (buyCoresUpgrade(world, state, id)) {
+        persistSave();
+        refreshCoresTab();
+      }
+    },
+  });
+}
+refreshCoresTab();
+
+// ---- Big Bang (prestige) ----
+function onBigBangClicked() {
+  const runCredits = Number(state.credits);
+  if (!canPrestige(runCredits)) {
+    showModal({
+      title: 'Not yet',
+      body: `Reach more credits before a Big Bang (need ${formatNumber(PRESTIGE.minCredits)}).`,
+      confirmLabel: 'OK',
+    });
+    return;
+  }
+  const proj = projectPrestige(state);
+  showModal({
+    title: 'Big Bang?',
+    body:
+      `Convert this run into +${formatNumber(proj.cores)} Cores ` +
+      `(lifetime → ${formatNumber(proj.lifetimeAfter)}).\n` +
+      `Felt boost: next run ≈ ${proj.speedup.toFixed(1)}× faster.`,
+    confirmLabel: `Big Bang (+${formatNumber(proj.cores)} ★)`,
+    cancelLabel: 'Cancel',
+    onConfirm: () => {
+      performBigBang(state);             // grant cores; reset run; persist partition keeps coresShop + blueprint
+      applyUpgradeEffects(world, state); // re-derive world.budgets + world.startCreditsMult from the post-reset state
+      reinitFreshRun(world, state);      // re-seed credits + blueprint clamped to the (now re-derived) budgets + head-start
+      persistSave();
+      refreshShop();
+      refreshCoresTab();
+    },
+  });
+}
+const bigBangBtn = $('big-bang-btn');
+if (bigBangBtn) bigBangBtn.addEventListener('click', onBigBangClicked);
+
+// ---- Offline earnings on load ("while you were gone") ----
+function runOfflineOnLoad() {
+  const now = Date.now();
+  const { efficiencyAdd, capAdd } = coresOfflineBonuses(world);
+  const result = computeOffline(state.stats, now, efficiencyAdd, capAdd);
+  if (!result.showModal) {
+    // No prior save / zero rate / future-dated: just stamp the clock and move on.
+    state.stats.lastSaveTime = now;
+    persistSave();
+    return;
+  }
+  showModal({
+    title: 'While you were gone…',
+    body:
+      `You were away ${Math.round(result.awaySeconds / 60)} min.\n` +
+      `Earned +${formatNumber(result.credits)} credits ` +
+      `(at ${Math.round(result.efficiency * 100)}% efficiency).`,
+    confirmLabel: 'Collect',
+    onConfirm: () => {
+      grantOffline(state, result.credits, Date.now());
+      persistSave();
+    },
+  });
+}
+runOfflineOnLoad();
+
 setupTabs({
   tabButtons: Array.from(document.querySelectorAll('[data-tab]')),
   panels: Array.from(document.querySelectorAll('[data-panel]')),
-  onSelect: (name) => { if (name === 'credits') refreshShop(); },
+  onSelect: (name) => {
+    if (name === 'credits') refreshShop();
+    else if (name === 'cores') refreshCoresTab();
+  },
 });
 setupPlacement({
   canvas,
@@ -269,9 +369,17 @@ function step(dt) {
 
   // 5) autosave gate
   if (run.now - run.lastAutosave >= AUTOSAVE_INTERVAL) {
+    const secondsSinceLastAutosave = run.now - run.lastAutosave;
     run.lastAutosave = run.now;
+    // Down-weighted EMA of the steady earn rate; golden/burst spikes are smoothed out.
+    state.stats.recentEarnRate = updateEarnRate(
+      state.stats.recentEarnRate,
+      run.creditsPerSec,
+      secondsSinceLastAutosave,
+      OFFLINE.emaHalfLifeSec,
+    );
     state.stats.lastSaveTime = Date.now();
-    try { localStorage.setItem(SAVE_KEY, serialize(state)); } catch (e) { /* storage full/blocked */ }
+    persistSave();
   }
 }
 
