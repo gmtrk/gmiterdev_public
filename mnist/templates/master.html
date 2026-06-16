@@ -28,7 +28,7 @@
     {% block header %}
     <header class="ud-header">
         <a href="{% url 'main' %}" class="ud-logo">
-            <span>gmiter</span><span class="ud-sw"><span class="ud-soul"></span></span><span>dev</span>
+            <span>gmiter</span><span class="ud-sw" aria-hidden="true"><span class="ud-soul"></span></span><span>dev</span>
         </a>
     </header>
     {% endblock %}
@@ -42,7 +42,7 @@
 
     {% block footer %}
     <footer class="ud-footer">
-        <div class="ud-save"><span class="ud-star">✶</span> <a href="mailto:gmtrkk@gmail.com">gmtrkk@gmail.com</a></div>
+        <div class="ud-save"><span class="ud-star" aria-hidden="true">✶</span> <a href="mailto:gmtrkk@gmail.com">gmtrkk@gmail.com</a></div>
         <div class="ud-copy">© 2026 jakub gmiterek</div>
     </footer>
     {% endblock %}
