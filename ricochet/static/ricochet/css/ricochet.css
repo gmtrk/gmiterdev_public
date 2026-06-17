@@ -189,6 +189,77 @@ body.rc-body {
    requirement modal). Keep the button shape so it never reads as plain text. */
 .rc-bigbang--locked { opacity: 0.55; }
 
+/* --- Modal dialog (Big Bang confirm, "Not yet", offline earnings) ---------
+   ui.showModal builds .rc-modal (a body-level overlay) and toggles it via the
+   `hidden` attribute. The [hidden] guard MUST win over `display: flex`, or the
+   modal can never close and its backdrop eats every click. */
+.rc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rc-modal[hidden] { display: none; }
+.rc-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 16, 0.72);
+}
+.rc-modal__card {
+  position: relative;
+  z-index: 1;
+  width: 360px;
+  max-width: 90vw;
+  padding: 20px;
+  background: var(--rc-panel);
+  border: 1px solid var(--rc-magenta);
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(255, 61, 240, 0.35);
+}
+.rc-modal__title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--rc-cyan);
+}
+.rc-modal__body {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #d6d6f0;
+}
+.rc-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.rc-modal__confirm {
+  padding: 9px 16px;
+  background: var(--rc-magenta);
+  border: 0;
+  border-radius: 8px;
+  color: #0a0a16;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.rc-modal__cancel {
+  padding: 9px 16px;
+  background: transparent;
+  border: 1px solid var(--rc-line);
+  border-radius: 8px;
+  color: #d6d6f0;
+  font: inherit;
+  cursor: pointer;
+}
+.rc-modal__confirm:hover,
+.rc-modal__cancel:hover { filter: brightness(1.12); outline: none; }
+
 .rc-lb__table {
   display: flex;
   flex-direction: column;
