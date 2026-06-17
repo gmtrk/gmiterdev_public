@@ -3,7 +3,7 @@
 // tabs. Pure decision helpers (tryPlace/removeTopmost) are unit-tested; the DOM
 // wiring (setupPlacement/setupTabs) builds on them and sets touch-action:none on
 // the canvas.
-import { BLOCK_LEVELS } from './config.js';
+import { BLOCK_LEVELS, MIN_PEG_SPACING } from './config.js';
 import {
   overlaps,
   inBounds,
@@ -34,24 +34,48 @@ function placedBoxes(world, placed) {
   return boxes;
 }
 
-// Attempt to place `type` ('peg'|'block') centered at (x,y). Mutates placed.*
-// and returns true on success; returns false (no mutation) if over budget,
-// overlapping, out of bounds, or intruding the spawn band.
-export function tryPlace(world, placed, type, x, y) {
-  const { hx, hy } = halfExtents(world, type);
-  if (type === 'peg' && placed.pegs.length >= world.budgets.pegs) return false;
-  if (type === 'block' && placed.blocks.length >= world.budgets.blocks) return false;
+// Geometric placement guards for a peg (NOT budget): in bounds, clear of the
+// spawn band, no overlap with placed pegs/blocks, and >= MIN_PEG_SPACING from
+// every peg (so no impenetrable wall). Shared by tryPlace and the Place overlay
+// so the green/red preview and real placement never disagree. Pure + tested.
+export function canPlacePeg(world, placed, x, y) {
+  const hx = world.pegRadius;
+  const hy = world.pegRadius;
   if (!inBounds(x, y, hx, hy)) return false;
   if (inSpawnBand(y, hy)) return false;
   const candidate = { x, y, hx, hy };
   for (const box of placedBoxes(world, placed)) {
     if (overlaps(candidate, box)) return false;
   }
-  if (type === 'peg') {
-    placed.pegs.push({ x, y });
-  } else {
-    placed.blocks.push({ x, y, level: BLOCK_LEVELS, respawnAt: null, golden: false });
+  const minSq = MIN_PEG_SPACING * MIN_PEG_SPACING;
+  for (const p of placed.pegs) {
+    const dx = x - p.x;
+    const dy = y - p.y;
+    if (dx * dx + dy * dy < minSq) return false;
   }
+  return true;
+}
+
+// Attempt to place `type` ('peg'|'block') centered at (x,y). Mutates placed.*
+// and returns true on success; returns false (no mutation) if over budget,
+// overlapping, out of bounds, or intruding the spawn band.
+export function tryPlace(world, placed, type, x, y) {
+  if (type === 'peg') {
+    if (placed.pegs.length >= world.budgets.pegs) return false;
+    if (!canPlacePeg(world, placed, x, y)) return false;
+    placed.pegs.push({ x, y });
+    return true;
+  }
+  // block
+  const { hx, hy } = halfExtents(world, type);
+  if (placed.blocks.length >= world.budgets.blocks) return false;
+  if (!inBounds(x, y, hx, hy)) return false;
+  if (inSpawnBand(y, hy)) return false;
+  const candidate = { x, y, hx, hy };
+  for (const box of placedBoxes(world, placed)) {
+    if (overlaps(candidate, box)) return false;
+  }
+  placed.blocks.push({ x, y, level: BLOCK_LEVELS, respawnAt: null, golden: false });
   return true;
 }
 

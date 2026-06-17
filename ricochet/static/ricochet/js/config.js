@@ -16,6 +16,10 @@ export const CEILING_DESKTOP = 5000, RESERVED_OWNED = 200, SPECIAL_CAP = 96, GRI
 // satisfying in playtest: drag 1.0 + a high speed cap, made safe by sub-stepping.)
 export const GRAVITY = 1700, DRAG = 1.0, E_WALL = 0.92, E_COLLIDER = 0.9;
 export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
+// Minimum center-to-center spacing between hand-placed pegs, so a ball (dia 12)
+// can always pass between two pegs (2*PEG_RADIUS+12 = 26 < this). Presets (pitch 70)
+// are unaffected. Live in the Place-tab overlay as exclusion rings.
+export const MIN_PEG_SPACING = 34;
 // Hard speed cap (px/s). At this speed a single DT step would move MAX_SPEED*DT
 // ≈ 18px — far past a 7px peg — so physics.stepPhysics SUB-STEPS the movement
 // (physics.substepCount) into slices each shorter than PEG_RADIUS, preserving the

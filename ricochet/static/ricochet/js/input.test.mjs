@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tryPlace, removeTopmost } from './input.js';
+import { tryPlace, removeTopmost, canPlacePeg } from './input.js';
 import { BLOCK_W, BLOCK_H } from './config.js';
 
 // world: minimal stub carrying budgets, blockW/blockH, pegRadius.
@@ -180,4 +180,20 @@ test('applyBlueprint: produces canonical block shapes (fresh copies)', () => {
   const b = placed.blocks[0];
   assert.deepEqual(Object.keys(b).sort(), ['golden', 'level', 'respawnAt', 'x', 'y']);
   assert.notEqual(b, blueprint.blocks[0]); // a copy, not the same object
+});
+
+test('canPlacePeg / tryPlace: refuses a peg within MIN_PEG_SPACING of another', () => {
+  const world = makeWorld({ pegs: 10, blocks: 0 });
+  const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
+  assert.equal(canPlacePeg(world, placed, 200, 430), false); // dist 30 < 34
+  assert.equal(tryPlace(world, placed, 'peg', 200, 430), false);
+  assert.equal(placed.pegs.length, 1);
+});
+
+test('canPlacePeg / tryPlace: allows a peg at or beyond MIN_PEG_SPACING', () => {
+  const world = makeWorld({ pegs: 10, blocks: 0 });
+  const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
+  assert.equal(canPlacePeg(world, placed, 200, 440), true); // dist 40 >= 34
+  assert.equal(tryPlace(world, placed, 'peg', 200, 440), true);
+  assert.equal(placed.pegs.length, 2);
 });
