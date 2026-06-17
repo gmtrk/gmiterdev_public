@@ -419,6 +419,11 @@ body.rc-body {
   color: var(--rc-cyan);
 }
 
+/* Ramp-angle slider (shown only when Ramp Tuning is unlocked). */
+.rc-ramp-control { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.rc-ramp-control input[type=range] { flex: 1; accent-color: #22e0ff; }
+.rc-ramp-readout { min-width: 3ch; text-align: right; color: #22e0ff; font-variant-numeric: tabular-nums; }
+
 /* Arena cursor affordance while the Place tab is active. */
 .rc-canvas--place {
   cursor: crosshair;

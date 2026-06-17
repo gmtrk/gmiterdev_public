@@ -1,5 +1,5 @@
 import { migrate, deserialize, serialize } from './save.js';
-import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER } from './physics.js';
+import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER, rebuildRamps } from './physics.js';
 import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige } from './economy.js';
 import {
   specialSpawnPlan, unlockSpecial, SPECIAL_TYPES,
@@ -8,6 +8,7 @@ import {
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
   SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE, DISPLAY_CPS_HALFLIFE,
+  RAMP_ANGLE,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
@@ -155,6 +156,10 @@ const hudEls = {
   combo: $('rc-combo'),
 };
 
+// Module-scope references to the ramp-angle control nodes (built below, used by
+// refreshRampControl which is called from multiple call sites).
+let rampRow, rampSlider, rampReadout;
+
 // Build the right-panel scaffold (Credits shop rows + Place tools/presets)
 // inside the template's empty #rc-tab-body. The Cores panel is authored in
 // Phase 7; we leave a placeholder so the tab toggles cleanly.
@@ -215,13 +220,38 @@ if (tabBody && !shopContainer) {
     b.textContent = label;
     presetRow.append(b);
   }
-  placePanel.append(placeHint, toolHead, toolRow, presetHead, presetRow);
+  rampRow = document.createElement('div');
+  rampRow.className = 'rc-ramp-control';
+  rampRow.hidden = true; // shown only once Ramp Tuning is unlocked
+  const rampLabel = document.createElement('label');
+  rampLabel.className = 'rc-place-subhead';
+  rampLabel.textContent = 'Ramp angle';
+  rampSlider = document.createElement('input');
+  rampSlider.type = 'range';
+  rampSlider.min = '5';
+  rampSlider.max = '70';
+  rampSlider.step = '1';
+  rampReadout = document.createElement('span');
+  rampReadout.className = 'rc-ramp-readout';
+  rampRow.append(rampLabel, rampSlider, rampReadout);
+
+  placePanel.append(placeHint, toolHead, toolRow, presetHead, presetRow, rampRow);
 
   tabBody.append(creditsPanel, coresPanel, placePanel);
 }
 
 function persistSave() {
   try { localStorage.setItem(SAVE_KEY, serialize(state)); } catch (e) { /* storage full/blocked */ }
+}
+
+function refreshRampControl() {
+  if (!rampRow) return;
+  rampRow.hidden = !world.rampAngleUnlocked;
+  if (world.rampAngleUnlocked) {
+    const a = state.placed.rampAngle != null ? state.placed.rampAngle : RAMP_ANGLE;
+    rampSlider.value = String(a);
+    rampReadout.textContent = a + '°';
+  }
 }
 
 function refreshShop() {
@@ -246,11 +276,25 @@ function refreshShop() {
           rebuildColliders(world);
         }
         refreshShop();
+        refreshRampControl();
       }
     },
   });
 }
 refreshShop();
+
+// Wire the ramp-angle slider (handler runs whenever the slider moves).
+// rampSlider is only set if the tabBody block ran (i.e. DOM is present).
+if (rampSlider) {
+  rampSlider.addEventListener('input', () => {
+    const a = Number(rampSlider.value);
+    state.placed.rampAngle = a;
+    world.rampAngle = a;
+    rebuildRamps(world);
+    rampReadout.textContent = a + '°';
+    persistSave();
+  });
+}
 
 // ---- Cores tab: render rows + handle buys ----
 const coresRowsEl = $('rc-cores-rows');
@@ -341,6 +385,7 @@ const tabs = setupTabs({
   onSelect: (name) => {
     if (name === 'credits') refreshShop();
     else if (name === 'cores') refreshCoresTab();
+    else if (name === 'place') refreshRampControl();
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
   },
@@ -348,6 +393,8 @@ const tabs = setupTabs({
 // Reflect the initially-active tab on the canvas cursor (onSelect only fires on
 // a click, so seed the crosshair class from the starting tab here).
 canvas.classList.toggle('rc-canvas--place', tabs.getActive() === 'place');
+// Seed the ramp control visibility/value from the loaded state.
+refreshRampControl();
 // Arena editing (placement + paddle drag) is gated to the Place tab so clicking
 // the arena on Credits/Cores/Scores can't silently mutate the blueprint.
 const isPlaceActive = () => tabs.getActive() === 'place';
