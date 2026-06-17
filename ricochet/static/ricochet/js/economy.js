@@ -138,3 +138,12 @@ export function coresFromRun(runCredits, coreK = PRESTIGE.coreK, coreScale = PRE
 export function canPrestige(runCredits, min = PRESTIGE.minCredits) {
   return runCredits >= min;
 }
+
+// Credits required for the NEXT Big Bang. Rises quadratically with how many times
+// you have already prestiged: base * (prestigeCount + 1)^2 — 10M, 40M, 90M, 160M…
+// At each tier's minimum you earn exactly (prestigeCount + 1) Cores (coresFromRun
+// is sqrt(credits/coreScale) and coreScale == base), so the cost tracks the payout.
+export function prestigeThreshold(prestigeCount, base = PRESTIGE.minCredits) {
+  const n = (typeof prestigeCount === 'number' && prestigeCount > 0) ? prestigeCount : 0;
+  return base * (n + 1) ** 2;
+}

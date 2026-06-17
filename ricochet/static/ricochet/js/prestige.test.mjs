@@ -6,7 +6,7 @@ import { projectPrestige, performBigBang } from './prestige.js';
 import { reinitFreshRun } from './prestige.js';
 import { STARTING_CREDITS } from './config.js';
 import { applyUpgradeEffects } from './economy.js';
-import { buildWorld, rebuildColliders } from './physics.js';
+import { buildWorld, rebuildColliders, spawnNormal, spawnSpecial, TYPE_CLACKER } from './physics.js';
 
 // Build a real world from a state so the clamp reads the actual post-reset budgets.
 function worldFor(state) {
@@ -93,6 +93,26 @@ test('performBigBang preserves stats but clears nothing it should not', () => {
   performBigBang(state);
   assert.equal(state.stats.lastSubmittedCores, 30);
   assert.equal(state.stats.recentEarnRate, 1234);
+});
+
+test('performBigBang increments prestigeCount (drives the rising prestige cost)', () => {
+  const state = sampleState();           // no prestigeCount field -> treated as 0
+  performBigBang(state);
+  assert.equal(state.prestigeCount, 1);
+  performBigBang(state);
+  assert.equal(state.prestigeCount, 2);
+});
+
+test('reinitFreshRun despawns all live balls (both pools)', () => {
+  const state = { ...sampleState(), credits: 0, upgrades: {}, coresShop: {} };
+  const world = worldFor(state);
+  spawnNormal(world, 500, 100, 0);
+  spawnNormal(world, 400, 120, 0);
+  spawnSpecial(world, TYPE_CLACKER, 300, 80);
+  assert.ok(world.normal.count > 0 && world.special.count > 0);
+  reinitFreshRun(world, state);
+  assert.equal(world.normal.count, 0, 'normal balls cleared on Big Bang');
+  assert.equal(world.special.count, 0, 'special balls cleared on Big Bang');
 });
 
 test('reinitFreshRun seeds starting credits from STARTING_CREDITS + Cores head-start', () => {

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   computeEventMult, creditsFromCounters, updateCombo, upgradeCost, upgradeEffect,
-  applyUpgradeEffects, coresFromRun, canPrestige,
+  applyUpgradeEffects, coresFromRun, canPrestige, prestigeThreshold,
 } from './economy.js';
 import { buildWorld } from './physics.js';
 import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES, BASE_CAPACITY, GOLDEN, KICK, ARENA_W, PRESTIGE, SPAWN_RATE_MAX } from './config.js';
@@ -262,6 +262,13 @@ test('canPrestige gates at PRESTIGE.minCredits', () => {
 test('canPrestige honors an explicit min override', () => {
   assert.equal(canPrestige(100, 100), true);
   assert.equal(canPrestige(99, 100), false);
+});
+
+test('prestigeThreshold grows quadratically with the prestige count (10M, 40M, 90M, 160M)', () => {
+  assert.equal(prestigeThreshold(0), 1e7);   // first Big Bang
+  assert.equal(prestigeThreshold(1), 4e7);   // after 1 prestige
+  assert.equal(prestigeThreshold(2), 9e7);
+  assert.equal(prestigeThreshold(3), 1.6e8);
 });
 
 test('buying ramps raises world.rampsLevel', () => {

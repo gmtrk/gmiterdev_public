@@ -1,13 +1,13 @@
 import { migrate, deserialize, serialize } from './save.js';
 import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER, rebuildRamps } from './physics.js';
-import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige, coresFromRun } from './economy.js';
+import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige, coresFromRun, prestigeThreshold } from './economy.js';
 import {
   specialSpawnPlan, unlockSpecial, SPECIAL_TYPES,
   resolveClack, makeSpecialEmit, chargeBurster, tryBurst, trySplitOnEnv,
 } from './specials.js';
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
-  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE, DISPLAY_CPS_HALFLIFE,
+  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, DISPLAY_CPS_HALFLIFE,
   RAMP_ANGLE, SPECIAL_RADIUS, BURSTER_RADIUS, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
@@ -435,10 +435,11 @@ refreshCoresTab();
 // ---- Big Bang (prestige) ----
 function onBigBangClicked() {
   const runCredits = Number(state.credits);
-  if (!canPrestige(runCredits)) {
+  const threshold = prestigeThreshold(state.prestigeCount || 0);
+  if (!canPrestige(runCredits, threshold)) {
     showModal({
       title: 'Not yet',
-      body: `Reach more credits before a Big Bang (need ${formatNumber(PRESTIGE.minCredits)}).`,
+      body: `Reach more credits before a Big Bang (need ${formatNumber(threshold)}).`,
       confirmLabel: 'OK',
     });
     return;
@@ -478,12 +479,13 @@ if (bigBangBtn) bigBangBtn.addEventListener('click', onBigBangClicked);
 function refreshBigBang() {
   if (!bigBangBtn) return;
   const credits = Number(state.credits);
-  if (credits >= PRESTIGE.minCredits) {
+  const threshold = prestigeThreshold(state.prestigeCount || 0);
+  if (credits >= threshold) {
     bigBangBtn.classList.remove('rc-bigbang--locked');
     bigBangBtn.textContent = `Big Bang (+${formatNumber(coresFromRun(credits))} ★)`;
   } else {
     bigBangBtn.classList.add('rc-bigbang--locked');
-    bigBangBtn.textContent = `Big Bang — need ${formatNumber(PRESTIGE.minCredits)}`;
+    bigBangBtn.textContent = `Big Bang — need ${formatNumber(threshold)}`;
   }
 }
 refreshBigBang();

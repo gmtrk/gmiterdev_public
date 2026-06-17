@@ -1,4 +1,4 @@
-import { coresFromRun, canPrestige } from './economy.js';
+import { coresFromRun, prestigeThreshold } from './economy.js';
 import { rebuildColliders } from './physics.js';
 import { STARTING_CREDITS } from './config.js';
 
@@ -16,7 +16,7 @@ export function projectPrestige(state) {
   const cores = coresFromRun(runCredits);
   return {
     cores,
-    canPrestige: canPrestige(runCredits),
+    canPrestige: runCredits >= prestigeThreshold(state.prestigeCount || 0),
     lifetimeAfter: state.lifetimeCores + cores,
     speedup: prestigeSpeedup(cores),
   };
@@ -30,6 +30,7 @@ export function performBigBang(state) {
   // ---- persist (untouched): cores, lifetimeCores, coresShop, placed, stats ----
   state.cores += gained;
   state.lifetimeCores += gained;
+  state.prestigeCount = (state.prestigeCount || 0) + 1; // drives the rising Big-Bang cost
   // ---- reset run progress (credits / Credits-shop / credit-bought specials) ----
   state.credits = 0;
   state.upgrades = {};
@@ -56,5 +57,11 @@ export function performBigBang(state) {
 export function reinitFreshRun(world, state) {
   const startMult = world.startCreditsMult != null ? world.startCreditsMult : 1;
   state.credits = STARTING_CREDITS * startMult;
+  // Despawn every ball from the finished run — a fresh run starts empty and the
+  // spawn tick refills it to capacity. Clearing the count empties each SoA pool;
+  // reset the spawn accumulator so refilling restarts at the normal cadence.
+  world.normal.count = 0;
+  world.special.count = 0;
+  world._spawnAcc = 0;
   rebuildColliders(world);
 }

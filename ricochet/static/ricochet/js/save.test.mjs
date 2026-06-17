@@ -221,3 +221,12 @@ test('migrate fills round-7 defaults for an old save missing them', () => {
   assert.equal(m.leaderboardInitials, null);
   assert.equal(m.debugUsed, false);
 });
+
+test('prestigeCount defaults to 0, round-trips, and backfills on old saves', () => {
+  assert.equal(defaultSave().prestigeCount, 0);
+  const s = defaultSave();
+  s.prestigeCount = 3;
+  assert.equal(migrate(JSON.parse(serialize(s))).prestigeCount, 3);
+  const old = { credits: '100', cores: 0, upgrades: {}, placed: {}, specials: {} };
+  assert.equal(migrate(old).prestigeCount, 0);
+});

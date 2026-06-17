@@ -33,6 +33,7 @@ export function defaultSave() {
     playerId: null,
     leaderboardInitials: null,
     debugUsed: false,
+    prestigeCount: 0,
   };
 }
 
@@ -50,6 +51,7 @@ export function serialize(state) {
     playerId: state.playerId ?? null,
     leaderboardInitials: state.leaderboardInitials ?? null,
     debugUsed: !!state.debugUsed,
+    prestigeCount: state.prestigeCount || 0,
   };
   return JSON.stringify(disk);
 }
@@ -106,5 +108,6 @@ export function migrate(obj) {
     playerId: 'playerId' in obj ? obj.playerId : d.playerId,
     leaderboardInitials: 'leaderboardInitials' in obj ? obj.leaderboardInitials : d.leaderboardInitials,
     debugUsed: 'debugUsed' in obj ? obj.debugUsed : d.debugUsed,
+    prestigeCount: 'prestigeCount' in obj ? obj.prestigeCount : d.prestigeCount,
   });
 }
