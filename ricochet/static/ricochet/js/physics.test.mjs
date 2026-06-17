@@ -671,13 +671,13 @@ test('resolveCircleSegment: clamps the outgoing speed to maxSpeed', () => {
 import { rampLayout } from './physics.js';
 
 test('rampLayout: level 0 -> no ramps; level 1 -> 2; level 2 -> 4', () => {
-  assert.equal(rampLayout(0, 30, 1000, 1500).length, 0);
-  assert.equal(rampLayout(1, 30, 1000, 1500).length, 2);
-  assert.equal(rampLayout(2, 30, 1000, 1500).length, 4);
+  // level 0 now yields the (free) bottom pair; level >=1 adds the mid pair
+  assert.equal(rampLayout(0, 30, 1000, 1500).length, 2);
+  assert.equal(rampLayout(1, 30, 1000, 1500).length, 4);
 });
 
 test('rampLayout: each pair is mirror-symmetric about W/2', () => {
-  const [left, right] = rampLayout(1, 30, 1000, 1500);
+  const [left, right] = rampLayout(0, 30, 1000, 1500);
   assert.ok(Math.abs((left.x1 + right.x1) - 1000) < 1e-4);
   assert.ok(Math.abs((left.x2 + right.x2) - 1000) < 1e-4);
   assert.ok(Math.abs(left.y1 - right.y1) < 1e-9);
@@ -685,18 +685,18 @@ test('rampLayout: each pair is mirror-symmetric about W/2', () => {
 });
 
 test('rampLayout: angle 0 yields horizontal ramps (y1 == y2)', () => {
-  const [left] = rampLayout(1, 0, 1000, 1500);
+  const [left] = rampLayout(0, 0, 1000, 1500);
   assert.ok(Math.abs(left.y1 - left.y2) < 1e-9);
 });
 
 test('rampLayout: bottom pair outer ends are pinned to the side walls', () => {
-  const [left, right] = rampLayout(1, 30, 1000, 1500);
+  const [left, right] = rampLayout(0, 30, 1000, 1500);
   assert.equal(left.x1, 0);     // left outer end at the left wall
   assert.equal(right.x1, 1000); // right outer end at the right wall
 });
 
 test('rampLayout: bottom inner end stays inside the arena even at a steep angle', () => {
-  const [left, right] = rampLayout(1, 70, 1000, 1500);
+  const [left, right] = rampLayout(0, 70, 1000, 1500);
   for (const s of [left, right]) {
     assert.ok(s.y2 <= 1500, `inner y ${s.y2} left the arena`);
     assert.ok(s.x2 >= 0 && s.x2 <= 1000, `inner x ${s.x2} out of bounds`);
@@ -708,7 +708,7 @@ import { RAMP_ANGLE, RAMP_THICKNESS } from './config.js';
 
 test('buildWorld seeds an empty ramps SoA + level 0 + default angle', () => {
   const world = buildWorld(makeState());
-  assert.equal(world.ramps.count, 0);
+  assert.equal(world.ramps.count, 2);
   assert.ok(world.ramps.x1s instanceof Float32Array);
   assert.equal(world.rampsLevel, 0);
   assert.equal(world.rampAngle, RAMP_ANGLE);
@@ -730,7 +730,7 @@ test('rebuildColliders also rebuilds ramps from the current level', () => {
   const world = buildWorld(makeState());
   world.rampsLevel = 1;
   rebuildColliders(world);
-  assert.equal(world.ramps.count, 2);
+  assert.equal(world.ramps.count, 4);
 });
 
 test('a ball falling onto a ramp segment bounces (counts as a wall hit) and does not pass through', () => {

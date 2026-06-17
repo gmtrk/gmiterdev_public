@@ -67,7 +67,7 @@ export const UPGRADES = [
   { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 60,  costGrowth: 1.28, effectKind: 'add', effectStep: 4, desc: '+1 peg you can place.' },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1, desc: '+1 block you can place.' },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10, desc: 'Pegs launch balls harder.' },
-  { id: 'ramps',           label: 'Ramps',            group: 'ramps',  baseCost: 70,  costGrowth: 1.5,  effectKind: 'add', effectStep: 1, max: 2, desc: 'Adds bouncy ramps.' },
+  { id: 'midRamps', label: 'Mid Ramps', group: 'ramps', baseCost: 70, costGrowth: 1, effectKind: 'add', effectStep: 1, max: 1, desc: 'Adds a second ramp pair midway.' },
   { id: 'rampAngleUnlock', label: 'Ramp Tuning', group: 'ramps', baseCost: 5000, costGrowth: 1, effectKind: 'add', effectStep: 0, max: 1, desc: 'Unlocks the ramp-angle slider.' },
   // Special-ball unlocks. One-shot purchases (max:1, no cost growth): buying
   // flips state.specials[unlock].unlocked and seeds the starter pack so the type

@@ -100,5 +100,5 @@ test('pegValue apply writes the nested world.surfaceBase.peg; rampAngle apply re
     ramps: { x1s: new Float32Array(0), y1s: new Float32Array(0), x2s: new Float32Array(0), y2s: new Float32Array(0), count: 0, r: 4 } };
   ra.apply(w2, 45);
   assert.equal(w2.rampAngle, 45);
-  assert.equal(w2.ramps.count, 2);
+  assert.equal(w2.ramps.count, 4);
 });

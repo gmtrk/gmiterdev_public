@@ -550,23 +550,20 @@ const RAMP_MID_FRAC = 0.62;      // midway pair center y = H * this
 
 export function rampLayout(level, angleDeg, W, H) {
   const out = [];
-  if (level <= 0) return out;
   const theta = (angleDeg * Math.PI) / 180;
   const cos = Math.cos(theta);
   const sin = Math.sin(theta);
 
-  // Bottom pair: outer (upper) end PINNED to the wall; extends inward + down.
-  // Clamp the length so the inner (lower) end never leaves the arena floor.
+  // Bottom pair: ALWAYS present (free). Outer (upper) end pinned to the wall;
+  // length-clamped so the inner (lower) end stays in the arena.
   const yA = H - RAMP_WALL_OFFSET;
   const maxDrop = H - RAMP_FLOOR_MARGIN - yA;
   const L = Math.min(RAMP_LEN, maxDrop / Math.max(sin, 1e-3));
-  // left `\`: outer at the left wall (high), inner toward center (lower)
   out.push({ x1: 0, y1: yA, x2: L * cos, y2: yA + L * sin });
-  // right `/`: mirror about W/2
   out.push({ x1: W, y1: yA, x2: W - L * cos, y2: yA + L * sin });
 
-  if (level >= 2) {
-    // Midway pair: unchanged inset side-deflectors.
+  if (level >= 1) {
+    // Mid pair (bought via "Mid Ramps"): inset side-deflectors.
     const half = RAMP_LEN / 2;
     const cxL = W * RAMP_X_FRAC;
     const cxR = W * (1 - RAMP_X_FRAC);

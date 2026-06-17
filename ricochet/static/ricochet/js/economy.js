@@ -91,7 +91,7 @@ export function applyUpgradeEffects(world, state) {
   world.kick = KICK + upgradeEffect(kickDef, _level(up, 'pegKick'));
 
   // ramps: how many ramp pairs are active (0/1/2). rebuildRamps reads this.
-  world.rampsLevel = _level(up, 'ramps');
+  world.rampsLevel = _level(up, 'midRamps');
   world.rampAngleUnlocked = _level(up, 'rampAngleUnlock') >= 1;
 
   // Cores head-start: starting-credits multiplier (multiplicative; 1 when unbought).
