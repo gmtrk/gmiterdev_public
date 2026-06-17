@@ -194,6 +194,7 @@ test('canPlacePeg / tryPlace: allows a peg at or beyond MIN_PEG_SPACING', () => 
   const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
   assert.equal(canPlacePeg(world, placed, 200, 520), true); // dist 120 >= 110
   assert.equal(tryPlace(world, placed, 'peg', 200, 520), true);
+  assert.equal(placed.pegs.length, 2);
 });
 test('canPlacePeg: honors a live world.minPegSpacing override', () => {
   const world = makeWorld({ pegs: 10, blocks: 0 });
