@@ -43,6 +43,12 @@ export function sliderRange(key) {
   return SLIDER_DEFS[key];
 }
 
+// True when the secret debug gesture's three keys (D, B, G) are all currently
+// held. `downSet` is a Set of lowercased key names. Pure + tested.
+export function gestureKeysHeld(downSet) {
+  return downSet.has('d') && downSet.has('b') && downSet.has('g');
+}
+
 // Clamp a raw slider value into its [min, max] range. Pure + tested.
 export function clampSlider(key, raw) {
   const r = SLIDER_DEFS[key];
@@ -122,6 +128,7 @@ export function setupDebug(state, world, ctx = {}) {
   window.addEventListener('keydown', (e) => {
     if (e.key !== '`' && e.key !== '~') return;
     if (isTextTarget(e.target)) return;
+    if (!enabled) return;
     e.preventDefault();
     setOpen(!isOpen());
   });
@@ -138,7 +145,7 @@ export function setupDebug(state, world, ctx = {}) {
 
   // ===== Reset =====
   const resetSec = section('Reset');
-  resetSec.append(btn('Wipe save & reload', () => {
+  resetSec.append(btn('Disable debug mode & wipe', () => {
     // Route through main.js so it can suppress the unload autosave (which would
     // otherwise re-save the current state during reload and undo the wipe).
     if (ctx.wipeAndReload) { ctx.wipeAndReload(); return; }
@@ -335,7 +342,44 @@ export function setupDebug(state, world, ctx = {}) {
   }
   panel.append(feelSec);
 
-  document.body.append(toggle, panel);
+  document.body.append(panel); // panel hidden; toggle appears only once debug is enabled
+
+  let enabled = false;
+  let toggleAppended = false;
+  // Reveal the 🛠 icon + activate the panel toggle. `taint=true` on a fresh
+  // gesture reveal (marks the save debug-used, disables the leaderboard, persists);
+  // `taint=false` on load when the save is ALREADY debug-used (just show the icon).
+  function enableDebug(taint) {
+    if (!toggleAppended) { document.body.append(toggle); toggleAppended = true; }
+    enabled = true;
+    if (taint && !state.debugUsed) {
+      state.debugUsed = true;
+      if (ctx.persist) ctx.persist();
+      if (ctx.onDebugEnabled) ctx.onDebugEnabled();
+    }
+  }
+
+  // Secret reveal: hold D + B + G together for 5s. Releasing any cancels.
+  const down = new Set();
+  let gestureTimer = null;
+  function cancelGesture() {
+    if (gestureTimer) { clearTimeout(gestureTimer); gestureTimer = null; }
+  }
+  window.addEventListener('keydown', (e) => {
+    if (isTextTarget(e.target)) return;
+    const k = (e.key || '').toLowerCase();
+    if (k !== 'd' && k !== 'b' && k !== 'g') return;
+    down.add(k);
+    if (gestureKeysHeld(down) && !gestureTimer && !enabled) {
+      gestureTimer = setTimeout(() => { gestureTimer = null; enableDebug(true); }, 5000);
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    const k = (e.key || '').toLowerCase();
+    if (k === 'd' || k === 'b' || k === 'g') { down.delete(k); cancelGesture(); }
+  });
+  // If this save is already debug-tainted, show the icon immediately (no re-taint).
+  if (state.debugUsed) enableDebug(false);
 
   return { toggle, panel, setOpen, isOpen };
 }

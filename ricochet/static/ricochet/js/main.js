@@ -763,6 +763,8 @@ setupDebug(state, world, {
   // route special unlocks through the real unlock+seed path so the pool actually
   // spawns the starter pack immediately (matches the in-game shop behaviour)
   unlockSpecial: (type) => unlockSpecialAndSeed(state, world, type),
+  persist: persistSave,
+  onDebugEnabled: () => leaderboard.refresh(),
 });
 
 const loop = createLoop({ step, render, onFrameTime });

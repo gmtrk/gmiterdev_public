@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clampLevel, sliderRange, clampSlider, SLIDER_KEYS } from './debug.js';
+import { clampLevel, sliderRange, clampSlider, SLIDER_KEYS, gestureKeysHeld } from './debug.js';
 import { GRAVITY, DRAG, MAX_SPEED, SPAWN_HELPER_DIST, SURFACE_BASE, RAMP_ANGLE } from './config.js';
 
 test('clampLevel clamps to [0, max]', () => {
@@ -107,5 +107,13 @@ test('pegValue apply writes the nested world.surfaceBase.peg; rampAngle apply re
   ra.apply(w2, 45);
   assert.equal(w2.rampAngle, 45);
   assert.equal(w2.ramps.count, 4);
+});
+
+test('gestureKeysHeld is true only when d, b, and g are all held', () => {
+  assert.equal(gestureKeysHeld(new Set(['d', 'b', 'g'])), true);
+  assert.equal(gestureKeysHeld(new Set(['d', 'b', 'g', 'x'])), true); // extra keys OK
+  assert.equal(gestureKeysHeld(new Set(['d', 'b'])), false);
+  assert.equal(gestureKeysHeld(new Set(['d', 'g'])), false);
+  assert.equal(gestureKeysHeld(new Set()), false);
 });
 
