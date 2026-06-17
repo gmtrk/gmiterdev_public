@@ -43,7 +43,7 @@ export const E_BLOCK = 0.95, BLOCK_KICK = 160;
 export const BOUNCE_JITTER = 0.4, BOUNCE_JITTER_CHANCE = 0.5;
 export const SURFACE_BASE = { wall: 1, peg: 2, block: 25 };
 export const EVENT_CAP = 29; // eventMult <= 1 + EVENT_CAP
-export const COMBO = { gainPerSec: 6, decayPerSec: 3, capBonusStart: 9, perStepGainCap: 0.3 };
+export const COMBO = { gainPerSec: 6, decayPerSec: 3, capBonusStart: 19, perStepGainCap: 0.3, gainFalloff: 0.6, minDecay: 0.5 };
 export const GOLDEN = { chance: 0.005, bonus: 12 };
 export const CLACK_COOLDOWN = 0.2;
 export const BURSTER = { chargePerBounce: 1, chargePerClack: 5, threshold: 20, ballsPerBurst: 6 };
@@ -67,6 +67,7 @@ export const PEG_PITCH_X = 70, PEG_PITCH_Y = 70, PEG_FIELD_TOP = Math.round(AREN
 // 'mul' reserved per contract but Credits levers are additive. max? caps repeatable levels.
 export const UPGRADES = [
   { id: 'globalValueMult', label: 'Value Multiplier', group: 'global', baseCost: 50,  costGrowth: 1.18, effectKind: 'add', effectStep: 0.25, desc: 'Boosts all scoring.' },
+  { id: 'comboDecay', label: 'Combo Hold', group: 'global', baseCost: 150, costGrowth: 1.3, effectKind: 'add', effectStep: 0.3, max: 8, desc: 'Combo fades slower.' },
   { id: 'ballCapacity',    label: 'Ball Capacity',    group: 'balls',  baseCost: 40,  costGrowth: 1.30, effectKind: 'add', effectStep: 1, desc: '+1 ball on the field.' },
   { id: 'spawnRate',       label: 'Spawn Speed',      group: 'balls',  baseCost: 35,  costGrowth: 1.26, effectKind: 'add', effectStep: 1, desc: 'Balls respawn faster.' },
   { id: 'goldenChance',    label: 'Golden Chance',    group: 'global', baseCost: 300, costGrowth: 1.35, effectKind: 'add', effectStep: 0.0025, max: 40, desc: 'Higher chance of golden balls.' },

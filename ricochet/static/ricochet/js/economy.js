@@ -1,5 +1,5 @@
 import {
-  EVENT_CAP, BASE_CAPACITY, GOLDEN, KICK,
+  EVENT_CAP, BASE_CAPACITY, GOLDEN, KICK, COMBO,
   UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE,
   PRESTIGE, SPAWN_RATE_BASE, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
@@ -20,12 +20,15 @@ export function creditsFromCounters(counters, surfaceBase, globalValueMult, even
 export function updateCombo(comboBonus, scoredThisStep, dt, cfg) {
   let next = comboBonus;
   if (scoredThisStep) {
-    next += Math.min(cfg.gainPerSec * dt, cfg.perStepGainCap);
+    // Diminishing gains: the rate shrinks as combo rises, so a high combo is a
+    // grind to push higher (still bounded per step by perStepGainCap).
+    const gain = (cfg.gainPerSec * dt) / (1 + comboBonus * cfg.gainFalloff);
+    next += Math.min(gain, cfg.perStepGainCap);
   } else {
     next -= cfg.decayPerSec * dt;
   }
   if (next < 0) next = 0;
-  if (next > cfg.capBonusStart) next = cfg.capBonusStart;
+  if (next > cfg.cap) next = cfg.cap;
   return next;
 }
 
@@ -96,6 +99,13 @@ export function applyUpgradeEffects(world, state) {
   // peg kick
   const kickDef = _def(UPGRADES, 'pegKick');
   world.kick = KICK + upgradeEffect(kickDef, _level(up, 'pegKick'));
+
+  // combo decay: the Combo Hold upgrade slows how fast combo fades, floored.
+  const comboDecayDef = _def(UPGRADES, 'comboDecay');
+  world.comboDecay = Math.max(
+    COMBO.minDecay,
+    COMBO.decayPerSec - upgradeEffect(comboDecayDef, _level(up, 'comboDecay')),
+  );
 
   // ramps: how many ramp pairs are active (0/1/2). rebuildRamps reads this.
   world.rampsLevel = _level(up, 'midRamps');

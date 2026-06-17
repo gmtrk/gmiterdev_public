@@ -34,27 +34,43 @@ test('creditsFromCounters ignores bonus fields on the counters object', () => {
   assert.equal(creditsFromCounters(counters, SURFACE_BASE, 5, 5), 0);
 });
 
+const COMBO_CFG = {
+  gainPerSec: COMBO.gainPerSec,
+  decayPerSec: COMBO.decayPerSec,
+  perStepGainCap: COMBO.perStepGainCap,
+  gainFalloff: COMBO.gainFalloff,
+  cap: COMBO.capBonusStart,
+};
+
 test('updateCombo gains gradually, never instantly to the cap', () => {
-  const next = updateCombo(0, true, 1 / 60, COMBO);
+  const next = updateCombo(0, true, 1 / 60, COMBO_CFG);
   assert.ok(next > 0, `expected gain, got ${next}`);
   assert.ok(next <= COMBO.perStepGainCap, `gain per step must be capped, got ${next}`);
   assert.ok(next < COMBO.capBonusStart, 'one step must not reach the cap');
 });
 
+test('updateCombo gain shrinks as combo rises (diminishing returns)', () => {
+  const dt = 1 / 60;
+  const lowGain = updateCombo(0, true, dt, COMBO_CFG) - 0;
+  const highGain = updateCombo(10, true, dt, COMBO_CFG) - 10;
+  assert.ok(highGain > 0, `still gains at high combo, got ${highGain}`);
+  assert.ok(highGain < lowGain, `gain at combo 10 (${highGain}) must be < at combo 0 (${lowGain})`);
+});
+
 test('updateCombo decays gradually but never hard-resets below 0', () => {
   const start = 5;
-  const next = updateCombo(start, false, 1 / 60, COMBO);
+  const next = updateCombo(start, false, 1 / 60, COMBO_CFG);
   assert.ok(next < start, 'should decay when not scoring');
   assert.ok(next > 0, `must not hard-reset to 0 in one step, got ${next}`);
 });
 
 test('updateCombo clamps decay at 0 (never negative)', () => {
-  const next = updateCombo(0.001, false, 1, COMBO);
+  const next = updateCombo(0.001, false, 1, COMBO_CFG);
   assert.equal(next, 0);
 });
 
-test('updateCombo clamps gain at capBonusStart', () => {
-  const next = updateCombo(COMBO.capBonusStart, true, 1, COMBO);
+test('updateCombo clamps gain at cap (regression: capBonus/capBonusStart key mismatch)', () => {
+  const next = updateCombo(COMBO.capBonusStart, true, 1, COMBO_CFG);
   assert.equal(next, COMBO.capBonusStart);
 });
 

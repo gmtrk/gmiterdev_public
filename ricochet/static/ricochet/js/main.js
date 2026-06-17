@@ -546,9 +546,10 @@ function step(dt) {
   const scoredThisStep = (c.wall + c.peg + c.block) > 0;
   run.comboBonus = updateCombo(run.comboBonus, scoredThisStep, dt, {
     gainPerSec: COMBO.gainPerSec,
-    decayPerSec: COMBO.decayPerSec,
-    capBonus: run.comboCapBonus,
+    decayPerSec: world.comboDecay != null ? world.comboDecay : COMBO.decayPerSec,
     perStepGainCap: COMBO.perStepGainCap,
+    gainFalloff: COMBO.gainFalloff,
+    cap: run.comboCapBonus,
   });
 
   // 4) CREDITS ACCRUAL — eventMult MUST use goldenBonus/breakBonus, never 0,0

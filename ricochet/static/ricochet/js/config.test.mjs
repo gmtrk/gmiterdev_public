@@ -57,7 +57,7 @@ test('SURFACE_BASE has wall/peg/block base values', () => {
 
 test('event + combo + golden + clack scalars match the contract', () => {
   assert.equal(C.EVENT_CAP, 29);
-  assert.deepEqual(C.COMBO, { gainPerSec: 6, decayPerSec: 3, capBonusStart: 9, perStepGainCap: 0.3 });
+  assert.deepEqual(C.COMBO, { gainPerSec: 6, decayPerSec: 3, capBonusStart: 19, perStepGainCap: 0.3, gainFalloff: 0.6, minDecay: 0.5 });
   assert.deepEqual(C.GOLDEN, { chance: 0.005, bonus: 12 });
   assert.equal(C.CLACK_COOLDOWN, 0.2);
 });
