@@ -1,28 +1,17 @@
-import { STARTING_CREDITS, ARENA_W, ARENA_H, BLOCK_LEVELS, PADDLE_WIDTH_BASE } from './config.js';
+import { STARTING_CREDITS, ARENA_W, ARENA_H, PADDLE_WIDTH_BASE } from './config.js';
 
 export const CURRENT_VERSION = 1;
 
 function starterBlueprint() {
-  // Plinko triangle: rows of pegs, widening downward, centered horizontally.
-  const pegs = [];
-  const rows = 4;
-  const startY = ARENA_H * 0.30;
-  const rowGap = 90;
-  const colGap = 90;
-  for (let row = 0; row < rows; row++) {
-    const count = row + 2; // 2,3,4,5 -> 14 pegs total
-    const y = startY + row * rowGap;
-    const width = (count - 1) * colGap;
-    const x0 = ARENA_W / 2 - width / 2;
-    for (let c = 0; c < count; c++) {
-      pegs.push({ x: x0 + c * colGap, y });
-    }
-  }
-  const blockY = ARENA_H * 0.68;
-  const blocks = [
-    { x: ARENA_W / 2 - 110, y: blockY, level: BLOCK_LEVELS, respawnAt: null, golden: false },
-    { x: ARENA_W / 2 + 110, y: blockY, level: BLOCK_LEVELS, respawnAt: null, golden: false },
+  // Minimal cold-open: two pegs near the top, no blocks, no owned paddle. Players
+  // buy the budgets (and the Paddle upgrade) to grow the field. The paddle entry
+  // carries its starting position/width; ownership is gated by the paddle upgrade
+  // level (world.paddle.present), so it stays invisible until bought.
+  const pegs = [
+    { x: ARENA_W / 2 - 80, y: ARENA_H * 0.32 },
+    { x: ARENA_W / 2 + 80, y: ARENA_H * 0.32 },
   ];
+  const blocks = [];
   const paddle = { x: ARENA_W / 2, width: PADDLE_WIDTH_BASE };
   return { pegs, blocks, paddle };
 }

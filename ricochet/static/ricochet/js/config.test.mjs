@@ -24,8 +24,8 @@ test('cap + grid scalars match the contract', () => {
 });
 
 test('physics scalars match the contract', () => {
-  assert.equal(C.GRAVITY, 600);
-  assert.equal(C.DRAG, 0.96);
+  assert.equal(C.GRAVITY, 1700);
+  assert.equal(C.DRAG, 0.99);
   assert.equal(C.E_WALL, 0.92);
   assert.equal(C.E_COLLIDER, 0.9);
   assert.equal(C.PEG_RADIUS, 7);
@@ -65,7 +65,20 @@ test('burster + offline + prestige scalars match the contract', () => {
 
 test('cold-open + base-capacity scalars match the contract', () => {
   assert.equal(C.STARTING_CREDITS, 25);
-  assert.equal(C.BASE_CAPACITY, 3);
+  assert.equal(C.BASE_CAPACITY, 1);
+});
+
+test('cold-open placement budgets are minimal (buy-to-grow)', () => {
+  assert.equal(C.PEG_BUDGET_BASE, 2);   // two starter pegs
+  assert.equal(C.BLOCK_BUDGET_BASE, 0); // no blocks until bought
+});
+
+test('feel-tuning scalars are present and sane', () => {
+  assert.ok(C.SPAWN_RATE_BASE > 0, 'spawn rate base positive');
+  assert.ok(C.E_BLOCK > 0 && C.E_BLOCK <= 1.5, 'block restitution sane');
+  assert.ok(C.BLOCK_KICK >= 0, 'block kick non-negative');
+  assert.ok(C.BOUNCE_JITTER >= 0, 'jitter angle non-negative');
+  assert.ok(C.BOUNCE_JITTER_CHANCE >= 0 && C.BOUNCE_JITTER_CHANCE <= 1, 'jitter chance is a probability');
 });
 
 test('PALETTE has the contract keys + values', () => {
@@ -110,8 +123,8 @@ test('UPGRADES has the headline globalValueMult + ballCapacity defs the economy 
   assert.equal(cap.costGrowth, 1.30);
 });
 
-test('UPGRADES includes the budget/paddle/kick levers the deriver reads', () => {
-  for (const id of ['goldenChance', 'pegBudget', 'blockBudget', 'paddleWidth', 'pegKick']) {
+test('UPGRADES includes the budget/paddle/kick/spawn levers the deriver reads', () => {
+  for (const id of ['goldenChance', 'pegBudget', 'blockBudget', 'paddleWidth', 'pegKick', 'spawnRate']) {
     assert.ok(C.UPGRADES.find((u) => u.id === id), `missing ${id}`);
   }
 });

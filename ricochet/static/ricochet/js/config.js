@@ -4,16 +4,25 @@
 export const DT = 1 / 60, MAX_SUBSTEPS = 2, FRAME_BUDGET_MS = 8;
 export const ARENA_W = 1000, ARENA_H = 1500;
 export const SPAWN_MARGIN = 40, SPAWN_Y = 30, MAX_SPAWNS_PER_TICK = 8;
+// Starting balls/sec = a 0.3s respawn interval. The spawnRate upgrade raises it.
+export const SPAWN_RATE_BASE = 1 / 0.3;
 export const CEILING_DESKTOP = 5000, RESERVED_OWNED = 200, SPECIAL_CAP = 96, GRID_CELL = 50;
-export const GRAVITY = 600, DRAG = 0.96, E_WALL = 0.92, E_COLLIDER = 0.9;
+// Snappier fall + light drag: balls should move fast and lively, not float. Both
+// are live-tunable off the world (debug sliders) — these are just the seeds.
+export const GRAVITY = 1700, DRAG = 0.99, E_WALL = 0.92, E_COLLIDER = 0.9;
 export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
-// Paddle is a strict energy sink (NOT a kicker like pegs): restitution < 1 and
-// zero kick, plus a tiny tangential nudge so a vertical drop walks off the edge
-// instead of column-bouncing forever.
-export const E_PADDLE = 0.6, PADDLE_NUDGE = 25;
+// Paddle bounces high (restitution near-elastic) but injects NO fixed energy
+// (kick stays 0) so it can't pump a trapped ball forever; the tangential nudge
+// walks a near-vertical drop off the edge so it eventually drains.
+export const E_PADDLE = 0.95, PADDLE_NUDGE = 25;
 // Tunneling invariant: MAX_SPEED*DT < PEG_RADIUS.
 export const MAX_SPEED = 0.9 * PEG_RADIUS / DT;
 export const BLOCK_W = 64, BLOCK_H = 28, BLOCK_LEVELS = 9, RESPAWN_DELAY = 4, BLOCK_BREAK_BONUS = 8;
+// Blocks bounce higher than pegs: stronger kick + near-elastic restitution.
+export const E_BLOCK = 0.95, BLOCK_KICK = 160;
+// Random bounce offset on block/paddle hits: with this chance, rotate the
+// outgoing velocity by up to ±BOUNCE_JITTER rad so balls scatter chaotically.
+export const BOUNCE_JITTER = 0.4, BOUNCE_JITTER_CHANCE = 0.5;
 export const SURFACE_BASE = { wall: 1, peg: 5, block: 25 };
 export const EVENT_CAP = 29; // eventMult <= 1 + EVENT_CAP
 export const COMBO = { gainPerSec: 6, decayPerSec: 3, capBonusStart: 9, perStepGainCap: 0.3 };
@@ -23,18 +32,24 @@ export const BURSTER = { chargePerBounce: 1, chargePerClack: 5, threshold: 60, b
 export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLifeSec: 300 };
 export const PRESTIGE = { coreScale: 1e9, coreK: 1, minCredits: 1e9 };
 export const STARTING_CREDITS = 25; // cold-open grant (first upgrade affordable after ~10s, not instantly)
-export const BASE_CAPACITY = 3;     // starting ball slots before upgrades
-export const PEG_BUDGET_BASE = 12, BLOCK_BUDGET_BASE = 2, PADDLE_WIDTH_BASE = 120;
+export const BASE_CAPACITY = 1;     // start with a single ball; buy Ball Capacity for more
+// Minimal cold-open field: 2 placed pegs, no blocks, no paddle. Players buy the
+// budgets / paddle to grow it. PADDLE_WIDTH_BASE is the width once owned (the
+// first Paddle level → width 100 + 20 = 120).
+export const PEG_BUDGET_BASE = 2, BLOCK_BUDGET_BASE = 0, PADDLE_WIDTH_BASE = 100;
 
 // Credits shop. effectKind 'add' = additive per level (diminishing ROI vs geometric cost);
 // 'mul' reserved per contract but Credits levers are additive. max? caps repeatable levels.
 export const UPGRADES = [
   { id: 'globalValueMult', label: 'Value Multiplier', group: 'global', baseCost: 50,  costGrowth: 1.18, effectKind: 'add', effectStep: 0.25 },
   { id: 'ballCapacity',    label: 'Ball Capacity',    group: 'balls',  baseCost: 40,  costGrowth: 1.30, effectKind: 'add', effectStep: 1 },
+  { id: 'spawnRate',       label: 'Spawn Speed',      group: 'balls',  baseCost: 35,  costGrowth: 1.26, effectKind: 'add', effectStep: 1 },
   { id: 'goldenChance',    label: 'Golden Chance',    group: 'global', baseCost: 300, costGrowth: 1.35, effectKind: 'add', effectStep: 0.0025, max: 40 },
   { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 60,  costGrowth: 1.28, effectKind: 'add', effectStep: 4 },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1 },
-  { id: 'paddleWidth',     label: 'Paddle Width',     group: 'paddle', baseCost: 80,  costGrowth: 1.25, effectKind: 'add', effectStep: 20 },
+  // Paddle: buying the first level both ADDS the paddle (present once level>=1)
+  // and sets its width; further levels widen it.
+  { id: 'paddleWidth',     label: 'Paddle',           group: 'paddle', baseCost: 80,  costGrowth: 1.25, effectKind: 'add', effectStep: 20 },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10 },
   // Special-ball unlocks. One-shot purchases (max:1, no cost growth): buying
   // flips state.specials[unlock].unlocked and seeds the starter pack so the type

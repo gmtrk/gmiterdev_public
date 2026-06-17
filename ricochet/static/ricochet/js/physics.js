@@ -2,8 +2,9 @@ import {
   DT, ARENA_W, ARENA_H, SPAWN_MARGIN, SPAWN_Y,
   CEILING_DESKTOP, RESERVED_OWNED, SPECIAL_CAP, GRID_CELL,
   GRAVITY, DRAG, E_WALL, E_COLLIDER, E_PADDLE, PADDLE_NUDGE, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
-  BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS,
+  BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS, E_BLOCK, BLOCK_KICK,
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK,
+  SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -73,6 +74,28 @@ export function clampSpeed(vx, vy, maxSpeed) {
   return { vx, vy };
 }
 
+// Rotate (vx,vy) by a random angle in [-maxAngle, +maxAngle]. Speed is preserved;
+// only the direction is perturbed (the "random offset" that scatters block/paddle
+// bounces). rng() returns [0,1). Pure given rng — unit-tested.
+export function jitterVelocity(vx, vy, maxAngle, rng) {
+  const ang = (rng() * 2 - 1) * maxAngle;
+  const c = Math.cos(ang);
+  const s = Math.sin(ang);
+  return { vx: vx * c - vy * s, vy: vx * s + vy * c };
+}
+
+// Apply the bounce-jitter roll to ball `i` of `pool` (block/paddle hits only).
+// No-op when the world has jitter disabled or the random roll misses.
+function _maybeJitter(world, pool, i) {
+  const chance = world.bounceJitterChance;
+  if (!(chance > 0)) return;
+  const rng = world.rng || Math.random;
+  if (rng() >= chance) return;
+  const j = jitterVelocity(pool.vx[i], pool.vy[i], world.bounceJitter, rng);
+  pool.vx[i] = j.vx;
+  pool.vy[i] = j.vy;
+}
+
 export function reflectWalls(x, y, vx, vy, r, W, H, eWall, hasFloor) {
   let hitWall = false;
   if (x - r < 0) { x = r; vx = -vx * eWall; hitWall = true; }
@@ -128,7 +151,9 @@ export function buildWorld(state) {
       w: BLOCK_W,
       h: BLOCK_H,
     },
-    paddle: { x: state.placed.paddle.x, y: ARENA_H - 80, w: state.placed.paddle.width, h: 16 },
+    // present:false until the player buys the Paddle upgrade (applyUpgradeEffects
+    // sets it from the paddleWidth level right after buildWorld).
+    paddle: { x: state.placed.paddle.x, y: ARENA_H - 80, w: state.placed.paddle.width, h: 16, present: false },
     grid: new Grid(ARENA_W, ARENA_H, GRID_CELL),
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
     ceiling: CEILING_DESKTOP,
@@ -139,13 +164,20 @@ export function buildWorld(state) {
     paddleE: E_PADDLE,
     kick: KICK,
     maxSpeed: MAX_SPEED,
+    // Blocks bounce higher than pegs (own restitution + kick); block/paddle hits
+    // get a random directional jitter for chaos. rng is injectable for tests.
+    blockE: E_BLOCK,
+    blockKick: BLOCK_KICK,
+    bounceJitter: BOUNCE_JITTER,
+    bounceJitterChance: BOUNCE_JITTER_CHANCE,
+    rng: Math.random,
     // Per-run, live-tunable feel constants. Seeded from config so the default
     // behaviour is unchanged, but stepPhysics reads these off the world (not the
     // module constants) so the debug panel can retune them live. spawnRate is the
-    // baseline balls/sec the main spawn tick reads.
+    // baseline balls/sec the main spawn tick reads (applyUpgradeEffects overrides it).
     gravity: GRAVITY,
     drag: DRAG,
-    spawnRate: 4,
+    spawnRate: SPAWN_RATE_BASE,
     globalValueMult: 1,
     goldenChance: GOLDEN.chance,
     baseCapacity: BASE_CAPACITY,
@@ -297,24 +329,27 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   // blocks (narrow-phase + block runtime) — filled in Task 2.7
   _resolveBlocksFor(world, pool, i, now, isSpecial);
 
-  // paddle — a strict ENERGY SINK, not a kicker. Resolve with the paddle
-  // restitution (< 1) and ZERO kick (the peg KICK here created a stable limit
-  // cycle: balls oscillated on the paddle forever, banking points). A near-
-  // vertical contact gets a tiny tangential nudge so a perfectly-vertical drop
-  // walks off the edge instead of column-bouncing in place.
+  // paddle — bounces high (near-elastic restitution) but injects NO fixed energy
+  // (kick = 0): a positive kick once created a stable limit cycle where balls
+  // oscillated on the paddle forever banking points. Restitution < 1 + drag means
+  // energy strictly decays, and the tangential nudge walks a near-vertical drop
+  // off the edge so it eventually drains. The paddle exists only once owned.
   const pa = world.paddle;
-  const pr = resolveCircleAABB(
-    pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-    pa.x, pa.y, pa.w / 2, pa.h / 2, world.paddleE, 0, world.maxSpeed,
-  );
-  if (pr.hit) {
-    pool.x[i] = pr.x; pool.y[i] = pr.y; pool.vx[i] = pr.vx; pool.vy[i] = pr.vy;
-    // Near-vertical contact (mostly horizontal separation impulse, little vx):
-    // nudge tangentially so the ball can walk off the paddle edge and drain.
-    if (Math.abs(pool.vx[i]) < Math.abs(pool.vy[i])) {
-      pool.vx[i] += PADDLE_NUDGE * Math.sign((pool.x[i] - pa.x) || 1);
+  if (pa.present) {
+    const pr = resolveCircleAABB(
+      pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
+      pa.x, pa.y, pa.w / 2, pa.h / 2, world.paddleE, 0, world.maxSpeed,
+    );
+    if (pr.hit) {
+      pool.x[i] = pr.x; pool.y[i] = pr.y; pool.vx[i] = pr.vx; pool.vy[i] = pr.vy;
+      // Near-vertical contact (mostly horizontal separation impulse, little vx):
+      // nudge tangentially so the ball can walk off the paddle edge and drain.
+      if (Math.abs(pool.vx[i]) < Math.abs(pool.vy[i])) {
+        pool.vx[i] += PADDLE_NUDGE * Math.sign((pool.x[i] - pa.x) || 1);
+      }
+      _maybeJitter(world, pool, i); // chaotic scatter off the paddle
+      if (isSpecial) pool.envHits[i]++;
     }
-    if (isSpecial) pool.envHits[i]++;
   }
 }
 
@@ -326,10 +361,11 @@ function _resolveBlocksFor(world, pool, i, now, isSpecial) {
     if (b.level[j] <= 0) continue; // inactive (awaiting respawn)
     const r = resolveCircleAABB(
       pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-      b.xs[j], b.ys[j], hw, hh, world.eCollider, world.kick, world.maxSpeed,
+      b.xs[j], b.ys[j], hw, hh, world.blockE, world.blockKick, world.maxSpeed,
     );
     if (!r.hit) continue;
     pool.x[i] = r.x; pool.y[i] = r.y; pool.vx[i] = r.vx; pool.vy[i] = r.vy;
+    _maybeJitter(world, pool, i); // chaotic scatter off blocks
     b.level[j]--;
     world.counters.block++;
     if (isSpecial) pool.envHits[i]++;

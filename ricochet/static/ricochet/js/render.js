@@ -244,10 +244,12 @@ export function draw(ctx, world, atlas, view) {
     ctx.fillRect(blocks.xs[i] - hw, blocks.ys[i] - hh, world.blockW, world.blockH);
   }
 
-  // paddle
+  // paddle (only once owned — present is gated by the paddle upgrade level)
   const pd = world.paddle;
-  ctx.fillStyle = P.ballCyan;
-  ctx.fillRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
+  if (pd.present) {
+    ctx.fillStyle = P.ballCyan;
+    ctx.fillRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
+  }
 
   // normal balls — golden flag selects the golden sprite
   const n = world.normal;

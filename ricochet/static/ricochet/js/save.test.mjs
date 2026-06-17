@@ -26,24 +26,19 @@ test('defaultSave specials are all locked at capacity 0', () => {
   }
 });
 
-test('defaultSave includes a starter blueprint: Plinko pegs + 1-2 blocks + paddle', () => {
+test('defaultSave is a minimal cold-open: 2 pegs, no blocks, paddle entry present', () => {
   const s = defaultSave();
   assert.ok(Array.isArray(s.placed.pegs));
-  assert.ok(s.placed.pegs.length >= 6, `expected a triangle of pegs, got ${s.placed.pegs.length}`);
+  assert.equal(s.placed.pegs.length, 2, `expected exactly 2 starter pegs, got ${s.placed.pegs.length}`);
   for (const p of s.placed.pegs) {
     assert.equal(typeof p.x, 'number');
     assert.equal(typeof p.y, 'number');
   }
-  assert.ok(s.placed.blocks.length >= 1 && s.placed.blocks.length <= 2, 'one or two starter blocks');
-  for (const b of s.placed.blocks) {
-    assert.equal(typeof b.x, 'number');
-    assert.equal(typeof b.y, 'number');
-    assert.equal(typeof b.level, 'number');
-    assert.equal(b.golden, false);
-    // block shape rule: no per-block hw/hh/w/h
-    assert.equal(b.w, undefined);
-    assert.equal(b.h, undefined);
-  }
+  // No blocks at the start — they are bought via the Block Budget upgrade.
+  assert.ok(Array.isArray(s.placed.blocks));
+  assert.equal(s.placed.blocks.length, 0, 'no starter blocks');
+  // The paddle entry carries position/width but is not "owned" — ownership is the
+  // paddleWidth upgrade level (world.paddle.present), derived at runtime.
   assert.equal(typeof s.placed.paddle.x, 'number');
   assert.equal(typeof s.placed.paddle.width, 'number');
 });

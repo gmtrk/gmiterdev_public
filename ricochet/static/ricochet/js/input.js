@@ -197,6 +197,7 @@ export function setupPaddleDrag(deps) {
   let dragging = false;
 
   function near(x, y) {
+    if (!world.paddle.present) return false; // no paddle to grab until it's bought
     return (
       Math.abs(x - world.paddle.x) <= world.paddle.w / 2 + 30 &&
       Math.abs(y - world.paddle.y) <= world.paddle.h / 2 + 30

@@ -104,6 +104,26 @@ test('clampSpeed scales an over-max velocity down to exactly MAX_SPEED', () => {
   assert.ok(r.vx > 0 && Math.abs(r.vy) < 1e-6);
 });
 
+import { jitterVelocity } from './physics.js';
+
+test('jitterVelocity with a centered rng (0.5) leaves the velocity unchanged', () => {
+  // rng()=0.5 -> angle (0.5*2-1)*max = 0 -> no rotation.
+  const r = jitterVelocity(30, -40, 0.4, () => 0.5);
+  assert.ok(Math.abs(r.vx - 30) < 1e-9, `vx ${r.vx}`);
+  assert.ok(Math.abs(r.vy - (-40)) < 1e-9, `vy ${r.vy}`);
+});
+
+test('jitterVelocity preserves speed while rotating direction', () => {
+  const sp0 = Math.hypot(30, -40); // 50
+  for (const u of [0, 0.25, 0.5, 0.75, 1]) {
+    const r = jitterVelocity(30, -40, 0.4, () => u);
+    assert.ok(Math.abs(Math.hypot(r.vx, r.vy) - sp0) < 1e-6, `speed drift at rng=${u}`);
+  }
+  // a non-centered rng actually changes the direction
+  const rotated = jitterVelocity(30, -40, 0.4, () => 1);
+  assert.ok(Math.abs(rotated.vx - 30) > 1e-3 || Math.abs(rotated.vy - (-40)) > 1e-3, 'expected rotation');
+});
+
 test('reflectWalls reflects and clamps off the left wall', () => {
   // ball center x=2, r=6 -> penetrates left wall (x-r = -4 < 0)
   const r = reflectWalls(2, 750, -10, 0, BALL_RADIUS, ARENA_W, ARENA_H, E_WALL, true);
@@ -405,12 +425,16 @@ test('FINITE LIFETIME: a ball launched at MAX_SPEED through an empty no-floor ar
 });
 
 test('PADDLE DRAIN: a ball dropped straight onto the paddle drains (no infinite bounce)', () => {
-  // Regression for the paddle "infinite bounce" trap: resolving the paddle with
-  // the peg KICK exactly replenished the energy restitution+drag removed, so a
-  // ball oscillated on the paddle forever (never leaked). With paddle kick=0 +
-  // restitution<1 + the tangential nudge, it must walk off and drain.
+  // Regression for the paddle "infinite bounce" trap: a positive paddle kick once
+  // replenished the energy restitution+drag removed, so a ball oscillated forever.
+  // The paddle now bounces high (restitution near 1) but still injects NO fixed
+  // energy (kick=0), so energy strictly decays and the tangential nudge walks the
+  // ball off the edge to drain. Owned-gated, so enable it; jitter off for a
+  // deterministic worst case (drain must hold on the nudge path alone).
   const world = buildWorld(makeEmptyState());
   world.hasFloor = false;
+  world.paddle.present = true;
+  world.bounceJitterChance = 0;
   const pa = world.paddle;
   // rest the ball just above the paddle top at the paddle's x, ~zero velocity
   spawnNormal(world, pa.x, pa.y - pa.h / 2 - BALL_RADIUS - 1, 0);
