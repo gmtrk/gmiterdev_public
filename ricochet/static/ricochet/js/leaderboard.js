@@ -69,7 +69,12 @@ export function submitScore(state) {
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
     body: JSON.stringify({ initials: state.leaderboardInitials, cores, player_id: state.playerId }),
   })
-    .then((r) => r.json())
+    .then((r) => {
+      // A 4xx (e.g. validation rejection) still resolves with a JSON error body;
+      // only treat the submit as recorded when the server actually accepted it.
+      if (!r.ok) throw new Error(`add-high-score failed: ${r.status}`);
+      return r.json();
+    })
     .then(() => {
       state.stats.lastSubmittedCores = state.lifetimeCores;
       return fetchHighScores().then(() => true);

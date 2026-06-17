@@ -7,7 +7,7 @@ import {
 } from './specials.js';
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
-  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, DISPLAY_CPS_HALFLIFE,
+  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, DISPLAY_CPS_HALFLIFE, RESERVED_OWNED,
   RAMP_ANGLE, SPECIAL_RADIUS, BURSTER_RADIUS, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
@@ -501,17 +501,19 @@ function runOfflineOnLoad() {
     persistSave();
     return;
   }
+  // Grant immediately (and stamp lastSaveTime to `now`) rather than waiting for the
+  // Collect click: the autosave loop advances lastSaveTime every AUTOSAVE_INTERVAL, so
+  // a player who closes the tab without clicking would otherwise lose the whole away
+  // interval — credits computed but never granted, clock already moved past the window.
+  grantOffline(state, result.credits, now);
+  persistSave();
   showModal({
     title: 'While you were gone…',
     body:
       `You were away ${Math.round(result.awaySeconds / 60)} min.\n` +
-      `Earned +${formatNumber(result.credits)} credits ` +
+      `Collected +${formatNumber(result.credits)} credits ` +
       `(at ${Math.round(result.efficiency * 100)}% efficiency).`,
-    confirmLabel: 'Collect',
-    onConfirm: () => {
-      grantOffline(state, result.credits, Date.now());
-      persistSave();
-    },
+    confirmLabel: 'Nice!',
   });
 }
 runOfflineOnLoad();
@@ -716,9 +718,16 @@ function render() {
 // The adaptive max is the QUALITY-CLAMPED design ceiling (not raw CEILING_DESKTOP)
 // so under-budget growth respects the low-quality clamp instead of undoing it
 // within seconds.
+// Hard floor for the adaptive ceiling. Must stay comfortably above RESERVED_OWNED:
+// special-emitted (cap-exempt) balls spawn only into the (ceiling - RESERVED_OWNED)
+// headroom (see specials.makeSpecialEmit.balls), so a floor at or below RESERVED_OWNED
+// would make that headroom non-positive and silently fizzle ALL Splitter/Burster
+// spawns whenever a slow device drove the ceiling down. 2x leaves RESERVED_OWNED of
+// real normal-ball headroom even at the floor.
+const MIN_CEILING = RESERVED_OWNED * 2;
 function onFrameTime(ms) {
   const max = qualityCeiling(world.targetCeiling, runtime.lowQuality);
-  world.ceiling = adaptCeiling(world.ceiling, ms, FRAME_BUDGET_MS, 100, max);
+  world.ceiling = adaptCeiling(world.ceiling, ms, FRAME_BUDGET_MS, MIN_CEILING, max);
 }
 
 // --- save on tab hide ---

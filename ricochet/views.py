@@ -45,10 +45,21 @@ def add_high_score(request):
     if player_id:
         if not re.fullmatch(r"[A-Za-z0-9-]{1,64}", player_id):
             return JsonResponse({"error": "Invalid player_id"}, status=400)
-        RicochetScore.objects.update_or_create(
+        # get_or_create (not update_or_create) so a stale/out-of-order/forged submit
+        # carrying a LOWER cores value can never regress a player's recorded high
+        # score — only a strictly higher value updates the row. The partial unique
+        # constraint on player_id (see models.RicochetScore.Meta) makes the
+        # get_or_create create-path race-safe: a concurrent double-submit hits an
+        # IntegrityError that get_or_create catches and resolves to the existing row,
+        # instead of leaving two rows that later 500 on MultipleObjectsReturned.
+        obj, created = RicochetScore.objects.get_or_create(
             player_id=player_id,
             defaults={"initials": initials, "cores": cores},
         )
+        if not created and cores > obj.cores:
+            obj.initials = initials
+            obj.cores = cores
+            obj.save(update_fields=["initials", "cores"])
     else:
         RicochetScore.objects.create(initials=initials, cores=cores)
     return JsonResponse({"message": "High score added successfully!"})

@@ -236,6 +236,34 @@ def test_add_high_score_upserts_by_player_id(client):
     assert row.initials == "ABD"
 
 
+def test_add_high_score_never_regresses_to_a_lower_value(client):
+    pid = "22222222-2222-4222-8222-222222222222"
+    client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "ABC", "cores": 100, "player_id": pid}),
+        content_type="application/json",
+    )
+    # A stale / out-of-order / forged submit with a LOWER value must not lower the row.
+    r = client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "XYZ", "cores": 40, "player_id": pid}),
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    row = RicochetScore.objects.get(player_id=pid)
+    assert row.cores == 100  # unchanged
+    assert row.initials == "ABC"  # initials not overwritten by the lower submit
+
+
+def test_player_id_partial_unique_blocks_duplicate_nonblank_rows(client):
+    from django.db import IntegrityError
+
+    pid = "33333333-3333-4333-8333-333333333333"
+    RicochetScore.objects.create(initials="ABC", cores=1, player_id=pid)
+    with pytest.raises(IntegrityError):
+        RicochetScore.objects.create(initials="DEF", cores=2, player_id=pid)
+
+
 def test_add_high_score_distinct_player_ids_make_distinct_rows(client):
     client.post(
         "/ricochet/add-high-score/",
