@@ -689,3 +689,33 @@ test('rampLayout: angle 0 yields horizontal ramps (y1 == y2)', () => {
   const [left] = rampLayout(1, 0, 1000, 1500);
   assert.ok(Math.abs(left.y1 - left.y2) < 1e-9);
 });
+
+import { rebuildRamps } from './physics.js';
+import { RAMP_ANGLE, RAMP_THICKNESS } from './config.js';
+
+test('buildWorld seeds an empty ramps SoA + level 0 + default angle', () => {
+  const world = buildWorld(makeState());
+  assert.equal(world.ramps.count, 0);
+  assert.ok(world.ramps.x1s instanceof Float32Array);
+  assert.equal(world.rampsLevel, 0);
+  assert.equal(world.rampAngle, RAMP_ANGLE);
+  assert.equal(world.ramps.r, RAMP_THICKNESS);
+});
+
+test('rebuildRamps fills world.ramps from rampsLevel + rampAngle', () => {
+  const world = buildWorld(makeState());
+  world.rampsLevel = 2;
+  rebuildRamps(world);
+  assert.equal(world.ramps.count, 4);
+  // matches the pure layout
+  const segs = rampLayout(2, world.rampAngle, world.W, world.H);
+  assert.ok(Math.abs(world.ramps.x1s[0] - segs[0].x1) < 1e-4);
+  assert.ok(Math.abs(world.ramps.y2s[3] - segs[3].y2) < 1e-4);
+});
+
+test('rebuildColliders also rebuilds ramps from the current level', () => {
+  const world = buildWorld(makeState());
+  world.rampsLevel = 1;
+  rebuildColliders(world);
+  assert.equal(world.ramps.count, 2);
+});

@@ -5,6 +5,7 @@ import {
   BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS, E_BLOCK, BLOCK_KICK,
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK, SPAWN_HELPER_DIST,
   SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
+  RAMP_LEN, RAMP_THICKNESS, RAMP_ANGLE,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -164,6 +165,13 @@ export function buildWorld(state) {
       w: BLOCK_W,
       h: BLOCK_H,
     },
+    ramps: {
+      x1s: new Float32Array(0), y1s: new Float32Array(0),
+      x2s: new Float32Array(0), y2s: new Float32Array(0),
+      count: 0, r: RAMP_THICKNESS,
+    },
+    rampsLevel: 0,
+    rampAngle: RAMP_ANGLE,
     grid: new Grid(ARENA_W, ARENA_H, GRID_CELL),
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
     surfaceBase: { ...SURFACE_BASE },
@@ -198,6 +206,7 @@ export function buildWorld(state) {
   };
   rebuildColliders(world);
   applyUpgradeEffects(world, state);
+  rebuildRamps(world); // applyUpgradeEffects set world.rampsLevel; build the segments
   return world;
 }
 
@@ -237,6 +246,7 @@ export function rebuildColliders(world) {
   world.blocks.h = world.blockH;
 
   world.grid.rebuild(world.pegs.xs, world.pegs.ys, world.pegs.count);
+  rebuildRamps(world);
 }
 
 export function spawnNormal(world, x, y, flags) {
@@ -516,7 +526,6 @@ export function rollGoldenFlag(goldenChance, rng = Math.random) {
 // Fixed-position bouncy walls derived from the ramps upgrade level + a tunable
 // angle (degrees). Left ramp `\`: outer end higher near the wall, inner end lower
 // toward center; right ramp is the mirror. Center stays open as the drain.
-const RAMP_LEN = 280;            // Task 7 swaps this for the config import
 const RAMP_X_FRAC = 0.27;        // left ramp center x = W * this (right = 1 - this)
 const RAMP_BOTTOM_OFFSET = 120;  // bottom pair center y = H - this
 const RAMP_MID_FRAC = 0.62;      // midway pair center y = H * this
@@ -539,4 +548,22 @@ export function rampLayout(level, angleDeg, W, H) {
   addPair(H - RAMP_BOTTOM_OFFSET);
   if (level >= 2) addPair(H * RAMP_MID_FRAC);
   return out;
+}
+
+export function rebuildRamps(world) {
+  const level = world.rampsLevel || 0;
+  const angle = world.rampAngle != null ? world.rampAngle : RAMP_ANGLE;
+  const segs = rampLayout(level, angle, world.W, world.H);
+  const n = segs.length;
+  const r = world.ramps;
+  if (r.x1s.length < n) {
+    r.x1s = new Float32Array(n); r.y1s = new Float32Array(n);
+    r.x2s = new Float32Array(n); r.y2s = new Float32Array(n);
+  }
+  for (let i = 0; i < n; i++) {
+    r.x1s[i] = segs[i].x1; r.y1s[i] = segs[i].y1;
+    r.x2s[i] = segs[i].x2; r.y2s[i] = segs[i].y2;
+  }
+  r.count = n;
+  r.r = RAMP_THICKNESS;
 }

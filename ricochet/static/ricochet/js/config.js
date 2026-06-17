@@ -22,6 +22,9 @@ export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
 // tunneling invariant per sub-step. Raising this stays collision-safe (more
 // sub-steps), at proportional CPU cost.
 export const MAX_SPEED = 1100;
+// Ramps (side-deflector bouncy walls). Length + capsule thickness are fixed;
+// angle (degrees) is live-tunable (debug "Ramp Angle").
+export const RAMP_LEN = 280, RAMP_THICKNESS = 4, RAMP_ANGLE = 30;
 export const BLOCK_W = 64, BLOCK_H = 28, BLOCK_LEVELS = 9, RESPAWN_DELAY = 4, BLOCK_BREAK_BONUS = 8;
 // Blocks bounce higher than pegs: stronger kick + near-elastic restitution.
 export const E_BLOCK = 0.95, BLOCK_KICK = 160;
