@@ -10,6 +10,7 @@ import {
   autoFillCount,
   clampBlueprintToBudget,
   unplacedCount,
+  previewPositions,
 } from './placement.js';
 import { ARENA_W, ARENA_H } from './config.js';
 
@@ -172,6 +173,23 @@ test('trianglePegs honors a wider pitch and lower fieldTop', () => {
   assert.ok(wide[0].y > def[0].y);          // 600 > default ~525
   // row 1 has two pegs PITCH apart -> wider pitch spreads them further
   const wideRow1 = wide.filter((p) => p.y === 600 + 120);
-  const defRow1 = def.filter((p) => p.y === def[0].y + 70);
+  const defRow1 = def.filter((p) => p.y === def[0].y + 110); // default pitch is now 110
   assert.ok((wideRow1[1].x - wideRow1[0].x) > (defRow1[1].x - defRow1[0].x));
+});
+
+test('previewPositions: triangle at an explicit spread equals trianglePegs with those params', () => {
+  assert.deepEqual(
+    previewPositions('triangle', { pitchX: 120, pitchY: 130, fieldTop: 600 }, 6),
+    trianglePegs(6, 120, 130, 600),
+  );
+});
+
+test('previewPositions: count <= 0 yields an empty array', () => {
+  assert.deepEqual(previewPositions('triangle', {}, 0), []);
+});
+
+test('previewPositions: a wider pitchX spaces adjacent row pegs farther apart', () => {
+  const narrow = previewPositions('triangle', { pitchX: 110 }, 3); // row0=1 peg, row1=2 pegs (idx 1,2)
+  const wide = previewPositions('triangle', { pitchX: 300 }, 3);
+  assert.ok(Math.abs(wide[2].x - wide[1].x) > Math.abs(narrow[2].x - narrow[1].x));
 });

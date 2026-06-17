@@ -180,3 +180,12 @@ test('special-ball scalars match the contract', () => {
   assert.equal(C.SPECIAL_MAX_SPEED, 850);
   assert.equal(C.SPECIAL_E, 1.0);
 });
+
+test('peg-spread floor + default pitch match the contract', () => {
+  assert.equal(C.MIN_PEG_SPACING, 110);
+  assert.equal(C.PEG_PITCH_X, 110);
+  assert.equal(C.PEG_PITCH_Y, 110);
+  const ps = C.UPGRADES.find((u) => u.id === 'pegSpread');
+  assert.equal(ps.max, 1);
+  assert.equal(ps.effectStep, 0);
+});

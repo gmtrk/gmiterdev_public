@@ -86,6 +86,19 @@ export function funnelPegs(count, pitchY = PEG_PITCH_Y, fieldTop = PEG_FIELD_TOP
   return out;
 }
 
+// Peg positions for a named preset at an EXPLICIT spread, sized to `count`. The
+// single source of preset geometry — both presetPositions (input.js) and the
+// Place-tab spread preview call this. Undefined spread fields fall back to the
+// generator defaults (PEG_PITCH_X/Y, PEG_FIELD_TOP). Pure + tested.
+export function previewPositions(name, spread = {}, count = 0) {
+  if (count <= 0) return [];
+  const { pitchX, pitchY, fieldTop } = spread;
+  if (name === 'triangle') return trianglePegs(count, pitchX, pitchY, fieldTop);
+  if (name === 'diamond') return diamondPegs(count, pitchX, pitchY, fieldTop);
+  if (name === 'funnel') return funnelPegs(count, pitchY, fieldTop);
+  return [];
+}
+
 // How many more elements may be placed to reach `budget` (never negative).
 export function autoFillCount(placedCount, budget) {
   return Math.max(0, budget - placedCount);

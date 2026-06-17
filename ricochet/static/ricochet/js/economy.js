@@ -94,12 +94,12 @@ export function applyUpgradeEffects(world, state) {
   world.budgets.pegs = PEG_BUDGET_BASE + upgradeEffect(pegBudgetDef, _level(up, 'pegBudget'));
   world.budgets.blocks = BLOCK_BUDGET_BASE + upgradeEffect(blockBudgetDef, _level(up, 'blockBudget'));
 
-  // peg spread: the Peg Spread upgrade widens the auto-fill pitch (both axes).
-  const spreadDef = _def(UPGRADES, 'pegSpread');
-  const spreadAdd = upgradeEffect(spreadDef, _level(up, 'pegSpread'));
-  if (!world.pegSpread) world.pegSpread = { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP };
-  world.pegSpread.pitchX = PEG_PITCH_X + spreadAdd;
-  world.pegSpread.pitchY = PEG_PITCH_Y + spreadAdd;
+  // peg spread: a one-time unlock that reveals the Place-tab spread control.
+  // It does NOT change pitch by itself; the player tunes pitch/start there.
+  world.pegSpreadUnlocked = _level(up, 'pegSpread') >= 1;
+  if (!world.pegSpread) {
+    world.pegSpread = { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP };
+  }
 
   // peg kick
   const kickDef = _def(UPGRADES, 'pegKick');

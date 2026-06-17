@@ -8,11 +8,9 @@ import {
   overlaps,
   inBounds,
   inSpawnBand,
-  trianglePegs,
-  diamondPegs,
-  funnelPegs,
   autoFillCount,
   clampBlueprintToBudget,
+  previewPositions,
 } from './placement.js';
 import { rebuildColliders } from './physics.js';
 
@@ -104,14 +102,10 @@ export function eraseWithinRadius(world, placed, x, y, radius) {
 
 // Compute the peg positions for a preset, sized to the remaining peg budget
 // (auto-fill: fill the headroom between placed pegs and the budget).
+// Delegates to previewPositions (placement.js) — the single source of preset geometry.
 export function presetPositions(name, world, placed) {
   const count = autoFillCount(placed.pegs.length, world.budgets.pegs);
-  if (count <= 0) return [];
-  const s = world.pegSpread || {};
-  if (name === 'triangle') return trianglePegs(count, s.pitchX, s.pitchY, s.fieldTop);
-  if (name === 'diamond') return diamondPegs(count, s.pitchX, s.pitchY, s.fieldTop);
-  if (name === 'funnel') return funnelPegs(count, s.pitchY, s.fieldTop);
-  return [];
+  return previewPositions(name, world.pegSpread || {}, count);
 }
 
 // Replace the placed pegs with a one-click preset (auto-filled to budget).

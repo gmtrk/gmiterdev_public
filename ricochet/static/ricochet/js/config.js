@@ -24,7 +24,7 @@ export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
 // Minimum center-to-center spacing between hand-placed pegs, so a ball (dia 12)
 // can always pass between two pegs (2*PEG_RADIUS+12 = 26 < this). Presets (pitch 70)
 // are unaffected. Live in the Place-tab overlay as exclusion rings.
-export const MIN_PEG_SPACING = 44;
+export const MIN_PEG_SPACING = 110;
 // Radius (virtual px) of the Remove-tool eraser: click/drag erases every peg and
 // block whose center is within this distance of the cursor.
 export const ERASER_RADIUS = 50;
@@ -69,7 +69,7 @@ export const BASE_CAPACITY = 1;     // start with a single ball; buy Ball Capaci
 export const PEG_BUDGET_BASE = 2, BLOCK_BUDGET_BASE = 0, PADDLE_WIDTH_BASE = 100;
 
 // Auto-fill preset geometry (base). Widened by the Peg Spread upgrade / debug sliders.
-export const PEG_PITCH_X = 70, PEG_PITCH_Y = 70, PEG_FIELD_TOP = Math.round(ARENA_H * 0.35);
+export const PEG_PITCH_X = 110, PEG_PITCH_Y = 110, PEG_FIELD_TOP = Math.round(ARENA_H * 0.35);
 
 // Credits shop. effectKind 'add' = additive per level (diminishing ROI vs geometric cost);
 // 'mul' reserved per contract but Credits levers are additive. max? caps repeatable levels.
@@ -82,7 +82,7 @@ export const UPGRADES = [
   { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 25,  costGrowth: 1.15, effectKind: 'add', effectStep: 1, desc: '+1 peg you can place.' },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1, desc: '+1 block you can place.' },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10, desc: 'Pegs launch balls harder.' },
-  { id: 'pegSpread', label: 'Peg Spread', group: 'pegs', baseCost: 150, costGrowth: 1.4, effectKind: 'add', effectStep: 6, desc: 'Widens auto-fill peg spacing.' },
+  { id: 'pegSpread', label: 'Peg Spread', group: 'pegs', baseCost: 150, costGrowth: 1, effectKind: 'add', effectStep: 0, max: 1, desc: 'Unlocks peg-spread tuning in the Place tab.' },
   { id: 'midRamps', label: 'Mid Ramps', group: 'ramps', baseCost: 70, costGrowth: 1, effectKind: 'add', effectStep: 1, max: 1, desc: 'Adds a second ramp pair midway.' },
   { id: 'rampAngleUnlock', label: 'Ramp Tuning', group: 'ramps', baseCost: 5000, costGrowth: 1, effectKind: 'add', effectStep: 0, max: 1, desc: 'Unlocks the ramp-angle slider.' },
   // Special-ball unlocks. One-shot purchases (max:1, no cost growth): buying

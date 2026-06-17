@@ -9,7 +9,7 @@
 // The pure helpers (clampLevel / sliderRange) are unit-tested in debug.test.mjs;
 // the DOM wiring (setupDebug) is manually verified.
 
-import { UPGRADES, CORES_UPGRADES, PALETTE, GRAVITY, DRAG, MAX_SPEED, SPAWN_HELPER_DIST, SURFACE_BASE, RAMP_ANGLE, MIN_PEG_SPACING, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP, SPECIAL_E, SPECIAL_MAX_SPEED } from './config.js';
+import { UPGRADES, CORES_UPGRADES, PALETTE, GRAVITY, DRAG, MAX_SPEED, SPAWN_HELPER_DIST, SURFACE_BASE, RAMP_ANGLE, SPECIAL_E, SPECIAL_MAX_SPEED } from './config.js';
 import { applyUpgradeEffects } from './economy.js';
 import { rebuildColliders, rebuildRamps } from './physics.js';
 import { unlockSpecial, SPECIAL_TYPES } from './specials.js';
@@ -33,10 +33,6 @@ const SLIDER_DEFS = {
   spawnHelperDist: { worldKey: 'spawnHelperDist', label: 'Aim Assist',       min: 0,    max: 200,           step: 2,     value: SPAWN_HELPER_DIST },
   pegValue:        { label: 'Peg Value',          min: 0,    max: 25,             step: 1,     value: SURFACE_BASE.peg, apply: (world, v) => { world.surfaceBase.peg = v; } },
   rampAngle:       { worldKey: 'rampAngle',       label: 'Ramp Angle',       min: 0,    max: 80,            step: 1,     value: RAMP_ANGLE, apply: (world, v) => { world.rampAngle = v; rebuildRamps(world); } },
-  minPegSpacing:   { label: 'Peg Spacing',  min: 10,  max: 120,  step: 1, value: MIN_PEG_SPACING, apply: (world, v) => { world.minPegSpacing = v; } },
-  pegPitchX:       { label: 'Peg Pitch X',  min: 30,  max: 150,  step: 1, value: PEG_PITCH_X,     apply: (world, v) => { if (!world.pegSpread) world.pegSpread = {}; world.pegSpread.pitchX = v; } },
-  pegPitchY:       { label: 'Peg Pitch Y',  min: 30,  max: 150,  step: 1, value: PEG_PITCH_Y,     apply: (world, v) => { if (!world.pegSpread) world.pegSpread = {}; world.pegSpread.pitchY = v; } },
-  pegFieldTop:     { label: 'Peg Start Y',  min: 100, max: 1200, step: 5, value: PEG_FIELD_TOP,   apply: (world, v) => { if (!world.pegSpread) world.pegSpread = {}; world.pegSpread.fieldTop = v; } },
   specialE:        { worldKey: 'specialE',        label: 'Special Bounce',    min: 0.5, max: 1.2,                step: 0.01, value: SPECIAL_E },
   specialMaxSpeed: { worldKey: 'specialMaxSpeed', label: 'Special Speed Cap',  min: 50,  max: SPECIAL_MAX_SPEED * 3, step: 10,   value: SPECIAL_MAX_SPEED },
 };
@@ -54,7 +50,7 @@ export function clampSlider(key, raw) {
   return Math.max(r.min, Math.min(raw, r.max));
 }
 
-export const SLIDER_KEYS = ['gravity', 'drag', 'maxSpeed', 'spawnRate', 'spawnHelperDist', 'pegValue', 'rampAngle', 'minPegSpacing', 'pegPitchX', 'pegPitchY', 'pegFieldTop', 'specialE', 'specialMaxSpeed'];
+export const SLIDER_KEYS = ['gravity', 'drag', 'maxSpeed', 'spawnRate', 'spawnHelperDist', 'pegValue', 'rampAngle', 'specialE', 'specialMaxSpeed'];
 
 // --- DOM overlay (manually verified) ------------------------------------
 

@@ -178,7 +178,9 @@ export function buildWorld(state) {
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
     comboDecay: COMBO.decayPerSec,
     minPegSpacing: MIN_PEG_SPACING,
-    pegSpread: { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP },
+    pegSpread: state.placed.spread
+      ? { pitchX: state.placed.spread.pitchX, pitchY: state.placed.spread.pitchY, fieldTop: state.placed.spread.fieldTop }
+      : { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP },
     surfaceBase: { ...SURFACE_BASE },
     ceiling: CEILING_DESKTOP,
     leakMargin: 40,

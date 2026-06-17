@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tryPlace, eraseWithinRadius, canPlacePeg } from './input.js';
+import { tryPlace, eraseWithinRadius, canPlacePeg, presetPositions } from './input.js';
+import { previewPositions } from './placement.js';
 import { BLOCK_W, BLOCK_H } from './config.js';
 
 // world: minimal stub carrying budgets, blockW/blockH, pegRadius.
@@ -104,8 +105,6 @@ test('eraseWithinRadius: returns 0 and mutates nothing when range is empty', () 
   assert.equal(placed.pegs.length, 1);
 });
 
-import { presetPositions } from './input.js';
-
 test('presetPositions: triangle dispatch yields the auto-fill headroom count', () => {
   const world = makeWorld({ pegs: 12, blocks: 5 });
   const placed = makePlaced();
@@ -130,6 +129,15 @@ test('presetPositions: unknown preset yields an empty array', () => {
   const world = makeWorld({ pegs: 8, blocks: 5 });
   const placed = makePlaced();
   assert.deepEqual(presetPositions('spiral', world, placed), []);
+});
+
+test('presetPositions delegates to previewPositions using world.pegSpread', () => {
+  const world = { budgets: { pegs: 6 }, pegSpread: { pitchX: 120, pitchY: 130, fieldTop: 600 } };
+  const placed = { pegs: [] };
+  assert.deepEqual(
+    presetPositions('triangle', world, placed),
+    previewPositions('triangle', world.pegSpread, 6),
+  );
 });
 
 import { applyPreset, applyBlueprint } from './input.js';
@@ -177,16 +185,15 @@ test('applyBlueprint: produces canonical block shapes (fresh copies)', () => {
 test('canPlacePeg / tryPlace: refuses a peg within MIN_PEG_SPACING of another', () => {
   const world = makeWorld({ pegs: 10, blocks: 0 });
   const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
-  assert.equal(canPlacePeg(world, placed, 200, 430), false); // dist 30 < 44
+  assert.equal(canPlacePeg(world, placed, 200, 430), false); // dist 30 < 110
   assert.equal(tryPlace(world, placed, 'peg', 200, 430), false);
   assert.equal(placed.pegs.length, 1);
 });
 test('canPlacePeg / tryPlace: allows a peg at or beyond MIN_PEG_SPACING', () => {
-  const world = makeWorld({ pegs: 10, blocks: 0 });
+  const world = makeWorld({ pegs: 5, blocks: 5 });
   const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
-  assert.equal(canPlacePeg(world, placed, 200, 450), true); // dist 50 >= 44
-  assert.equal(tryPlace(world, placed, 'peg', 200, 450), true);
-  assert.equal(placed.pegs.length, 2);
+  assert.equal(canPlacePeg(world, placed, 200, 520), true); // dist 120 >= 110
+  assert.equal(tryPlace(world, placed, 'peg', 200, 520), true);
 });
 test('canPlacePeg: honors a live world.minPegSpacing override', () => {
   const world = makeWorld({ pegs: 10, blocks: 0 });

@@ -293,14 +293,22 @@ test('pegBudget grants +1 peg per level (per-peg pricing)', () => {
   assert.equal(world.budgets.pegs, base + 3); // +1 per level, not +4
 });
 
-test('pegSpread upgrade widens world.pegSpread pitchX/pitchY', () => {
+test('pegSpread is a one-time unlock flag and does NOT scale pitch by level', () => {
   const state = freshState();
   const world = buildWorld(state);
   applyUpgradeEffects(world, state);
-  const baseX = world.pegSpread.pitchX;
-  const baseY = world.pegSpread.pitchY;
-  state.upgrades.pegSpread = 2;
+  assert.equal(world.pegSpreadUnlocked, false);
+  const pitchBefore = world.pegSpread.pitchX;
+  state.upgrades.pegSpread = 1;
   applyUpgradeEffects(world, state);
-  assert.equal(world.pegSpread.pitchX, baseX + 12); // +6/level
-  assert.equal(world.pegSpread.pitchY, baseY + 12);
+  assert.equal(world.pegSpreadUnlocked, true);
+  assert.equal(world.pegSpread.pitchX, pitchBefore, 'unlock must not change pitch');
+});
+
+test('applyUpgradeEffects does not clobber an already-set pegSpread', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  world.pegSpread = { pitchX: 300, pitchY: 250, fieldTop: 600 };
+  applyUpgradeEffects(world, state);
+  assert.deepEqual(world.pegSpread, { pitchX: 300, pitchY: 250, fieldTop: 600 });
 });

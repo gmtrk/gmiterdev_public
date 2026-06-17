@@ -668,6 +668,13 @@ test('resolveCircleSegment: clamps the outgoing speed to maxSpeed', () => {
   assert.ok(Math.hypot(r.vx, r.vy) <= 1100 + 1e-3);
 });
 
+test('buildWorld seeds world.pegSpread from state.placed.spread when present', () => {
+  const state = makeState();
+  state.placed.spread = { pitchX: 220, pitchY: 180, fieldTop: 500 };
+  const world = buildWorld(state);
+  assert.deepEqual(world.pegSpread, { pitchX: 220, pitchY: 180, fieldTop: 500 });
+});
+
 import { rampLayout } from './physics.js';
 
 test('rampLayout: level 0 -> 2 (free bottom pair); level >=1 -> 4 (+ mid pair)', () => {
