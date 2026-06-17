@@ -197,3 +197,27 @@ test('migrate backfills missing stats/specials/placed from defaults', () => {
   assert.deepEqual(m.placed, d.placed);
   assert.deepEqual(m.stats, d.stats);
 });
+
+test('defaultSave includes the round-7 leaderboard/debug fields with defaults', () => {
+  const s = defaultSave();
+  assert.equal(s.playerId, null);
+  assert.equal(s.leaderboardInitials, null);
+  assert.equal(s.debugUsed, false);
+});
+
+test('serialize+migrate round-trips playerId/leaderboardInitials/debugUsed', () => {
+  const s = defaultSave();
+  s.playerId = 'p-abc'; s.leaderboardInitials = 'XYZ'; s.debugUsed = true;
+  const round = migrate(JSON.parse(serialize(s)));
+  assert.equal(round.playerId, 'p-abc');
+  assert.equal(round.leaderboardInitials, 'XYZ');
+  assert.equal(round.debugUsed, true);
+});
+
+test('migrate fills round-7 defaults for an old save missing them', () => {
+  const old = { credits: '100', cores: 0, upgrades: {}, placed: {}, specials: {} };
+  const m = migrate(old);
+  assert.equal(m.playerId, null);
+  assert.equal(m.leaderboardInitials, null);
+  assert.equal(m.debugUsed, false);
+});

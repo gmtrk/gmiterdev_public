@@ -30,6 +30,9 @@ export function defaultSave() {
     coresShop: {},
     placed: starterBlueprint(),
     stats: { recentEarnRate: 0, lastSaveTime: 0, lastSubmittedCores: 0 },
+    playerId: null,
+    leaderboardInitials: null,
+    debugUsed: false,
   };
 }
 
@@ -44,6 +47,9 @@ export function serialize(state) {
     coresShop: state.coresShop,
     placed: state.placed,
     stats: state.stats,
+    playerId: state.playerId ?? null,
+    leaderboardInitials: state.leaderboardInitials ?? null,
+    debugUsed: !!state.debugUsed,
   };
   return JSON.stringify(disk);
 }
@@ -97,5 +103,8 @@ export function migrate(obj) {
     coresShop: 'coresShop' in obj ? obj.coresShop : d.coresShop,
     placed: 'placed' in obj ? obj.placed : d.placed,
     stats: 'stats' in obj ? obj.stats : d.stats,
+    playerId: 'playerId' in obj ? obj.playerId : d.playerId,
+    leaderboardInitials: 'leaderboardInitials' in obj ? obj.leaderboardInitials : d.leaderboardInitials,
+    debugUsed: 'debugUsed' in obj ? obj.debugUsed : d.debugUsed,
   });
 }
