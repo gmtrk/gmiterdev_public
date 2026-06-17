@@ -165,6 +165,28 @@ body.rc-body {
   letter-spacing: 0.04em;
 }
 
+.rc-bigbang {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px;
+  background: var(--rc-magenta);
+  border: 0;
+  border-radius: 8px;
+  color: #0a0a16;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.rc-bigbang:hover,
+.rc-bigbang:focus-visible {
+  filter: brightness(1.12);
+  outline: none;
+}
+/* Locked = below the prestige threshold: dimmed but still clickable (shows the
+   requirement modal). Keep the button shape so it never reads as plain text. */
 .rc-bigbang--locked { opacity: 0.55; }
 
 .rc-lb__table {
