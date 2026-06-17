@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnTick, buildHudAdapter } from './mainstep.js';
+import { spawnTick, buildHudAdapter, snapSpawnX } from './mainstep.js';
 import { FLAG_GOLDEN, FLAG_CAP_EXEMPT } from './physics.js';
 import { MAX_SPAWNS_PER_TICK } from './config.js';
 
@@ -132,4 +132,33 @@ test('buildHudAdapter returns the contract shape (plus cores for the Cores HUD s
   assert.equal(a.comboBonus, 3.5);
   assert.equal(a.comboCapBonus, 9);
   assert.equal(a.ceiling, 5000);
+});
+
+test('snapSpawnX: leaves x alone when it already hits a peg (within hitRadius)', () => {
+  const pegs = new Float32Array([500]);
+  assert.equal(snapSpawnX(505, pegs, 1, 13, 24, 40, 1000), 505); // d=5 <= 13
+});
+
+test('snapSpawnX: snaps a near-miss to ~11px off-center on the approach side', () => {
+  const pegs = new Float32Array([500]);
+  // d=25 is in (13, 13+24]; snap to pegX + sign*(13*0.85)=500+11.05
+  assert.ok(Math.abs(snapSpawnX(525, pegs, 1, 13, 24, 40, 1000) - 511.05) < 1e-6);
+  // approached from the left -> stays on the left
+  assert.ok(Math.abs(snapSpawnX(475, pegs, 1, 13, 24, 40, 1000) - 488.95) < 1e-6);
+});
+
+test('snapSpawnX: leaves x alone when the nearest peg is beyond hitRadius+helperDist', () => {
+  const pegs = new Float32Array([500]);
+  assert.equal(snapSpawnX(560, pegs, 1, 13, 24, 40, 1000), 560); // d=60 > 37
+});
+
+test('snapSpawnX: no-op with no pegs or zero helper distance', () => {
+  assert.equal(snapSpawnX(525, new Float32Array([]), 0, 13, 24, 40, 1000), 525);
+  assert.equal(snapSpawnX(525, new Float32Array([500]), 1, 13, 0, 40, 1000), 525);
+});
+
+test('snapSpawnX: clamps the snapped result into the spawn band', () => {
+  const pegs = new Float32Array([960]); // near the right edge (W-margin = 960)
+  // d=30 in band; raw snap = 960+11.05 = 971.05 -> clamp to 960
+  assert.equal(snapSpawnX(990, pegs, 1, 13, 24, 40, 1000), 960);
 });

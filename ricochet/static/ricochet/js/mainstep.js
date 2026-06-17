@@ -1,6 +1,29 @@
 import { spawnNormal, spawnCount, rollGoldenFlag, FLAG_CAP_EXEMPT } from './physics.js';
 import { SPAWN_MARGIN, SPAWN_Y, MAX_SPAWNS_PER_TICK } from './config.js';
 
+// Aim-assist: nudge a top-spawn x onto a near-miss peg column so a straight
+// drop actually lands on the peg. A ball already hits a peg when
+// |x - pegX| <= hitRadius (= PEG_RADIUS + BALL_RADIUS). Only act in the
+// near-miss band (hitRadius, hitRadius + helperDist]; snap to JUST INSIDE the
+// hit zone on the side the ball came from (~11px off-center, not dead-center,
+// so it glances off rather than pogo-ing on a peg with kick). Pure + tested.
+export function snapSpawnX(x, pegXs, pegCount, hitRadius, helperDist, margin, W) {
+  if (!pegXs || pegCount <= 0 || helperDist <= 0) return x;
+  let bestI = -1;
+  let bestD = Infinity;
+  for (let i = 0; i < pegCount; i++) {
+    const d = Math.abs(x - pegXs[i]);
+    if (d < bestD) { bestD = d; bestI = i; }
+  }
+  if (bestI < 0 || bestD <= hitRadius || bestD > hitRadius + helperDist) return x;
+  const pegX = pegXs[bestI];
+  const side = Math.sign(x - pegX) || 1;
+  let snapped = pegX + side * (hitRadius * 0.85);
+  if (snapped < margin) snapped = margin;
+  else if (snapped > W - margin) snapped = W - margin;
+  return snapped;
+}
+
 // Count cap-bound (timer-spawned) normal balls. Power-spawned balls carry
 // FLAG_CAP_EXEMPT and live in reserved headroom above the capacity, so they do
 // NOT consume capacity slots (spec: power balls are "not tied to the cap").
