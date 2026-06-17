@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { OFFLINE } from './config.js';
 import {
   updateEarnRate,
+  smoothRate,
   clampAwaySeconds,
   offlineEfficiency,
   offlineCredits,
@@ -100,4 +101,26 @@ test('grantOffline is grant-once: re-collecting after lastSaveTime advance yield
   const again = computeOffline(state.stats, now, 0, 0);
   assert.equal(again.awaySeconds, 0);
   assert.equal(again.credits, 0);
+});
+
+test('smoothRate: converges toward a constant sample over many steps', () => {
+  let r = 0;
+  for (let i = 0; i < 600; i++) r = smoothRate(r, 100, 1 / 60, 1.0);
+  assert.ok(Math.abs(r - 100) < 1, `expected ~100, got ${r}`);
+});
+
+test('smoothRate: a single zero sample after a high rate does NOT collapse to 0', () => {
+  const r = smoothRate(100, 0, 1 / 60, 1.0);
+  assert.ok(r > 98, `one zero step dropped the rate too far: ${r}`);
+});
+
+test('smoothRate: symmetric — rises and falls at the same alpha', () => {
+  const up = smoothRate(0, 100, 1 / 60, 1.0);
+  const down = 100 - smoothRate(100, 0, 1 / 60, 1.0);
+  assert.ok(Math.abs(up - down) < 1e-9, 'EMA must be symmetric for a display value');
+});
+
+test('smoothRate: guards non-positive dt / halfLife (returns prev)', () => {
+  assert.equal(smoothRate(50, 999, 0, 1.0), 50);
+  assert.equal(smoothRate(50, 999, 1 / 60, 0), 50);
 });

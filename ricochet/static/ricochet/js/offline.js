@@ -21,6 +21,16 @@ export function updateEarnRate(prevRate, sampleRate, dt, halfLifeSec = OFFLINE.e
   return prevRate + alpha * (sample - prevRate);
 }
 
+// Symmetric half-life EMA for a DISPLAY rate: blends up and down equally (unlike
+// updateEarnRate, which is asymmetric/anti-spike and would under-report a display
+// value). Smooths the per-second HUD so it doesn't read 0 on the many steps with
+// no contact. Pure + tested.
+export function smoothRate(prevRate, sampleRate, dt, halfLifeSec) {
+  if (!(halfLifeSec > 0) || !(dt > 0)) return prevRate;
+  const alpha = 1 - Math.pow(0.5, dt / halfLifeSec);
+  return prevRate + alpha * (sampleRate - prevRate);
+}
+
 // Seconds elapsed since the last save, clamped: future-dated (now < lastSaveTime) -> 0
 // (clock-skew/fraud guard); beyond the cap -> cap. Times are in milliseconds.
 export function clampAwaySeconds(nowMs, lastSaveMs, capSeconds = OFFLINE.capSeconds) {

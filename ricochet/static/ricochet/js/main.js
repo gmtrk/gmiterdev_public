@@ -7,7 +7,7 @@ import {
 } from './specials.js';
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
-  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE,
+  SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE, DISPLAY_CPS_HALFLIFE,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
@@ -24,6 +24,7 @@ import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
 import { setupLeaderboard } from './leaderboard.js';
 import {
   updateEarnRate,
+  smoothRate,
   computeOffline,
   grantOffline,
 } from './offline.js';
@@ -463,7 +464,7 @@ function step(dt) {
   const eventMult = computeEventMult(run.comboBonus, c.goldenBonus, c.breakBonus);
   const gained = creditsFromCounters(c, world.surfaceBase, world.globalValueMult, eventMult);
   state.credits += gained;
-  run.creditsPerSec = gained / dt;
+  run.creditsPerSec = smoothRate(run.creditsPerSec, gained / dt, dt, DISPLAY_CPS_HALFLIFE);
 
   // 4b) lightweight stat-card tracking (headline numbers for exportStatCard):
   //   runEarnings    = credits gained this run (reset on Big Bang)

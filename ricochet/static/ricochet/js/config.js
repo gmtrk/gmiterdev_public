@@ -38,6 +38,8 @@ export const GOLDEN = { chance: 0.005, bonus: 12 };
 export const CLACK_COOLDOWN = 0.2;
 export const BURSTER = { chargePerBounce: 1, chargePerClack: 5, threshold: 60, ballsPerBurst: 6 };
 export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLifeSec: 300 };
+// Half-life (s) for the smoothed PER-SEC HUD counter (symmetric EMA of credits/sec).
+export const DISPLAY_CPS_HALFLIFE = 1.0;
 export const PRESTIGE = { coreScale: 1e9, coreK: 1, minCredits: 1e9 };
 export const STARTING_CREDITS = 25; // cold-open grant (first upgrade affordable after ~10s, not instantly)
 export const BASE_CAPACITY = 1;     // start with a single ball; buy Ball Capacity for more
