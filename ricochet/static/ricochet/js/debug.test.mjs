@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { clampLevel, sliderRange, clampSlider, SLIDER_KEYS } from './debug.js';
-import { GRAVITY, DRAG, MAX_SPEED } from './config.js';
+import { GRAVITY, DRAG, MAX_SPEED, SPAWN_HELPER_DIST, SURFACE_BASE, RAMP_ANGLE } from './config.js';
 
 test('clampLevel clamps to [0, max]', () => {
   assert.equal(clampLevel(5, 9), 5);
@@ -64,4 +64,41 @@ test('clampSlider maps a raw value into the key range', () => {
 
 test('clampSlider passes through an unknown key unchanged', () => {
   assert.equal(clampSlider('nope', 42), 42);
+});
+
+test('sliderRange exposes the new aim-assist / peg-value / ramp-angle sliders', () => {
+  const aa = sliderRange('spawnHelperDist');
+  assert.equal(aa.worldKey, 'spawnHelperDist');
+  assert.equal(aa.value, SPAWN_HELPER_DIST);
+
+  const pv = sliderRange('pegValue');
+  assert.equal(pv.value, SURFACE_BASE.peg);
+  assert.equal(typeof pv.apply, 'function');
+
+  const ra = sliderRange('rampAngle');
+  assert.equal(ra.worldKey, 'rampAngle');
+  assert.equal(ra.value, RAMP_ANGLE);
+  assert.equal(typeof ra.apply, 'function');
+});
+
+test('SLIDER_KEYS includes the new keys and no longer includes paddleE', () => {
+  assert.ok(SLIDER_KEYS.includes('spawnHelperDist'));
+  assert.ok(SLIDER_KEYS.includes('pegValue'));
+  assert.ok(SLIDER_KEYS.includes('rampAngle'));
+  assert.ok(!SLIDER_KEYS.includes('paddleE'));
+});
+
+test('pegValue apply writes the nested world.surfaceBase.peg; rampAngle apply rebuilds', () => {
+  const pv = sliderRange('pegValue');
+  const w1 = { surfaceBase: { wall: 1, peg: 2, block: 25 } };
+  pv.apply(w1, 7);
+  assert.equal(w1.surfaceBase.peg, 7);
+
+  // rampAngle.apply sets the angle and triggers a rebuild (count reflects level)
+  const ra = sliderRange('rampAngle');
+  const w2 = { W: 1000, H: 1500, rampsLevel: 1, rampAngle: 30,
+    ramps: { x1s: new Float32Array(0), y1s: new Float32Array(0), x2s: new Float32Array(0), y2s: new Float32Array(0), count: 0, r: 4 } };
+  ra.apply(w2, 45);
+  assert.equal(w2.rampAngle, 45);
+  assert.equal(w2.ramps.count, 2);
 });
