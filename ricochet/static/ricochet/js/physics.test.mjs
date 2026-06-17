@@ -689,6 +689,20 @@ test('rampLayout: angle 0 yields horizontal ramps (y1 == y2)', () => {
   assert.ok(Math.abs(left.y1 - left.y2) < 1e-9);
 });
 
+test('rampLayout: bottom pair outer ends are pinned to the side walls', () => {
+  const [left, right] = rampLayout(1, 30, 1000, 1500);
+  assert.equal(left.x1, 0);     // left outer end at the left wall
+  assert.equal(right.x1, 1000); // right outer end at the right wall
+});
+
+test('rampLayout: bottom inner end stays inside the arena even at a steep angle', () => {
+  const [left, right] = rampLayout(1, 70, 1000, 1500);
+  for (const s of [left, right]) {
+    assert.ok(s.y2 <= 1500, `inner y ${s.y2} left the arena`);
+    assert.ok(s.x2 >= 0 && s.x2 <= 1000, `inner x ${s.x2} out of bounds`);
+  }
+});
+
 import { rebuildRamps } from './physics.js';
 import { RAMP_ANGLE, RAMP_THICKNESS } from './config.js';
 
@@ -744,8 +758,8 @@ test('RAMP DRAIN: a ball dropped onto a ramp pair drains within a bounded number
   world.hasFloor = false;
   world.rampsLevel = 1;
   rebuildRamps(world);
-  // drop onto the left ramp's center
-  spawnNormal(world, world.W * 0.27, world.H - 200, 0);
+  // drop onto the left ramp (now pinned to the left wall)
+  spawnNormal(world, 100, world.H - 200, 0);
   let steps = 0;
   let rampContacts = 0;
   const LIMIT = 6000;

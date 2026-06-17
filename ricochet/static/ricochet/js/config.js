@@ -32,6 +32,9 @@ export const MAX_SPEED = 1100;
 // Ramps (side-deflector bouncy walls). Length + capsule thickness are fixed;
 // angle (degrees) is live-tunable (debug "Ramp Angle").
 export const RAMP_LEN = 280, RAMP_THICKNESS = 4, RAMP_ANGLE = 30;
+// Bottom ramps anchor their outer (upper) end to the side wall at height H-RAMP_WALL_OFFSET;
+// the length is clamped so the inner (lower) end never passes H-RAMP_FLOOR_MARGIN.
+export const RAMP_WALL_OFFSET = 190, RAMP_FLOOR_MARGIN = 20;
 export const BLOCK_W = 64, BLOCK_H = 28, BLOCK_LEVELS = 9, RESPAWN_DELAY = 4, BLOCK_BREAK_BONUS = 8;
 // Blocks bounce higher than pegs: stronger kick + near-elastic restitution.
 export const E_BLOCK = 0.95, BLOCK_KICK = 160;

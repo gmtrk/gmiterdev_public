@@ -5,7 +5,7 @@ import {
   BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS, E_BLOCK, BLOCK_KICK,
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK, SPAWN_HELPER_DIST,
   SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
-  RAMP_LEN, RAMP_THICKNESS, RAMP_ANGLE,
+  RAMP_LEN, RAMP_THICKNESS, RAMP_ANGLE, RAMP_WALL_OFFSET, RAMP_FLOOR_MARGIN,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -546,26 +546,34 @@ export function rollGoldenFlag(goldenChance, rng = Math.random) {
 // angle (degrees). Left ramp `\`: outer end higher near the wall, inner end lower
 // toward center; right ramp is the mirror. Center stays open as the drain.
 const RAMP_X_FRAC = 0.27;        // left ramp center x = W * this (right = 1 - this)
-const RAMP_BOTTOM_OFFSET = 120;  // bottom pair center y = H - this
 const RAMP_MID_FRAC = 0.62;      // midway pair center y = H * this
 
 export function rampLayout(level, angleDeg, W, H) {
   const out = [];
   if (level <= 0) return out;
   const theta = (angleDeg * Math.PI) / 180;
-  const half = RAMP_LEN / 2;
   const cos = Math.cos(theta);
   const sin = Math.sin(theta);
-  const cxL = W * RAMP_X_FRAC;
-  const cxR = W * (1 - RAMP_X_FRAC);
-  const addPair = (cy) => {
-    // left `\`: outer (toward wall) high/left, inner (toward center) low/right
+
+  // Bottom pair: outer (upper) end PINNED to the wall; extends inward + down.
+  // Clamp the length so the inner (lower) end never leaves the arena floor.
+  const yA = H - RAMP_WALL_OFFSET;
+  const maxDrop = H - RAMP_FLOOR_MARGIN - yA;
+  const L = Math.min(RAMP_LEN, maxDrop / Math.max(sin, 1e-3));
+  // left `\`: outer at the left wall (high), inner toward center (lower)
+  out.push({ x1: 0, y1: yA, x2: L * cos, y2: yA + L * sin });
+  // right `/`: mirror about W/2
+  out.push({ x1: W, y1: yA, x2: W - L * cos, y2: yA + L * sin });
+
+  if (level >= 2) {
+    // Midway pair: unchanged inset side-deflectors.
+    const half = RAMP_LEN / 2;
+    const cxL = W * RAMP_X_FRAC;
+    const cxR = W * (1 - RAMP_X_FRAC);
+    const cy = H * RAMP_MID_FRAC;
     out.push({ x1: cxL - half * cos, y1: cy - half * sin, x2: cxL + half * cos, y2: cy + half * sin });
-    // right `/`: mirror about W/2
     out.push({ x1: cxR + half * cos, y1: cy - half * sin, x2: cxR - half * cos, y2: cy + half * sin });
-  };
-  addPair(H - RAMP_BOTTOM_OFFSET);
-  if (level >= 2) addPair(H * RAMP_MID_FRAC);
+  }
   return out;
 }
 
