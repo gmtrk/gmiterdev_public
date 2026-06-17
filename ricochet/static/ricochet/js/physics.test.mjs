@@ -179,7 +179,7 @@ test('reflectWalls leaves an interior ball untouched', () => {
   assert.equal(r.vy, 5);
 });
 
-import { resolveCircleCircle, resolveCircleAABB } from './physics.js';
+import { resolveCircleCircle, resolveCircleAABB, resolveCircleSegment } from './physics.js';
 import { PEG_RADIUS, E_COLLIDER, KICK, BLOCK_H } from './config.js';
 
 test('resolveCircleCircle: no overlap -> hit:false, velocity unchanged', () => {
@@ -639,4 +639,32 @@ test('buildWorld seeds world.surfaceBase as a fresh copy of SURFACE_BASE', () =>
   // mutating the world copy must not touch the shared config constant
   world.surfaceBase.peg = 99;
   assert.equal(SURFACE_BASE.peg, 2);
+});
+
+test('resolveCircleSegment: misses when the ball is farther than br+segR from the segment', () => {
+  const r = resolveCircleSegment(50, 50, 0, 100, 6, 0, 100, 100, 100, 4, 0.92, 1100);
+  assert.equal(r.hit, false);
+  assert.equal(r.x, 50);
+  assert.equal(r.vy, 100);
+});
+
+test('resolveCircleSegment: a ball falling onto a horizontal segment bounces up with restitution', () => {
+  // segment y=100 from x=0..100; ball at (50,92) sum=br+segR=10, dist=8 -> hit
+  const r = resolveCircleSegment(50, 92, 0, 100, 6, 0, 100, 100, 100, 4, 0.92, 1100);
+  assert.equal(r.hit, true);
+  assert.ok(r.y < 92, 'depenetrated upward (out of the segment)');
+  assert.ok(Math.abs(r.vy - (100 - 1.92 * 100)) < 1e-4, `vy=${r.vy}`); // = -92
+  assert.equal(r.vx, 0);
+});
+
+test('resolveCircleSegment: a tilted segment deflects a falling ball sideways', () => {
+  // 45-degree segment from (0,0) to (100,100); ball just above-right of the midpoint
+  const r = resolveCircleSegment(54, 46, 0, 100, 6, 0, 0, 100, 100, 4, 0.92, 1100);
+  assert.equal(r.hit, true);
+  assert.ok(r.vx > 0, 'gained rightward velocity off the slope');
+});
+
+test('resolveCircleSegment: clamps the outgoing speed to maxSpeed', () => {
+  const r = resolveCircleSegment(50, 92, 0, 5000, 6, 0, 100, 100, 100, 4, 0.92, 1100);
+  assert.ok(Math.hypot(r.vx, r.vy) <= 1100 + 1e-3);
 });

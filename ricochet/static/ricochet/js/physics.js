@@ -288,6 +288,44 @@ export function resolveCircleAABB(bx, by, vx, vy, br, ax, ay, aw, ah, e, kick, m
   return { x: bx, y: by, vx: c.vx, vy: c.vy, hit: true };
 }
 
+// Circle vs. capsule (segment + thickness segR). Like a wall: restitution e, NO
+// kick (so it can't sustain an infinite-bounce farm). Closest-point narrow phase;
+// depenetrates along the contact normal and reflects. Pure + tested.
+export function resolveCircleSegment(bx, by, vx, vy, br, x1, y1, x2, y2, segR, e, maxSpeed) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 > 1e-12 ? ((bx - x1) * dx + (by - y1) * dy) / len2 : 0;
+  if (t < 0) t = 0; else if (t > 1) t = 1;
+  const cx = x1 + t * dx;
+  const cy = y1 + t * dy;
+  const ox = bx - cx;
+  const oy = by - cy;
+  const dist2 = ox * ox + oy * oy;
+  const sum = br + segR;
+  if (dist2 >= sum * sum) return { x: bx, y: by, vx, vy, hit: false };
+  let dist = Math.sqrt(dist2);
+  let nx;
+  let ny;
+  if (dist > 1e-9) {
+    nx = ox / dist; ny = oy / dist;
+  } else {
+    // ball center exactly on the segment: use the perpendicular, prefer "up"
+    const sl = Math.sqrt(len2) || 1;
+    nx = -dy / sl; ny = dx / sl;
+    if (ny > 0) { nx = -nx; ny = -ny; }
+    dist = 0;
+  }
+  const pen = sum - dist;
+  bx += nx * pen;
+  by += ny * pen;
+  const vn = vx * nx + vy * ny;
+  vx -= (1 + e) * vn * nx;
+  vy -= (1 + e) * vn * ny;
+  const c = clampSpeed(vx, vy, maxSpeed);
+  return { x: bx, y: by, vx: c.vx, vy: c.vy, hit: true };
+}
+
 // Single module-scope peg narrow-phase helper. Resolves the nearest peg this
 // ball overlaps (grid broad-phase); returns true on a hit. Authored once.
 function _resolvePegsNear(world, pool, i) {
