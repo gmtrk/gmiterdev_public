@@ -327,11 +327,21 @@ export function draw(ctx, world, atlas, view) {
         ctx.arc(place.x, place.y, ERASER_RADIUS, 0, Math.PI * 2);
         ctx.stroke();
       } else {
-        ctx.strokeStyle = place.canPlace ? 'rgba(80,230,120,0.9)' : 'rgba(236,106,94,0.9)';
+        const ok = place.canPlace;
+        ctx.fillStyle = ok ? 'rgba(80,230,120,0.35)' : 'rgba(236,106,94,0.35)';
+        ctx.strokeStyle = ok ? 'rgba(80,230,120,0.9)' : 'rgba(236,106,94,0.9)';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(place.x, place.y, PEG_RADIUS + 2, 0, Math.PI * 2);
-        ctx.stroke();
+        if (place.tool === 'block') {
+          const hw = world.blockW / 2;
+          const hh = world.blockH / 2;
+          ctx.fillRect(place.x - hw, place.y - hh, world.blockW, world.blockH);
+          ctx.strokeRect(place.x - hw, place.y - hh, world.blockW, world.blockH);
+        } else {
+          ctx.beginPath();
+          ctx.arc(place.x, place.y, PEG_RADIUS, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
       }
     }
   }
