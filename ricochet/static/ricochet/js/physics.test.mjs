@@ -748,11 +748,14 @@ test('RAMP DRAIN: a ball dropped onto a ramp pair drains within a bounded number
   // drop onto the left ramp's center
   spawnNormal(world, world.W * 0.27, world.H - 200, 0);
   let steps = 0;
+  let rampContacts = 0;
   const LIMIT = 6000;
   while (world.normal.count > 0 && steps < LIMIT) {
     stepPhysics(world, DT, steps * DT);
+    rampContacts += world.counters.wall;
     steps++;
   }
   assert.equal(world.normal.count, 0, `ball never drained off the ramps in ${steps} steps`);
   assert.ok(steps < LIMIT, 'ramp bounce trap: ball never drained');
+  assert.ok(rampContacts > 0, 'ball never bounced off a ramp before draining (test would be vacuous)');
 });
