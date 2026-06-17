@@ -41,5 +41,14 @@ def add_high_score(request):
         return JsonResponse({"error": "Invalid cores"}, status=400)
     if not (0 <= cores <= HARD_MAX):
         return JsonResponse({"error": "Cores out of range"}, status=400)
-    RicochetScore.objects.create(initials=initials, cores=cores)
+    player_id = str(data.get("player_id", ""))
+    if player_id:
+        if not re.fullmatch(r"[A-Za-z0-9-]{1,64}", player_id):
+            return JsonResponse({"error": "Invalid player_id"}, status=400)
+        RicochetScore.objects.update_or_create(
+            player_id=player_id,
+            defaults={"initials": initials, "cores": cores},
+        )
+    else:
+        RicochetScore.objects.create(initials=initials, cores=cores)
     return JsonResponse({"message": "High score added successfully!"})

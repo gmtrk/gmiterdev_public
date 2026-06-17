@@ -214,3 +214,57 @@ def test_hard_max_is_within_safe_integer_range():
 
     assert HARD_MAX == int(1e12)
     assert HARD_MAX <= 2 ** 53
+
+
+def test_add_high_score_upserts_by_player_id(client):
+    pid = "11111111-1111-4111-8111-111111111111"
+    r1 = client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "abc", "cores": 5, "player_id": pid}),
+        content_type="application/json",
+    )
+    assert r1.status_code == 200
+    r2 = client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "abd", "cores": 9, "player_id": pid}),
+        content_type="application/json",
+    )
+    assert r2.status_code == 200
+    assert RicochetScore.objects.filter(player_id=pid).count() == 1  # one row, updated
+    row = RicochetScore.objects.get(player_id=pid)
+    assert row.cores == 9
+    assert row.initials == "ABD"
+
+
+def test_add_high_score_distinct_player_ids_make_distinct_rows(client):
+    client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "AAA", "cores": 1, "player_id": "p-aaa"}),
+        content_type="application/json",
+    )
+    client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "BBB", "cores": 2, "player_id": "p-bbb"}),
+        content_type="application/json",
+    )
+    assert RicochetScore.objects.count() == 2
+
+
+def test_add_high_score_without_player_id_legacy_creates(client):
+    r = client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "ZZZ", "cores": 3}),
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    assert RicochetScore.objects.count() == 1
+    assert RicochetScore.objects.get().player_id == ""
+
+
+def test_add_high_score_rejects_bad_player_id(client):
+    r = client.post(
+        "/ricochet/add-high-score/",
+        data=json.dumps({"initials": "ABC", "cores": 1, "player_id": "bad id !"}),
+        content_type="application/json",
+    )
+    assert r.status_code == 400
