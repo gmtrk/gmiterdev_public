@@ -246,6 +246,19 @@ export function rebuildColliders(world) {
 
   const nbCap = placedBlocks.length;
   const nb = budgets.blocks != null ? Math.min(nbCap, budgets.blocks) : nbCap;
+  // Snapshot the LIVE runtime state (chip HP, respawn timer, golden roll) of the
+  // currently-live blocks, keyed by position, BEFORE any reallocation overwrites
+  // it. Without this, every rebuild (e.g. placing one more block) would reset all
+  // blocks to full HP from the blueprint — blocks chipped/broken/respawning would
+  // "refresh". New blocks (no prior position) fall back to the blueprint.
+  const prevBlocks = new Map();
+  for (let i = 0; i < world.blocks.count; i++) {
+    prevBlocks.set(world.blocks.xs[i] + ',' + world.blocks.ys[i], {
+      level: world.blocks.level[i],
+      respawnAt: world.blocks.respawnAt[i],
+      golden: world.blocks.golden[i],
+    });
+  }
   if (world.blocks.xs.length < nbCap) {
     world.blocks.xs = new Float32Array(nbCap);
     world.blocks.ys = new Float32Array(nbCap);
@@ -257,9 +270,16 @@ export function rebuildColliders(world) {
     const b = placedBlocks[i];
     world.blocks.xs[i] = b.x;
     world.blocks.ys[i] = b.y;
-    world.blocks.level[i] = b.level;
-    world.blocks.respawnAt[i] = b.respawnAt || 0;
-    world.blocks.golden[i] = b.golden ? 1 : 0;
+    const live = prevBlocks.get(b.x + ',' + b.y);
+    if (live) {
+      world.blocks.level[i] = live.level;
+      world.blocks.respawnAt[i] = live.respawnAt;
+      world.blocks.golden[i] = live.golden;
+    } else {
+      world.blocks.level[i] = b.level;
+      world.blocks.respawnAt[i] = b.respawnAt || 0;
+      world.blocks.golden[i] = b.golden ? 1 : 0;
+    }
   }
   world.blocks.count = nb;
   world.blocks.w = world.blockW;

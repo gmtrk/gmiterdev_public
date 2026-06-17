@@ -336,6 +336,22 @@ test('rebuildColliders clamps live colliders to world.budgets (persisted bluepri
   assert.equal(world.pegs.count, 2);
 });
 
+test('rebuildColliders preserves existing blocks live HP/respawn (placing a new block does not refresh them)', () => {
+  const state = makeState();           // ample budget; 1 block at (400,820)
+  const world = buildWorld(state);
+  assert.equal(world.blocks.count, 1);
+  world.blocks.level[0] = 3;           // simulate balls having chipped it down
+  world.blocks.respawnAt[0] = 0;
+  // place a NEW block (append to the blueprint) then rebuild, as actAt does
+  state.placed.blocks.push({ x: 600, y: 900, level: BLOCK_LEVELS, respawnAt: null, golden: false });
+  rebuildColliders(world);
+  assert.equal(world.blocks.count, 2);
+  const oldI = world.blocks.xs[0] === 400 ? 0 : 1;
+  const newI = oldI === 0 ? 1 : 0;
+  assert.equal(world.blocks.level[oldI], 3, 'the existing block keeps its chipped HP');
+  assert.equal(world.blocks.level[newI], BLOCK_LEVELS, 'the newly placed block starts at full HP');
+});
+
 test('spawnNormal inserts into world.normal while count < ceiling and sets fields', () => {
   const state = makeState();
   const world = buildWorld(state);
