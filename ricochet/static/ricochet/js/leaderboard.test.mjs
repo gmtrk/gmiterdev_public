@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LB_HARD_MAX, clampCores } from './leaderboard.js';
+import { LB_HARD_MAX, clampCores, canJoin, isJoined, shouldAutoUpdate } from './leaderboard.js';
 
 test('LB_HARD_MAX matches the server bound and is a safe integer', () => {
   assert.equal(LB_HARD_MAX, 1e12);
@@ -37,4 +37,27 @@ test('clampCores coerces non-finite / non-numeric input to 0', () => {
 
 test('clampCores reads numeric strings', () => {
   assert.equal(clampCores('500'), 500);
+});
+
+function st(over = {}) {
+  return { playerId: null, leaderboardInitials: null, debugUsed: false, lifetimeCores: 0, ...over };
+}
+
+test('isJoined reflects a stored playerId', () => {
+  assert.equal(isJoined(st()), false);
+  assert.equal(isJoined(st({ playerId: 'p-1' })), true);
+});
+
+test('canJoin: not joined AND >=1 core AND not debug', () => {
+  assert.equal(canJoin(st({ lifetimeCores: 1 })), true);
+  assert.equal(canJoin(st({ lifetimeCores: 0 })), false);                       // no core
+  assert.equal(canJoin(st({ lifetimeCores: 5, debugUsed: true })), false);      // debug-tainted
+  assert.equal(canJoin(st({ lifetimeCores: 5, playerId: 'p-1' })), false);      // already joined
+});
+
+test('shouldAutoUpdate: joined AND >=1 core AND not debug', () => {
+  assert.equal(shouldAutoUpdate(st({ playerId: 'p-1', lifetimeCores: 3 })), true);
+  assert.equal(shouldAutoUpdate(st({ playerId: 'p-1', lifetimeCores: 0 })), false);
+  assert.equal(shouldAutoUpdate(st({ playerId: 'p-1', lifetimeCores: 3, debugUsed: true })), false);
+  assert.equal(shouldAutoUpdate(st({ lifetimeCores: 3 })), false);              // not joined
 });

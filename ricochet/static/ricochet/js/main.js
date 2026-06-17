@@ -465,9 +465,9 @@ function onBigBangClicked() {
       // Immediate HUD refresh so the new Cores total shows at once (the throttled
       // render-loop HUD would otherwise lag up to ~166ms).
       updateHUD(buildHudAdapter(state, world, run), hudEls);
-      // Offer the leaderboard submit AFTER cores are granted, so canSubmit() sees
+      // Push the new Cores total AFTER cores are granted, so shouldAutoUpdate() sees
       // the freshly-bumped state.lifetimeCores.
-      leaderboard.offerOnBigBang();
+      leaderboard.onBigBang();
     },
   });
 }
@@ -522,6 +522,7 @@ const tabs = setupTabs({
     if (name === 'credits') refreshShop();
     else if (name === 'cores') refreshCoresTab();
     else if (name === 'place') { refreshRampControl(); refreshSpreadControl(); }
+    else if (name === 'scores') leaderboard.refresh();
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
     if (name !== 'place' && view.place) view.place.active = false;
@@ -548,8 +549,8 @@ setupPlacement({
 });
 setupQualityToggle(window.__ricochetSetLowQuality, runtime.lowQuality);
 
-// Module-scope so onBigBangClicked (Phase 7) can call leaderboard.offerOnBigBang().
-const leaderboard = setupLeaderboard(state);
+// Module-scope so onBigBangClicked can call leaderboard.onBigBang().
+const leaderboard = setupLeaderboard(state, { persist: persistSave });
 
 // ---- Share stat-card ----
 // Renders the live arena + headline numbers (lifetime cores + the run stats

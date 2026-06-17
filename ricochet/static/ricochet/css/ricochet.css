@@ -144,6 +144,8 @@ body.rc-body {
 
 /* --- Leaderboard (Scores tab) + Big-Bang submit affordance --- */
 .rc-hidden { display: none !important; }
+.rc-lb__status { margin: 6px 0; font-size: 13px; opacity: 0.85; }
+.rc-lb__submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .rc-lb__title {
   margin: 0 0 10px;

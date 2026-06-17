@@ -54,14 +54,12 @@
       {# rc-lb-initials / rc-lb-submit-btn) and the Big-Bang submit affordance. #}
       <div class="rc-lb" data-panel="scores" hidden>
         <h3 class="rc-lb__title">Leaderboard</h3>
-        <div id="rc-bigbang-submit" class="rc-lb__bigbang rc-hidden">
-          New lifetime high — submit it below!
-        </div>
+        <div id="rc-lb-status" class="rc-lb__status rc-hidden"></div>
         <div id="rc-lb-table" class="rc-lb__table"></div>
-        <div class="rc-lb__form">
+        <div id="rc-lb-form" class="rc-lb__form">
           <input id="rc-lb-initials" class="rc-lb__input" type="text" maxlength="3"
                  inputmode="latin" autocomplete="off" placeholder="AAA" aria-label="Your initials">
-          <button id="rc-lb-submit-btn" class="rc-lb__submit" type="button">Submit</button>
+          <button id="rc-lb-submit-btn" class="rc-lb__submit" type="button">Join leaderboard</button>
         </div>
         <button id="rc-statcard-btn" class="rc-statcard-btn" type="button">Share stat-card</button>
       </div>
