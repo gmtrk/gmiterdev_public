@@ -475,7 +475,6 @@ test('NO TUNNELING: a fast ball collides with a block instead of passing through
   assert.ok(hit, 'fast ball tunneled through the block instead of colliding');
 });
 
-
 function makeBlockState(level, golden) {
   const s = makeState();
   s.placed.pegs = [];

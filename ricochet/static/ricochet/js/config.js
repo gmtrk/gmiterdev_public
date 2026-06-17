@@ -41,9 +41,8 @@ export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLife
 export const PRESTIGE = { coreScale: 1e9, coreK: 1, minCredits: 1e9 };
 export const STARTING_CREDITS = 25; // cold-open grant (first upgrade affordable after ~10s, not instantly)
 export const BASE_CAPACITY = 1;     // start with a single ball; buy Ball Capacity for more
-// Minimal cold-open field: 2 placed pegs, no blocks, no paddle. Players buy the
-// budgets / paddle to grow it. PADDLE_WIDTH_BASE is the width once owned (the
-// first Paddle level → width 100 + 20 = 120).
+// Minimal cold-open field: 2 placed pegs, no blocks. Players buy the
+// budgets to grow it. PADDLE_WIDTH_BASE is retained for compatibility (now unused).
 export const PEG_BUDGET_BASE = 2, BLOCK_BUDGET_BASE = 0, PADDLE_WIDTH_BASE = 100;
 
 // Credits shop. effectKind 'add' = additive per level (diminishing ROI vs geometric cost);

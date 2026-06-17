@@ -76,7 +76,7 @@ export function clampSpeed(vx, vy, maxSpeed) {
 }
 
 // Rotate (vx,vy) by a random angle in [-maxAngle, +maxAngle]. Speed is preserved;
-// only the direction is perturbed (the "random offset" that scatters block/paddle
+// only the direction is perturbed (the "random offset" that scatters block
 // bounces). rng() returns [0,1). Pure given rng — unit-tested.
 export function jitterVelocity(vx, vy, maxAngle, rng) {
   const ang = (rng() * 2 - 1) * maxAngle;
@@ -98,7 +98,7 @@ export function substepCount(maxSpeed, dt) {
   return n;
 }
 
-// Apply the bounce-jitter roll to ball `i` of `pool` (block/paddle hits only).
+// Apply the bounce-jitter roll to ball `i` of `pool` (block hits only).
 // No-op when the world has jitter disabled or the random roll misses.
 function _maybeJitter(world, pool, i) {
   const chance = world.bounceJitterChance;
@@ -182,7 +182,7 @@ export function buildWorld(state) {
     eCollider: E_COLLIDER,
     kick: KICK,
     maxSpeed: MAX_SPEED,
-    // Blocks bounce higher than pegs (own restitution + kick); block/paddle hits
+    // Blocks bounce higher than pegs (own restitution + kick); block hits
     // get a random directional jitter for chaos. rng is injectable for tests.
     blockE: E_BLOCK,
     blockKick: BLOCK_KICK,
@@ -383,7 +383,7 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   }
 }
 
-// Resolve all environment contacts (walls, pegs, blocks, paddle) at the ball's
+// Resolve all environment contacts (walls, pegs, blocks) at the ball's
 // current position. Called once per movement sub-step. Counter increments are
 // per contact, which is correct: two pegs hit across two sub-steps = two peg hits.
 function _resolveContacts(world, pool, i, now, isSpecial) {

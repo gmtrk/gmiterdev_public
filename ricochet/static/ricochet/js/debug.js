@@ -3,8 +3,8 @@
 // Toggled by the backtick (`) key OR a small fixed "🛠" button. Has ZERO effect
 // on normal play until toggled open. Lets a developer reset state, grant
 // credits/Cores, add/remove every upgrade (and unlock/lock specials), and
-// live-tune the game feel (gravity, drag, ball-speed cap, paddle bounciness,
-// spawn rate) against the running sim.
+// live-tune the game feel (gravity, drag, ball-speed cap, spawn rate) against
+// the running sim.
 //
 // The pure helpers (clampLevel / sliderRange) are unit-tested in debug.test.mjs;
 // the DOM wiring (setupDebug) is manually verified.
@@ -30,9 +30,9 @@ const SLIDER_DEFS = {
   drag:            { worldKey: 'drag',            label: 'Drag',             min: 0.8,  max: 1,             step: 0.001, value: DRAG },
   maxSpeed:        { worldKey: 'maxSpeed',        label: 'Ball Speed Cap',   min: 50,   max: MAX_SPEED * 3, step: 5,     value: MAX_SPEED },
   spawnRate:       { worldKey: 'spawnRate',       label: 'Spawn Rate',       min: 0,    max: 60,            step: 0.5,   value: 4 },
-  spawnHelperDist: { worldKey: 'spawnHelperDist', label: 'Aim Assist', min: 0, max: 200, step: 2, value: SPAWN_HELPER_DIST },
-  pegValue:        { label: 'Peg Value', min: 0, max: 25, step: 1, value: SURFACE_BASE.peg, apply: (world, v) => { world.surfaceBase.peg = v; } },
-  rampAngle:       { worldKey: 'rampAngle', label: 'Ramp Angle', min: 0, max: 80, step: 1, value: RAMP_ANGLE, apply: (world, v) => { world.rampAngle = v; rebuildRamps(world); } },
+  spawnHelperDist: { worldKey: 'spawnHelperDist', label: 'Aim Assist',       min: 0,    max: 200,           step: 2,     value: SPAWN_HELPER_DIST },
+  pegValue:        { label: 'Peg Value',          min: 0,    max: 25,             step: 1,     value: SURFACE_BASE.peg, apply: (world, v) => { world.surfaceBase.peg = v; } },
+  rampAngle:       { worldKey: 'rampAngle',       label: 'Ramp Angle',       min: 0,    max: 80,            step: 1,     value: RAMP_ANGLE, apply: (world, v) => { world.rampAngle = v; rebuildRamps(world); } },
 };
 
 // Return the {worldKey, label, min, max, step, value} range descriptor for a

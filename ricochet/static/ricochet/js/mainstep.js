@@ -58,13 +58,13 @@ export function spawnTick(world, dt, spawnRate, rng = Math.random, spawnFn = spa
   const remaining = freeSlots - n;
   world._spawnAcc = remaining > 0 ? Math.min(acc, remaining) : 0;
   const band = world.W - 2 * SPAWN_MARGIN;
-  const dist = world.spawnHelperDist || 0;
+  const helperDist = world.spawnHelperDist || 0;
   const pegs = world.pegs;
   const hitR = PEG_RADIUS + BALL_RADIUS;
   for (let i = 0; i < n; i++) {
     let x = SPAWN_MARGIN + rng() * band;
-    if (dist > 0 && pegs && pegs.count > 0) {
-      x = snapSpawnX(x, pegs.xs, pegs.count, hitR, dist, SPAWN_MARGIN, world.W);
+    if (helperDist > 0 && pegs && pegs.count > 0) {
+      x = snapSpawnX(x, pegs.xs, pegs.count, hitR, helperDist, SPAWN_MARGIN, world.W);
     }
     const flags = rollGoldenFlag(world.goldenChance, rng);
     spawnFn(world, x, SPAWN_Y, flags);

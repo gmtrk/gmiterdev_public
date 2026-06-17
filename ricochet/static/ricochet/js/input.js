@@ -188,8 +188,8 @@ export function setupPlacement(deps) {
 
 // Wire the right-panel tabs (Credits / Cores / Place / Scores). `deps` =
 // { tabButtons, panels, onSelect, initial }. onSelect(name) lets the caller
-// (re)render the active tab. Returns { getActive() } so callers (placement /
-// paddle drag) can gate canvas interactions to the active tab.
+// (re)render the active tab. Returns { getActive() } so callers (placement)
+// can gate canvas interactions to the active tab.
 export function setupTabs(deps) {
   const { tabButtons, panels, onSelect, initial } = deps;
   // Seed from the markup's pre-selected tab (rc-tab--active) or `initial`.

@@ -134,7 +134,7 @@ test('UPGRADES has the headline globalValueMult + ballCapacity defs the economy 
   assert.equal(cap.costGrowth, 1.30);
 });
 
-test('UPGRADES includes the budget/paddle/kick/spawn levers the deriver reads', () => {
+test('UPGRADES includes the budget/kick/spawn levers the deriver reads', () => {
   for (const id of ['goldenChance', 'pegBudget', 'blockBudget', 'pegKick', 'spawnRate', 'ramps']) {
     assert.ok(C.UPGRADES.find((u) => u.id === id), `missing ${id}`);
   }

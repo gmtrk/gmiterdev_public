@@ -3,10 +3,9 @@ import { STARTING_CREDITS, ARENA_W, ARENA_H, PADDLE_WIDTH_BASE } from './config.
 export const CURRENT_VERSION = 1;
 
 function starterBlueprint() {
-  // Minimal cold-open: two pegs near the top, no blocks, no owned paddle. Players
-  // buy the budgets (and the Paddle upgrade) to grow the field. The paddle entry
-  // carries its starting position/width; ownership is gated by the paddle upgrade
-  // level (world.paddle.present), so it stays invisible until bought.
+  // Minimal cold-open: two pegs near the top, no blocks. Players
+  // buy the budgets to grow the field. The paddle entry is vestigial (kept for
+  // backward compatibility with save format) and is not used by the simulation.
   const pegs = [
     { x: ARENA_W / 2 - 80, y: ARENA_H * 0.32 },
     { x: ARENA_W / 2 + 80, y: ARENA_H * 0.32 },
