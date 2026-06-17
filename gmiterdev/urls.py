@@ -23,5 +23,6 @@ urlpatterns = [
     path('', main_view, name='main'),
     path("mnist/", include("mnist.urls")),
     path("metaguess/", include("metaguess.urls")),
+    path("ricochet/", include("ricochet.urls")),
     path("admin/", admin.site.urls),
 ]

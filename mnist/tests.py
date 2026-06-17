@@ -8,7 +8,25 @@ from pathlib import Path
 
 import pytest
 
+from .models import AppVisit
+
 pytestmark = pytest.mark.django_db
+
+
+def test_visiting_ricochet_increments_its_counter(client):
+    client.get("/ricochet/")
+    visit = AppVisit.objects.get(app_name="ricochet")
+    assert visit.visit_count == 1
+    client.get("/ricochet/")
+    visit.refresh_from_db()
+    assert visit.visit_count == 2
+
+
+def test_home_page_renders_ricochet_visits(client):
+    AppVisit.objects.create(app_name="ricochet", visit_count=7)
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert b"visits 7" in resp.content
 
 
 def test_home_page_loads(client):

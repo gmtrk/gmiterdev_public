@@ -11,7 +11,7 @@ class VisitTrackingMiddleware(MiddlewareMixin):
             return None
 
         # Define the apps to track
-        trackable_apps = ('mnist', 'metaguess')
+        trackable_apps = ('mnist', 'metaguess', 'ricochet')
 
         # Get the app name from the URL path
         app_name = request.path.strip('/')
