@@ -135,7 +135,7 @@ test('UPGRADES has the headline globalValueMult + ballCapacity defs the economy 
 });
 
 test('UPGRADES includes the budget/kick/spawn levers the deriver reads', () => {
-  for (const id of ['goldenChance', 'pegBudget', 'blockBudget', 'pegKick', 'spawnRate', 'midRamps']) {
+  for (const id of ['goldenChance', 'pegBudget', 'blockBudget', 'pegKick', 'spawnRate', 'midRamps', 'pegSpread']) {
     assert.ok(C.UPGRADES.find((u) => u.id === id), `missing ${id}`);
   }
 });

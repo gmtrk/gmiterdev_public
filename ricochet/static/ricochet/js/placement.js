@@ -9,6 +9,9 @@ import {
   BLOCK_H,
   BLOCK_LEVELS,
   PEG_RADIUS,
+  PEG_PITCH_X,
+  PEG_PITCH_Y,
+  PEG_FIELD_TOP,
 } from './config.js';
 
 // Each element is an AABB {x, y, hx, hy} (center + half-extents).
@@ -32,61 +35,51 @@ export function inSpawnBand(y, hy) {
 // laid out on a fixed pitch so they never self-overlap. We over-generate a grid
 // then return exactly `count` positions in deterministic order.
 
-const PEG_PITCH_X = 70; // horizontal spacing between pegs in a row
-const PEG_PITCH_Y = 70; // vertical spacing between rows
-const FIELD_TOP = Math.round(ARENA_H * 0.35); // presets build in the lower-middle so balls get a long fall first
-
 // A centered triangle (Plinko): row r has r+1 pegs, widening downward.
-export function trianglePegs(count) {
+export function trianglePegs(count, pitchX = PEG_PITCH_X, pitchY = PEG_PITCH_Y, fieldTop = PEG_FIELD_TOP) {
   const out = [];
   const cx = ARENA_W / 2;
   let row = 0;
   while (out.length < count) {
     const n = row + 1;
-    const y = FIELD_TOP + row * PEG_PITCH_Y;
-    const startX = cx - ((n - 1) * PEG_PITCH_X) / 2;
-    for (let i = 0; i < n && out.length < count; i++) {
-      out.push({ x: startX + i * PEG_PITCH_X, y });
-    }
+    const y = fieldTop + row * pitchY;
+    const startX = cx - ((n - 1) * pitchX) / 2;
+    for (let i = 0; i < n && out.length < count; i++) out.push({ x: startX + i * pitchX, y });
     row++;
   }
   return out;
 }
 
 // A diamond: rows widen to a middle row then narrow again.
-export function diamondPegs(count) {
+export function diamondPegs(count, pitchX = PEG_PITCH_X, pitchY = PEG_PITCH_Y, fieldTop = PEG_FIELD_TOP) {
   const out = [];
   const cx = ARENA_W / 2;
-  // Pick a max half-width that keeps the diamond on-screen.
-  const maxPerRow = Math.max(1, Math.floor((ARENA_W - 2 * SPAWN_MARGIN) / PEG_PITCH_X));
+  const maxPerRow = Math.max(1, Math.floor((ARENA_W - 2 * SPAWN_MARGIN) / pitchX));
   const half = Math.min(5, Math.floor(maxPerRow / 2));
   let row = 0;
   while (out.length < count) {
-    // widths: 1,2,...,half+1,...,2,1 then repeat the cycle if more pegs needed
     const cycle = 2 * half + 1;
     const pos = row % cycle;
     const n = pos <= half ? pos + 1 : cycle - pos;
-    const y = FIELD_TOP + row * PEG_PITCH_Y;
-    const startX = cx - ((n - 1) * PEG_PITCH_X) / 2;
-    for (let i = 0; i < n && out.length < count; i++) {
-      out.push({ x: startX + i * PEG_PITCH_X, y });
-    }
+    const y = fieldTop + row * pitchY;
+    const startX = cx - ((n - 1) * pitchX) / 2;
+    for (let i = 0; i < n && out.length < count; i++) out.push({ x: startX + i * pitchX, y });
     row++;
   }
   return out;
 }
 
 // A funnel: two converging walls of pegs guiding balls toward center.
-export function funnelPegs(count) {
+export function funnelPegs(count, pitchY = PEG_PITCH_Y, fieldTop = PEG_FIELD_TOP) {
   const out = [];
   const cx = ARENA_W / 2;
   const rows = Math.ceil(count / 2);
-  const topGap = 360; // half-distance of the walls from center at the top
-  const botGap = 90; // converges to this near the bottom
+  const topGap = 360;
+  const botGap = 90;
   for (let r = 0; r < rows && out.length < count; r++) {
     const t = rows === 1 ? 0 : r / (rows - 1);
     const gap = topGap + (botGap - topGap) * t;
-    const y = FIELD_TOP + r * PEG_PITCH_Y;
+    const y = fieldTop + r * pitchY;
     out.push({ x: cx - gap, y });
     if (out.length < count) out.push({ x: cx + gap, y });
   }

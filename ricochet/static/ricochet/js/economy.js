@@ -1,7 +1,7 @@
 import {
   EVENT_CAP, BASE_CAPACITY, GOLDEN, KICK,
   UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE,
-  PRESTIGE, SPAWN_RATE_BASE,
+  PRESTIGE, SPAWN_RATE_BASE, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 
 export function computeEventMult(comboBonus, goldenBonus, breakBonus, cap = EVENT_CAP) {
@@ -85,6 +85,13 @@ export function applyUpgradeEffects(world, state) {
   const blockBudgetDef = _def(UPGRADES, 'blockBudget');
   world.budgets.pegs = PEG_BUDGET_BASE + upgradeEffect(pegBudgetDef, _level(up, 'pegBudget'));
   world.budgets.blocks = BLOCK_BUDGET_BASE + upgradeEffect(blockBudgetDef, _level(up, 'blockBudget'));
+
+  // peg spread: the Peg Spread upgrade widens the auto-fill pitch (both axes).
+  const spreadDef = _def(UPGRADES, 'pegSpread');
+  const spreadAdd = upgradeEffect(spreadDef, _level(up, 'pegSpread'));
+  if (!world.pegSpread) world.pegSpread = { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP };
+  world.pegSpread.pitchX = PEG_PITCH_X + spreadAdd;
+  world.pegSpread.pitchY = PEG_PITCH_Y + spreadAdd;
 
   // peg kick
   const kickDef = _def(UPGRADES, 'pegKick');

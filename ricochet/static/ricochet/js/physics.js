@@ -7,6 +7,7 @@ import {
   SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
   RAMP_LEN, RAMP_THICKNESS, RAMP_ANGLE, RAMP_WALL_OFFSET, RAMP_FLOOR_MARGIN,
   SPECIAL_RADIUS, BURSTER_RADIUS, SPECIAL_MAX_SPEED, MIN_PEG_SPACING,
+  PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -176,6 +177,7 @@ export function buildWorld(state) {
     grid: new Grid(ARENA_W, ARENA_H, GRID_CELL),
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
     minPegSpacing: MIN_PEG_SPACING,
+    pegSpread: { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP },
     surfaceBase: { ...SURFACE_BASE },
     ceiling: CEILING_DESKTOP,
     leakMargin: 40,

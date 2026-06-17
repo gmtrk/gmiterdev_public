@@ -107,9 +107,10 @@ export function eraseWithinRadius(world, placed, x, y, radius) {
 export function presetPositions(name, world, placed) {
   const count = autoFillCount(placed.pegs.length, world.budgets.pegs);
   if (count <= 0) return [];
-  if (name === 'triangle') return trianglePegs(count);
-  if (name === 'diamond') return diamondPegs(count);
-  if (name === 'funnel') return funnelPegs(count);
+  const s = world.pegSpread || {};
+  if (name === 'triangle') return trianglePegs(count, s.pitchX, s.pitchY, s.fieldTop);
+  if (name === 'diamond') return diamondPegs(count, s.pitchX, s.pitchY, s.fieldTop);
+  if (name === 'funnel') return funnelPegs(count, s.pitchY, s.fieldTop);
   return [];
 }
 

@@ -257,3 +257,15 @@ test('pegBudget grants +1 peg per level (per-peg pricing)', () => {
   applyUpgradeEffects(world, state);
   assert.equal(world.budgets.pegs, base + 3); // +1 per level, not +4
 });
+
+test('pegSpread upgrade widens world.pegSpread pitchX/pitchY', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  const baseX = world.pegSpread.pitchX;
+  const baseY = world.pegSpread.pitchY;
+  state.upgrades.pegSpread = 2;
+  applyUpgradeEffects(world, state);
+  assert.equal(world.pegSpread.pitchX, baseX + 12); // +6/level
+  assert.equal(world.pegSpread.pitchY, baseY + 12);
+});
