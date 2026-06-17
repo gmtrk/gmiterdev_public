@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { clampLevel, sliderRange, clampSlider, SLIDER_KEYS } from './debug.js';
-import { GRAVITY, DRAG, MAX_SPEED, SPAWN_HELPER_DIST, SURFACE_BASE, RAMP_ANGLE } from './config.js';
+import { GRAVITY, DRAG, MAX_SPEED, SPAWN_HELPER_DIST, SURFACE_BASE, RAMP_ANGLE, MIN_PEG_SPACING, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP } from './config.js';
 
 test('clampLevel clamps to [0, max]', () => {
   assert.equal(clampLevel(5, 9), 5);
@@ -101,4 +101,26 @@ test('pegValue apply writes the nested world.surfaceBase.peg; rampAngle apply re
   ra.apply(w2, 45);
   assert.equal(w2.rampAngle, 45);
   assert.equal(w2.ramps.count, 4);
+});
+
+test('sliderRange exposes the peg spacing/spread sliders', () => {
+  assert.equal(sliderRange('minPegSpacing').value, MIN_PEG_SPACING);
+  assert.equal(typeof sliderRange('minPegSpacing').apply, 'function');
+  assert.equal(sliderRange('pegPitchX').value, PEG_PITCH_X);
+  assert.equal(sliderRange('pegPitchY').value, PEG_PITCH_Y);
+  assert.equal(sliderRange('pegFieldTop').value, PEG_FIELD_TOP);
+});
+
+test('SLIDER_KEYS includes the new peg sliders', () => {
+  for (const k of ['minPegSpacing', 'pegPitchX', 'pegPitchY', 'pegFieldTop']) {
+    assert.ok(SLIDER_KEYS.includes(k));
+  }
+});
+
+test('peg slider apply hooks write the world fields', () => {
+  const w = { minPegSpacing: 44, pegSpread: { pitchX: 70, pitchY: 70, fieldTop: 525 } };
+  sliderRange('minPegSpacing').apply(w, 90); assert.equal(w.minPegSpacing, 90);
+  sliderRange('pegPitchX').apply(w, 110); assert.equal(w.pegSpread.pitchX, 110);
+  sliderRange('pegPitchY').apply(w, 100); assert.equal(w.pegSpread.pitchY, 100);
+  sliderRange('pegFieldTop').apply(w, 700); assert.equal(w.pegSpread.fieldTop, 700);
 });
