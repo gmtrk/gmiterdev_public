@@ -8,7 +8,7 @@ import {
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
   SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE, DISPLAY_CPS_HALFLIFE,
-  RAMP_ANGLE, SPECIAL_RADIUS, BURSTER_RADIUS,
+  RAMP_ANGLE, SPECIAL_RADIUS, BURSTER_RADIUS, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
@@ -19,7 +19,7 @@ import {
   specialUnlockDef, buySpecialUnlock, exportStatCard,
 } from './ui.js';
 import { setupPlacement, setupTabs, applyPreset } from './input.js';
-import { unplacedCount } from './placement.js';
+import { unplacedCount, previewPositions } from './placement.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
 import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
@@ -162,6 +162,12 @@ const hudEls = {
 // refreshRampControl which is called from multiple call sites).
 let rampRow, rampSlider, rampReadout;
 
+// Module-scope references to the peg-spread control nodes (built below, used by
+// refreshSpreadControl which is called from multiple call sites).
+let spreadRow, spreadApplyBtn;
+const spreadSliders = {}; // { pitchX, pitchY, fieldTop } -> { input, readout }
+const pendingSpread = { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP };
+
 // Build the right-panel scaffold (Credits shop rows + Place tools/presets)
 // inside the template's empty #rc-tab-body. The Cores panel is authored in
 // Phase 7; we leave a placeholder so the tab toggles cleanly.
@@ -237,7 +243,40 @@ if (tabBody && !shopContainer) {
   rampReadout.className = 'rc-ramp-readout';
   rampRow.append(rampLabel, rampSlider, rampReadout);
 
-  placePanel.append(placeHint, toolHead, toolRow, presetHead, presetRow, rampRow);
+  // Peg-spread control (Place tab) — shown only once Peg Spread is unlocked.
+  // Three sliders preview a ghost of the auto-fill formation; Apply commits it.
+  spreadRow = document.createElement('div');
+  spreadRow.className = 'rc-spread-control';
+  spreadRow.hidden = true;
+  const spreadHead = document.createElement('p');
+  spreadHead.className = 'rc-place-subhead';
+  spreadHead.textContent = 'Peg spread';
+  spreadRow.append(spreadHead);
+  for (const [key, label, min, max, step] of [
+    ['pitchX', 'Spacing X', 110, 500, 5],
+    ['pitchY', 'Spacing Y', 110, 500, 5],
+    ['fieldTop', 'Start Y', 100, 1200, 5],
+  ]) {
+    const wrap = document.createElement('label');
+    wrap.className = 'rc-spread-row';
+    wrap.textContent = label;
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = String(min); input.max = String(max); input.step = String(step);
+    input.dataset.spread = key;
+    const readout = document.createElement('span');
+    readout.className = 'rc-spread-readout';
+    wrap.append(input, readout);
+    spreadRow.append(wrap);
+    spreadSliders[key] = { input, readout };
+  }
+  spreadApplyBtn = document.createElement('button');
+  spreadApplyBtn.type = 'button';
+  spreadApplyBtn.className = 'rc-spread-apply';
+  spreadApplyBtn.textContent = 'Apply spread';
+  spreadRow.append(spreadApplyBtn);
+
+  placePanel.append(placeHint, toolHead, toolRow, presetHead, presetRow, rampRow, spreadRow);
 
   tabBody.append(creditsPanel, coresPanel, placePanel);
 }
@@ -287,6 +326,18 @@ function refreshRampControl() {
   }
 }
 
+function refreshSpreadControl() {
+  if (!spreadRow) return;
+  spreadRow.hidden = !world.pegSpreadUnlocked;
+  if (!world.pegSpreadUnlocked) return;
+  const s = state.placed.spread || world.pegSpread || { pitchX: PEG_PITCH_X, pitchY: PEG_PITCH_Y, fieldTop: PEG_FIELD_TOP };
+  for (const key of ['pitchX', 'pitchY', 'fieldTop']) {
+    pendingSpread[key] = s[key];
+    spreadSliders[key].input.value = String(s[key]);
+    spreadSliders[key].readout.textContent = Math.round(s[key]) + 'px';
+  }
+}
+
 function refreshShop() {
   renderShop('credits', {
     container: shopContainer,
@@ -310,6 +361,7 @@ function refreshShop() {
         }
         refreshShop();
         refreshRampControl();
+        refreshSpreadControl();
         refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint();
       }
     },
@@ -327,6 +379,39 @@ if (rampSlider) {
     rebuildRamps(world);
     rampReadout.textContent = a + '°';
     persistSave();
+  });
+}
+
+// Wire the spread sliders: each input updates pendingSpread + readout + live ghost.
+function updateSpreadGhost() {
+  const count = Math.max(0, world.budgets.pegs);
+  const name = state.placed.preset || 'triangle';
+  view.spreadPreview = { active: true, positions: previewPositions(name, pendingSpread, count) };
+}
+if (spreadRow) {
+  for (const key of ['pitchX', 'pitchY', 'fieldTop']) {
+    spreadSliders[key].input.addEventListener('input', () => {
+      pendingSpread[key] = Number(spreadSliders[key].input.value);
+      spreadSliders[key].readout.textContent = Math.round(pendingSpread[key]) + 'px';
+      updateSpreadGhost();
+    });
+  }
+}
+
+// Apply commits the pending spread: writes state + world, re-lays the preset, persists.
+if (spreadApplyBtn) {
+  spreadApplyBtn.addEventListener('click', () => {
+    state.placed.spread = { pitchX: pendingSpread.pitchX, pitchY: pendingSpread.pitchY, fieldTop: pendingSpread.fieldTop };
+    world.pegSpread = { pitchX: pendingSpread.pitchX, pitchY: pendingSpread.pitchY, fieldTop: pendingSpread.fieldTop };
+    // Re-lay the active preset at the new spread (hand-placed pegs are left alone).
+    if (state.placed.preset) {
+      state.placed.pegs = [];
+      applyPreset(state.placed.preset, world, state.placed);
+    }
+    rebuildColliders(world);
+    view.spreadPreview = { active: false, positions: [] };
+    persistSave();
+    refreshPlaceBadge(); refreshToolCounts();
   });
 }
 
@@ -376,6 +461,7 @@ function onBigBangClicked() {
       refreshShop();
       refreshCoresTab();
       refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint();
+      refreshSpreadControl();
       // Immediate HUD refresh so the new Cores total shows at once (the throttled
       // render-loop HUD would otherwise lag up to ~166ms).
       updateHUD(buildHudAdapter(state, world, run), hudEls);
@@ -418,9 +504,10 @@ const tabs = setupTabs({
   tabButtons: Array.from(document.querySelectorAll('[data-tab]')),
   panels: Array.from(document.querySelectorAll('[data-panel]')),
   onSelect: (name) => {
+    if (name !== 'place' && view.spreadPreview) view.spreadPreview.active = false;
     if (name === 'credits') refreshShop();
     else if (name === 'cores') refreshCoresTab();
-    else if (name === 'place') refreshRampControl();
+    else if (name === 'place') { refreshRampControl(); refreshSpreadControl(); }
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
     if (name !== 'place' && view.place) view.place.active = false;
@@ -431,7 +518,7 @@ const tabs = setupTabs({
 // a click, so seed the crosshair class from the starting tab here).
 canvas.classList.toggle('rc-canvas--place', tabs.getActive() === 'place');
 // Seed the ramp control visibility/value from the loaded state.
-refreshRampControl();
+refreshRampControl(); refreshSpreadControl();
 // Arena editing (placement + paddle drag) is gated to the Place tab so clicking
 // the arena on Credits/Cores/Scores can't silently mutate the blueprint.
 const isPlaceActive = () => tabs.getActive() === 'place';
@@ -441,7 +528,7 @@ setupPlacement({
   state,
   toolButtons: Array.from(document.querySelectorAll('[data-tool]')),
   presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
-  onChange: () => { refreshShop(); refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint(); },
+  onChange: () => { refreshShop(); refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint(); refreshSpreadControl(); },
   isActive: isPlaceActive,
   view,
 });

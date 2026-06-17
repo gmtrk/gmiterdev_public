@@ -319,6 +319,19 @@ export function draw(ctx, world, atlas, view) {
       ctx.arc(pegs.xs[i], pegs.ys[i], (world.minPegSpacing != null ? world.minPegSpacing : MIN_PEG_SPACING), 0, Math.PI * 2);
       ctx.stroke();
     }
+    // spread preview ghost: where the auto-fill pegs would land at the pending
+    // spread (Place-tab Peg-spread control). Translucent cyan, distinct from the
+    // solid placed pegs, the magenta rings, and the green/red cursor ghost.
+    const preview = view.spreadPreview;
+    if (preview && preview.active && preview.positions) {
+      ctx.fillStyle = 'rgba(34,224,255,0.30)';
+      for (const p of preview.positions) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, PEG_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     if (Number.isFinite(place.x) && Number.isFinite(place.y)) {
       if (place.tool === 'remove') {
         ctx.strokeStyle = 'rgba(255,255,255,0.6)';

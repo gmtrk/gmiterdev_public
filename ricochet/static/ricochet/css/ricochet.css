@@ -427,6 +427,14 @@ body.rc-body {
 .rc-ramp-control input[type=range] { flex: 1; accent-color: #22e0ff; }
 .rc-ramp-readout { min-width: 3ch; text-align: right; color: #22e0ff; font-variant-numeric: tabular-nums; }
 
+/* Peg-spread control (shown only when Peg Spread is unlocked). */
+.rc-spread-control[hidden] { display: none; }
+.rc-spread-control { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.rc-spread-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.rc-spread-row input[type="range"] { flex: 1; }
+.rc-spread-readout { min-width: 48px; text-align: right; opacity: 0.8; }
+.rc-spread-apply { margin-top: 4px; align-self: flex-start; }
+
 /* Arena cursor affordance while the Place tab is active. */
 .rc-canvas--place {
   cursor: crosshair;
