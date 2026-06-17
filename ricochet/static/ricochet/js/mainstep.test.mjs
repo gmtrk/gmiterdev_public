@@ -162,3 +162,32 @@ test('snapSpawnX: clamps the snapped result into the spawn band', () => {
   // d=30 in band; raw snap = 960+11.05 = 971.05 -> clamp to 960
   assert.equal(snapSpawnX(990, pegs, 1, 13, 24, 40, 1000), 960);
 });
+
+test('spawnTick: aim-assist snaps a spawn onto a near-miss peg column', () => {
+  // Deterministic rng so the raw spawn x is known: x = SPAWN_MARGIN + r*band.
+  // band = 1000 - 80 = 920; r=0.5 -> raw x = 40 + 460 = 500. Place a peg at 525
+  // so the raw 500 is a near-miss (d=25, in (13,37]); expect snap to 525-11.05.
+  const spawned = [];
+  const world = {
+    W: 1000, H: 1500, ceiling: 100, baseCapacity: 100, goldenChance: 0,
+    _spawnAcc: 0, spawnHelperDist: 24,
+    normal: { count: 0, flags: new Uint8Array(100) },
+    pegs: { xs: new Float32Array([525]), count: 1 },
+  };
+  const rng = () => 0.5;
+  const spawnFn = (w, x, y) => { spawned.push(x); w.normal.count++; };
+  spawnTick(world, 1, 1, rng, spawnFn); // spawnRate*dt = 1 -> exactly one ball
+  assert.equal(spawned.length, 1);
+  assert.ok(Math.abs(spawned[0] - (525 - 13 * 0.85)) < 1e-6, `got ${spawned[0]}`);
+});
+
+test('spawnTick: no aim-assist when world has no pegs (legacy behaviour intact)', () => {
+  const spawned = [];
+  const world = {
+    W: 1000, H: 1500, ceiling: 100, baseCapacity: 100, goldenChance: 0,
+    _spawnAcc: 0, spawnHelperDist: 24,
+    normal: { count: 0, flags: new Uint8Array(100) },
+  };
+  spawnTick(world, 1, 1, () => 0.5, (w, x) => { spawned.push(x); w.normal.count++; });
+  assert.equal(spawned[0], 500); // raw x, untouched
+});

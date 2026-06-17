@@ -6,6 +6,9 @@ export const ARENA_W = 1000, ARENA_H = 1500;
 export const SPAWN_MARGIN = 40, SPAWN_Y = 30, MAX_SPAWNS_PER_TICK = 8;
 // Starting balls/sec = a 0.3s respawn interval. The spawnRate upgrade raises it.
 export const SPAWN_RATE_BASE = 1 / 0.3;
+// Aim-assist: a top-spawn x within (hitRadius, hitRadius + this] of a peg column
+// gets nudged onto the peg. 0 disables. Live-tunable (debug "Aim Assist").
+export const SPAWN_HELPER_DIST = 24;
 export const CEILING_DESKTOP = 5000, RESERVED_OWNED = 200, SPECIAL_CAP = 96, GRID_CELL = 50;
 // Snappy fall + NO air drag (1.0): balls keep their energy and stay fast/lively,
 // losing speed only at surfaces (wall/peg/block/paddle restitution). Both are

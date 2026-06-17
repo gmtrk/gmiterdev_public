@@ -1,5 +1,5 @@
 import { spawnNormal, spawnCount, rollGoldenFlag, FLAG_CAP_EXEMPT } from './physics.js';
-import { SPAWN_MARGIN, SPAWN_Y, MAX_SPAWNS_PER_TICK } from './config.js';
+import { SPAWN_MARGIN, SPAWN_Y, MAX_SPAWNS_PER_TICK, PEG_RADIUS, BALL_RADIUS } from './config.js';
 
 // Aim-assist: nudge a top-spawn x onto a near-miss peg column so a straight
 // drop actually lands on the peg. A ball already hits a peg when
@@ -58,8 +58,14 @@ export function spawnTick(world, dt, spawnRate, rng = Math.random, spawnFn = spa
   const remaining = freeSlots - n;
   world._spawnAcc = remaining > 0 ? Math.min(acc, remaining) : 0;
   const band = world.W - 2 * SPAWN_MARGIN;
+  const dist = world.spawnHelperDist || 0;
+  const pegs = world.pegs;
+  const hitR = PEG_RADIUS + BALL_RADIUS;
   for (let i = 0; i < n; i++) {
-    const x = SPAWN_MARGIN + rng() * band;
+    let x = SPAWN_MARGIN + rng() * band;
+    if (dist > 0 && pegs && pegs.count > 0) {
+      x = snapSpawnX(x, pegs.xs, pegs.count, hitR, dist, SPAWN_MARGIN, world.W);
+    }
     const flags = rollGoldenFlag(world.goldenChance, rng);
     spawnFn(world, x, SPAWN_Y, flags);
   }
