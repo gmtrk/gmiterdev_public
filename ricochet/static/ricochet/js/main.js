@@ -526,7 +526,12 @@ function onFrameTime(ms) {
 }
 
 // --- save on tab hide ---
+// Set true during a debug "wipe save", so the pagehide/visibilitychange autosave
+// fired by location.reload() can't write the (un-wiped) in-memory state back and
+// resurrect the save we just removed.
+let suppressSave = false;
 function saveNow() {
+  if (suppressSave) return;
   state.stats.lastSaveTime = Date.now();
   try { localStorage.setItem(SAVE_KEY, serialize(state)); } catch (e) { /* ignore */ }
 }
@@ -544,6 +549,13 @@ window.__ricochet.unlockSpecial = (typeName) => unlockSpecialAndSeed(state, worl
 // host surface so debug grants/upgrade tweaks/unlock toggles apply live.
 setupDebug(state, world, {
   formatNumber,
+  // Wipe the save without the unload autosave resurrecting it: suppress saves,
+  // remove the key, then reload to a fresh defaultSave.
+  wipeAndReload: () => {
+    suppressSave = true;
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
+    location.reload();
+  },
   updateHUD,
   refreshShop,
   onStateChange: () => {

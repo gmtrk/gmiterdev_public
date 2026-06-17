@@ -135,6 +135,9 @@ export function setupDebug(state, world, ctx = {}) {
   // ===== Reset =====
   const resetSec = section('Reset');
   resetSec.append(btn('Wipe save & reload', () => {
+    // Route through main.js so it can suppress the unload autosave (which would
+    // otherwise re-save the current state during reload and undo the wipe).
+    if (ctx.wipeAndReload) { ctx.wipeAndReload(); return; }
     try { localStorage.removeItem('ricochet:save'); } catch (e) { /* ignore */ }
     location.reload();
   }));
