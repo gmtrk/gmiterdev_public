@@ -319,18 +319,6 @@ export function draw(ctx, world, atlas, view) {
       ctx.arc(pegs.xs[i], pegs.ys[i], (world.minPegSpacing != null ? world.minPegSpacing : MIN_PEG_SPACING), 0, Math.PI * 2);
       ctx.stroke();
     }
-    // spread preview ghost: where the auto-fill pegs would land at the pending
-    // spread (Place-tab Peg-spread control). Translucent cyan, distinct from the
-    // solid placed pegs, the magenta rings, and the green/red cursor ghost.
-    const preview = view.spreadPreview;
-    if (preview && preview.active && preview.positions) {
-      ctx.fillStyle = 'rgba(34,224,255,0.30)';
-      for (const p of preview.positions) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, PEG_RADIUS, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
 
     if (Number.isFinite(place.x) && Number.isFinite(place.y)) {
       if (place.tool === 'remove') {
@@ -356,6 +344,21 @@ export function draw(ctx, world, atlas, view) {
           ctx.stroke();
         }
       }
+    }
+  }
+
+  // spread preview ghost (Place-tab Peg-spread control): where the auto-fill
+  // pegs would land at the pending spread. Gated on the preview's own active
+  // flag (set on slider drag, cleared on Apply / leaving the Place tab) so it
+  // shows live while the cursor is on the side-panel sliders — independent of
+  // the cursor-over-arena place.active flag. Translucent cyan; never over gameplay.
+  const spread = view.spreadPreview;
+  if (spread && spread.active && spread.positions) {
+    ctx.fillStyle = 'rgba(34,224,255,0.30)';
+    for (const p of spread.positions) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, PEG_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 }
