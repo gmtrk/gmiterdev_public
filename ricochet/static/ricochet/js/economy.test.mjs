@@ -167,11 +167,11 @@ test('buying budgets/kick raises the matching derived stats', () => {
   const pegB = world.budgets.pegs;
   const blockB = world.budgets.blocks;
   const kick = world.kick;
-  state.upgrades.pegBudget = 2;     // +8
+  state.upgrades.pegBudget = 2;     // +2
   state.upgrades.blockBudget = 3;   // +3
   state.upgrades.pegKick = 2;       // +20
   applyUpgradeEffects(world, state);
-  assert.equal(world.budgets.pegs, pegB + 8);
+  assert.equal(world.budgets.pegs, pegB + 2);
   assert.equal(world.budgets.blocks, blockB + 3);
   assert.equal(world.kick, kick + 20);
 });
@@ -246,4 +246,14 @@ test('buying rampAngleUnlock flips world.rampAngleUnlocked', () => {
   state.upgrades.rampAngleUnlock = 1;
   applyUpgradeEffects(world, state);
   assert.equal(world.rampAngleUnlocked, true);
+});
+
+test('pegBudget grants +1 peg per level (per-peg pricing)', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  const base = world.budgets.pegs;
+  state.upgrades.pegBudget = 3;
+  applyUpgradeEffects(world, state);
+  assert.equal(world.budgets.pegs, base + 3); // +1 per level, not +4
 });

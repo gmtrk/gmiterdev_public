@@ -67,7 +67,7 @@ export const UPGRADES = [
   { id: 'ballCapacity',    label: 'Ball Capacity',    group: 'balls',  baseCost: 40,  costGrowth: 1.30, effectKind: 'add', effectStep: 1, desc: '+1 ball on the field.' },
   { id: 'spawnRate',       label: 'Spawn Speed',      group: 'balls',  baseCost: 35,  costGrowth: 1.26, effectKind: 'add', effectStep: 1, desc: 'Balls respawn faster.' },
   { id: 'goldenChance',    label: 'Golden Chance',    group: 'global', baseCost: 300, costGrowth: 1.35, effectKind: 'add', effectStep: 0.0025, max: 40, desc: 'Higher chance of golden balls.' },
-  { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 60,  costGrowth: 1.28, effectKind: 'add', effectStep: 4, desc: '+1 peg you can place.' },
+  { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 25,  costGrowth: 1.15, effectKind: 'add', effectStep: 1, desc: '+1 peg you can place.' },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1, desc: '+1 block you can place.' },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10, desc: 'Pegs launch balls harder.' },
   { id: 'midRamps', label: 'Mid Ramps', group: 'ramps', baseCost: 70, costGrowth: 1, effectKind: 'add', effectStep: 1, max: 1, desc: 'Adds a second ramp pair midway.' },

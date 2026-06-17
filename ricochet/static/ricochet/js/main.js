@@ -256,7 +256,14 @@ function refreshPlaceBadge() {
   placeBadge.textContent = String(n);
   placeBadge.hidden = n <= 0;
 }
-refreshPlaceBadge();
+const triangleBtn = document.querySelector('[data-preset="triangle"]');
+function refreshPresetHint() {
+  if (!triangleBtn) return;
+  const unplacedPegs = Math.max(0, world.budgets.pegs - state.placed.pegs.length);
+  const suggest = unplacedPegs > 0 && !state.placed.preset;
+  triangleBtn.classList.toggle('rc-preset--suggest', suggest);
+}
+refreshPlaceBadge(); refreshPresetHint();
 
 function refreshRampControl() {
   if (!rampRow) return;
@@ -291,7 +298,7 @@ function refreshShop() {
         }
         refreshShop();
         refreshRampControl();
-        refreshPlaceBadge();
+        refreshPlaceBadge(); refreshPresetHint();
       }
     },
   });
@@ -356,7 +363,7 @@ function onBigBangClicked() {
       persistSave();
       refreshShop();
       refreshCoresTab();
-      refreshPlaceBadge();
+      refreshPlaceBadge(); refreshPresetHint();
       // Immediate HUD refresh so the new Cores total shows at once (the throttled
       // render-loop HUD would otherwise lag up to ~166ms).
       updateHUD(buildHudAdapter(state, world, run), hudEls);
@@ -405,7 +412,7 @@ const tabs = setupTabs({
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
     if (name !== 'place' && view.place) view.place.active = false;
-    refreshPlaceBadge();
+    refreshPlaceBadge(); refreshPresetHint();
   },
 });
 // Reflect the initially-active tab on the canvas cursor (onSelect only fires on
@@ -422,7 +429,7 @@ setupPlacement({
   state,
   toolButtons: Array.from(document.querySelectorAll('[data-tool]')),
   presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
-  onChange: () => { refreshShop(); refreshPlaceBadge(); },
+  onChange: () => { refreshShop(); refreshPlaceBadge(); refreshPresetHint(); },
   isActive: isPlaceActive,
   view,
 });
