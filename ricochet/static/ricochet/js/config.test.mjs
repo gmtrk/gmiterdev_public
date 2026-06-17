@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as C from './config.js';
+import { substepCount } from './physics.js';
 
 test('timestep + frame-budget scalars match the contract', () => {
   assert.equal(C.DT, 1 / 60);
@@ -25,7 +26,7 @@ test('cap + grid scalars match the contract', () => {
 
 test('physics scalars match the contract', () => {
   assert.equal(C.GRAVITY, 1700);
-  assert.equal(C.DRAG, 0.99);
+  assert.equal(C.DRAG, 1.0);
   assert.equal(C.E_WALL, 0.92);
   assert.equal(C.E_COLLIDER, 0.9);
   assert.equal(C.PEG_RADIUS, 7);
@@ -33,9 +34,13 @@ test('physics scalars match the contract', () => {
   assert.equal(C.KICK, 60);
 });
 
-test('MAX_SPEED honors the tunneling invariant MAX_SPEED*DT < PEG_RADIUS', () => {
-  assert.equal(C.MAX_SPEED, 0.9 * C.PEG_RADIUS / C.DT);
-  assert.ok(C.MAX_SPEED * C.DT < C.PEG_RADIUS, 'tunneling invariant violated');
+test('MAX_SPEED honors the tunneling invariant PER SUB-STEP (substepCount)', () => {
+  // The single-step bound MAX_SPEED*DT < PEG_RADIUS no longer holds (the cap is
+  // high for feel); stepPhysics sub-steps the move so each SLICE stays under a
+  // peg radius. Verify the sub-stepped displacement honors the invariant.
+  const n = substepCount(C.MAX_SPEED, C.DT);
+  assert.ok(n >= 1, 'at least one sub-step');
+  assert.ok((C.MAX_SPEED * C.DT) / n < C.PEG_RADIUS, 'per-sub-step displacement must stay under PEG_RADIUS');
 });
 
 test('block scalars match the contract', () => {

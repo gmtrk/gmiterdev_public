@@ -7,16 +7,22 @@ export const SPAWN_MARGIN = 40, SPAWN_Y = 30, MAX_SPAWNS_PER_TICK = 8;
 // Starting balls/sec = a 0.3s respawn interval. The spawnRate upgrade raises it.
 export const SPAWN_RATE_BASE = 1 / 0.3;
 export const CEILING_DESKTOP = 5000, RESERVED_OWNED = 200, SPECIAL_CAP = 96, GRID_CELL = 50;
-// Snappier fall + light drag: balls should move fast and lively, not float. Both
-// are live-tunable off the world (debug sliders) — these are just the seeds.
-export const GRAVITY = 1700, DRAG = 0.99, E_WALL = 0.92, E_COLLIDER = 0.9;
+// Snappy fall + NO air drag (1.0): balls keep their energy and stay fast/lively,
+// losing speed only at surfaces (wall/peg/block/paddle restitution). Both are
+// live-tunable off the world (debug sliders) — these are just the seeds. (Found
+// satisfying in playtest: drag 1.0 + a high speed cap, made safe by sub-stepping.)
+export const GRAVITY = 1700, DRAG = 1.0, E_WALL = 0.92, E_COLLIDER = 0.9;
 export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
 // Paddle bounces high (restitution near-elastic) but injects NO fixed energy
 // (kick stays 0) so it can't pump a trapped ball forever; the tangential nudge
 // walks a near-vertical drop off the edge so it eventually drains.
 export const E_PADDLE = 0.95, PADDLE_NUDGE = 25;
-// Tunneling invariant: MAX_SPEED*DT < PEG_RADIUS.
-export const MAX_SPEED = 0.9 * PEG_RADIUS / DT;
+// Hard speed cap (px/s). At this speed a single DT step would move MAX_SPEED*DT
+// ≈ 18px — far past a 7px peg — so physics.stepPhysics SUB-STEPS the movement
+// (physics.substepCount) into slices each shorter than PEG_RADIUS, preserving the
+// tunneling invariant per sub-step. Raising this stays collision-safe (more
+// sub-steps), at proportional CPU cost.
+export const MAX_SPEED = 1100;
 export const BLOCK_W = 64, BLOCK_H = 28, BLOCK_LEVELS = 9, RESPAWN_DELAY = 4, BLOCK_BREAK_BONUS = 8;
 // Blocks bounce higher than pegs: stronger kick + near-elastic restitution.
 export const E_BLOCK = 0.95, BLOCK_KICK = 160;

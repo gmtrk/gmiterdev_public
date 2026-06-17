@@ -84,6 +84,19 @@ export function jitterVelocity(vx, vy, maxAngle, rng) {
   return { vx: vx * c - vy * s, vy: vx * s + vy * c };
 }
 
+// Number of collision sub-steps for a full DT so a ball at `maxSpeed` advances
+// less than PEG_RADIUS per slice (the tunneling bound). 1 when the speed cap is
+// already step-safe; capped so an extreme cap can't blow up CPU. Pure + tested.
+const SUBSTEP_SAFETY = 0.9;     // keep each slice comfortably under a peg radius
+const MAX_SUBSTEP_COUNT = 16;   // backstop for an absurd speed-cap slider value
+export function substepCount(maxSpeed, dt) {
+  const limit = SUBSTEP_SAFETY * PEG_RADIUS;
+  let n = Math.ceil((maxSpeed * dt) / limit);
+  if (!(n >= 1)) n = 1;
+  if (n > MAX_SUBSTEP_COUNT) n = MAX_SUBSTEP_COUNT;
+  return n;
+}
+
 // Apply the bounce-jitter roll to ball `i` of `pool` (block/paddle hits only).
 // No-op when the world has jitter disabled or the random roll misses.
 function _maybeJitter(world, pool, i) {
@@ -299,22 +312,35 @@ function _resolvePegsNear(world, pool, i) {
 function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   // gravity + drag — read off the world (seeded from GRAVITY/DRAG in buildWorld)
   // so the debug panel can retune them live without touching module constants.
+  // Applied ONCE over the full dt (so the gravity/drag integration is unchanged).
   const gravity = world.gravity != null ? world.gravity : GRAVITY;
   const drag = world.drag != null ? world.drag : DRAG;
   pool.vy[i] += gravity * dt;
   pool.vx[i] *= drag;
   pool.vy[i] *= drag;
-  // Clamp free-flight speed to MAX_SPEED BEFORE advancing. The collision
-  // resolvers clamp on contact, but a fast free fall is never clamped otherwise,
-  // and the tunneling invariant (MAX_SPEED*DT < PEG_RADIUS) only holds if EVERY
-  // step's displacement is bounded. Without this, high gravity / light drag push
-  // terminal velocity far past the cap and balls tunnel straight through pegs,
-  // blocks, and the paddle (or bounce off the far face after over-shooting).
+  // Clamp the speed feeding the move to MAX_SPEED. The contact resolvers also
+  // clamp, so velocity stays <= maxSpeed across every sub-step below.
   const cl = clampSpeed(pool.vx[i], pool.vy[i], world.maxSpeed);
   pool.vx[i] = cl.vx; pool.vy[i] = cl.vy;
-  pool.x[i] += pool.vx[i] * dt;
-  pool.y[i] += pool.vy[i] * dt;
 
+  // Advance + collide in N sub-steps so a fast ball can't skip an obstacle. A
+  // single dt move at a high speed cap (1100 px/s ≈ 18px) would jump past a 7px
+  // peg / 28px block (and bounce off the far face after over-shooting). Slicing
+  // the move into pieces each shorter than PEG_RADIUS keeps the tunneling
+  // invariant per sub-step. N is derived from the live maxSpeed in stepPhysics.
+  const sub = world.substeps > 0 ? world.substeps : 1;
+  const sdt = dt / sub;
+  for (let s = 0; s < sub; s++) {
+    pool.x[i] += pool.vx[i] * sdt;
+    pool.y[i] += pool.vy[i] * sdt;
+    _resolveContacts(world, pool, i, now, isSpecial);
+  }
+}
+
+// Resolve all environment contacts (walls, pegs, blocks, paddle) at the ball's
+// current position. Called once per movement sub-step. Counter increments are
+// per contact, which is correct: two pegs hit across two sub-steps = two peg hits.
+function _resolveContacts(world, pool, i, now, isSpecial) {
   // walls
   const w = reflectWalls(
     pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
@@ -334,14 +360,14 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
     if (!isSpecial && (pool.flags[i] & FLAG_GOLDEN)) world.counters.goldenBonus += GOLDEN.bonus;
   }
 
-  // blocks (narrow-phase + block runtime) — filled in Task 2.7
+  // blocks (narrow-phase + block runtime)
   _resolveBlocksFor(world, pool, i, now, isSpecial);
 
   // paddle — bounces high (near-elastic restitution) but injects NO fixed energy
   // (kick = 0): a positive kick once created a stable limit cycle where balls
-  // oscillated on the paddle forever banking points. Restitution < 1 + drag means
-  // energy strictly decays, and the tangential nudge walks a near-vertical drop
-  // off the edge so it eventually drains. The paddle exists only once owned.
+  // oscillated on the paddle forever banking points. Restitution < 1 means energy
+  // decays at the surface, and the tangential nudge walks a near-vertical drop off
+  // the edge so it eventually drains. The paddle exists only once owned.
   const pa = world.paddle;
   if (pa.present) {
     const pr = resolveCircleAABB(
@@ -420,6 +446,10 @@ export function stepPhysics(world, dt, now, emit = NOOP_EMIT, resolveClack = nul
   world.counters.block = 0;
   world.counters.goldenBonus = 0;
   world.counters.breakBonus = 0;
+
+  // Collision sub-step count for this step, derived from the live speed cap so a
+  // retuned maxSpeed (debug slider) stays tunneling-safe. Read in _integrateAndCollide.
+  world.substeps = substepCount(world.maxSpeed, dt);
 
   _respawnBlocks(world, now);
 

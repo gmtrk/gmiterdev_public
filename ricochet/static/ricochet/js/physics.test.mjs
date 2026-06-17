@@ -97,8 +97,8 @@ test('clampSpeed leaves sub-max velocities untouched', () => {
 });
 
 test('clampSpeed scales an over-max velocity down to exactly MAX_SPEED', () => {
-  // velocity (1000, 0) has speed 1000 > MAX_SPEED (378)
-  const r = clampSpeed(1000, 0, MAX_SPEED);
+  // velocity (2*MAX_SPEED, 0) is clearly over the cap and must scale down to it.
+  const r = clampSpeed(2 * MAX_SPEED, 0, MAX_SPEED);
   const sp = Math.hypot(r.vx, r.vy);
   assert.ok(Math.abs(sp - MAX_SPEED) < 1e-3, `speed was ${sp}`);
   assert.ok(r.vx > 0 && Math.abs(r.vy) < 1e-6);
@@ -122,6 +122,25 @@ test('jitterVelocity preserves speed while rotating direction', () => {
   // a non-centered rng actually changes the direction
   const rotated = jitterVelocity(30, -40, 0.4, () => 1);
   assert.ok(Math.abs(rotated.vx - 30) > 1e-3 || Math.abs(rotated.vy - (-40)) > 1e-3, 'expected rotation');
+});
+
+import { substepCount } from './physics.js';
+import { DT as STEP_DT } from './config.js';
+
+test('substepCount is 1 when the speed cap is already single-step safe', () => {
+  // 210 px/s -> 3.5px/step, under the 0.9*PEG_RADIUS slice limit, so no slicing.
+  assert.equal(substepCount(210, STEP_DT), 1);
+});
+
+test('substepCount slices a high cap so each sub-step stays under PEG_RADIUS', () => {
+  const n = substepCount(1100, STEP_DT);
+  assert.ok(n >= 3, `expected >=3 sub-steps for 1100 px/s, got ${n}`);
+  assert.ok((1100 * STEP_DT) / n < PEG_RADIUS, 'per-sub-step displacement under a peg radius');
+});
+
+test('substepCount stays >=1 and is capped for extreme caps', () => {
+  assert.ok(substepCount(0, STEP_DT) >= 1);
+  assert.ok(substepCount(1e9, STEP_DT) <= 16);
 });
 
 test('reflectWalls reflects and clamps off the left wall', () => {
