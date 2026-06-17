@@ -5,12 +5,15 @@ import {
   resolveClack,
   chargeBurster,
   tryBurst,
+  trySplitOnEnv,
   CLACKER_CLACK_CREDITS,
   makeSpecialEmit,
   SPECIAL_TYPES,
   specialSpawnPlan,
   unlockSpecial,
   UNLOCK_STARTER,
+  SPLITTER_MIN,
+  SPLITTER_MAX,
 } from './specials.js';
 import {
   buildWorld,
@@ -368,4 +371,22 @@ test('unlockSpecial on an already-unlocked type is idempotent and grants nothing
 test('unlockSpecial throws on an unknown type', () => {
   const cfg = { clacker: { unlocked: false, capacity: 0 } };
   assert.throws(() => unlockSpecial(cfg, 'magnet'), /unknown special/i);
+});
+
+test('trySplitOnEnv: a splitter with env-hits emits 1-2 balls', () => {
+  const emitted = [];
+  const world = { special: { type: new Uint8Array([SPLITTER]), envHits: new Int32Array([3]),
+    x: new Float32Array([100]), y: new Float32Array([200]), count: 1 } };
+  const emit = { balls: (n) => emitted.push(n), credits() {} };
+  assert.equal(trySplitOnEnv(world, 0, emit, () => 0.9), true);
+  assert.equal(emitted.length, 1);
+  assert.ok(emitted[0] === SPLITTER_MIN || emitted[0] === SPLITTER_MAX);
+});
+
+test('trySplitOnEnv: no-op for non-splitters or zero env-hits', () => {
+  const emit = { balls: () => { throw new Error('should not emit'); }, credits() {} };
+  const clacker = { special: { type: new Uint8Array([CLACKER]), envHits: new Int32Array([5]), x: new Float32Array([0]), y: new Float32Array([0]), count: 1 } };
+  assert.equal(trySplitOnEnv(clacker, 0, emit, () => 0.9), false);
+  const idle = { special: { type: new Uint8Array([SPLITTER]), envHits: new Int32Array([0]), x: new Float32Array([0]), y: new Float32Array([0]), count: 1 } };
+  assert.equal(trySplitOnEnv(idle, 0, emit, () => 0.9), false);
 });

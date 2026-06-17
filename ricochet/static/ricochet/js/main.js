@@ -3,7 +3,7 @@ import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLIT
 import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige } from './economy.js';
 import {
   specialSpawnPlan, unlockSpecial, SPECIAL_TYPES,
-  resolveClack, makeSpecialEmit, chargeBurster, tryBurst,
+  resolveClack, makeSpecialEmit, chargeBurster, tryBurst, trySplitOnEnv,
 } from './specials.js';
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
@@ -519,6 +519,7 @@ function step(dt) {
   for (let i = 0; i < sp.count; i++) {
     chargeBurster(sp, i, sp.envHits[i] * BURSTER_CFG.chargePerBounce);
     tryBurst(world, i, emit);
+    trySplitOnEnv(world, i, emit);
   }
 
   // 3) combo update — scored this step if any surface contact happened

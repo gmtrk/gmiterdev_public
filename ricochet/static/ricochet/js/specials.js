@@ -88,6 +88,18 @@ export function tryBurst(world, i, emit) {
   return true;
 }
 
+// Splitter: also split when it bounces off the environment this step (not only on
+// special-vs-special clacks, which are rare when specials are sparse). Emits one
+// 1-2 cap-exempt NORMAL spawn at its position when it had >=1 env hit. Pure + tested.
+export function trySplitOnEnv(world, i, emit, rng = Math.random) {
+  const sp = world.special;
+  if (sp.type[i] !== SPLITTER) return false;
+  if (!(sp.envHits[i] > 0)) return false;
+  const count = rng() < 0.5 ? SPLITTER_MIN : SPLITTER_MAX;
+  emit.balls(count, sp.x[i], sp.y[i]);
+  return true;
+}
+
 // Build the per-step emit object passed into resolveClack / tryBurst.
 // - credits(n): forward to the economy accumulator (addCredits) in main.js.
 // - balls(count, x, y): spawn NORMAL, CAP_EXEMPT balls into world.normal via the
