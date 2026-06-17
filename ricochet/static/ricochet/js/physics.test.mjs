@@ -240,7 +240,7 @@ test('resolveCircleAABB TUNNELING: a MAX_SPEED ball overlapping a thin block (ha
 });
 
 import { buildWorld, rebuildColliders, spawnNormal, spawnSpecial } from './physics.js';
-import { SPAWN_Y, BLOCK_W, BLOCK_LEVELS, SPECIAL_CAP } from './config.js';
+import { SPAWN_Y, BLOCK_W, BLOCK_LEVELS, SPECIAL_CAP, SURFACE_BASE } from './config.js';
 import { Grid } from './grid.js';
 
 // A minimal canonical `state` for world-building tests.
@@ -656,4 +656,12 @@ test('rollGoldenFlag returns FLAG_GOLDEN when rng < goldenChance, else 0', () =>
   assert.equal(rollGoldenFlag(0.5, () => 0.1), FLAG_GOLDEN);
   assert.equal(rollGoldenFlag(0.5, () => 0.9), 0);
   assert.equal(rollGoldenFlag(0, () => 0.0), 0); // 0 is not < 0
+});
+
+test('buildWorld seeds world.surfaceBase as a fresh copy of SURFACE_BASE', () => {
+  const world = buildWorld(makeState());
+  assert.deepEqual(world.surfaceBase, { wall: 1, peg: 2, block: 25 });
+  // mutating the world copy must not touch the shared config constant
+  world.surfaceBase.peg = 99;
+  assert.equal(SURFACE_BASE.peg, 2);
 });

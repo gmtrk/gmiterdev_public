@@ -6,7 +6,7 @@ import {
   resolveClack, makeSpecialEmit, chargeBurster, tryBurst,
 } from './specials.js';
 import {
-  DT, SURFACE_BASE, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
+  DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
   SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
@@ -462,7 +462,7 @@ function step(dt) {
 
   // 4) CREDITS ACCRUAL — eventMult MUST use goldenBonus/breakBonus, never 0,0
   const eventMult = computeEventMult(run.comboBonus, c.goldenBonus, c.breakBonus);
-  const gained = creditsFromCounters(c, SURFACE_BASE, world.globalValueMult, eventMult);
+  const gained = creditsFromCounters(c, world.surfaceBase, world.globalValueMult, eventMult);
   state.credits += gained;
   run.creditsPerSec = gained / dt;
 

@@ -29,7 +29,7 @@ export const E_BLOCK = 0.95, BLOCK_KICK = 160;
 // Random bounce offset on block/paddle hits: with this chance, rotate the
 // outgoing velocity by up to ±BOUNCE_JITTER rad so balls scatter chaotically.
 export const BOUNCE_JITTER = 0.4, BOUNCE_JITTER_CHANCE = 0.5;
-export const SURFACE_BASE = { wall: 1, peg: 5, block: 25 };
+export const SURFACE_BASE = { wall: 1, peg: 2, block: 25 };
 export const EVENT_CAP = 29; // eventMult <= 1 + EVENT_CAP
 export const COMBO = { gainPerSec: 6, decayPerSec: 3, capBonusStart: 9, perStepGainCap: 0.3 };
 export const GOLDEN = { chance: 0.005, bonus: 12 };

@@ -52,7 +52,7 @@ test('block scalars match the contract', () => {
 });
 
 test('SURFACE_BASE has wall/peg/block base values', () => {
-  assert.deepEqual(C.SURFACE_BASE, { wall: 1, peg: 5, block: 25 });
+  assert.deepEqual(C.SURFACE_BASE, { wall: 1, peg: 2, block: 25 });
 });
 
 test('event + combo + golden + clack scalars match the contract', () => {
@@ -94,6 +94,12 @@ test('PALETTE has the contract keys + values', () => {
   assert.equal(C.PALETTE.clacker, '#22e0ff');
   assert.equal(C.PALETTE.splitter, '#ff3df0');
   assert.equal(C.PALETTE.burster, '#ffb347');
+});
+
+test('SURFACE_BASE.peg is rebalanced down to 2 (wall 1, block 25 unchanged)', () => {
+  assert.equal(C.SURFACE_BASE.wall, 1);
+  assert.equal(C.SURFACE_BASE.peg, 2);
+  assert.equal(C.SURFACE_BASE.block, 25);
 });
 
 test('UPGRADES is a non-empty array of well-formed, unique-id defs', () => {

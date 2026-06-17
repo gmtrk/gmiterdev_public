@@ -4,7 +4,7 @@ import {
   GRAVITY, DRAG, E_WALL, E_COLLIDER, E_PADDLE, PADDLE_NUDGE, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
   BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS, E_BLOCK, BLOCK_KICK,
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK,
-  SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE,
+  SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -169,6 +169,7 @@ export function buildWorld(state) {
     paddle: { x: state.placed.paddle.x, y: ARENA_H - 80, w: state.placed.paddle.width, h: 16, present: false },
     grid: new Grid(ARENA_W, ARENA_H, GRID_CELL),
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
+    surfaceBase: { ...SURFACE_BASE },
     ceiling: CEILING_DESKTOP,
     leakMargin: 40,
     hasFloor: false,

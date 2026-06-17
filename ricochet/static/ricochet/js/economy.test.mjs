@@ -25,8 +25,8 @@ test('computeEventMult is exactly 1 with no events', () => {
 
 test('creditsFromCounters sums surface*base*globalValueMult*eventMult', () => {
   const counters = { wall: 2, peg: 3, block: 1, goldenBonus: 0, breakBonus: 0 };
-  // (2*1 + 3*5 + 1*25) = 42 ; *2 *3 = 252
-  assert.equal(creditsFromCounters(counters, SURFACE_BASE, 2, 3), 252);
+  // (2*1 + 3*2 + 1*25) = 33 ; *2 *3 = 198
+  assert.equal(creditsFromCounters(counters, SURFACE_BASE, 2, 3), 198);
 });
 
 test('creditsFromCounters ignores bonus fields on the counters object', () => {
