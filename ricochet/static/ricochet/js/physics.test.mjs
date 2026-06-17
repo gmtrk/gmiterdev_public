@@ -668,3 +668,24 @@ test('resolveCircleSegment: clamps the outgoing speed to maxSpeed', () => {
   const r = resolveCircleSegment(50, 92, 0, 5000, 6, 0, 100, 100, 100, 4, 0.92, 1100);
   assert.ok(Math.hypot(r.vx, r.vy) <= 1100 + 1e-3);
 });
+
+import { rampLayout } from './physics.js';
+
+test('rampLayout: level 0 -> no ramps; level 1 -> 2; level 2 -> 4', () => {
+  assert.equal(rampLayout(0, 30, 1000, 1500).length, 0);
+  assert.equal(rampLayout(1, 30, 1000, 1500).length, 2);
+  assert.equal(rampLayout(2, 30, 1000, 1500).length, 4);
+});
+
+test('rampLayout: each pair is mirror-symmetric about W/2', () => {
+  const [left, right] = rampLayout(1, 30, 1000, 1500);
+  assert.ok(Math.abs((left.x1 + right.x1) - 1000) < 1e-4);
+  assert.ok(Math.abs((left.x2 + right.x2) - 1000) < 1e-4);
+  assert.ok(Math.abs(left.y1 - right.y1) < 1e-9);
+  assert.ok(Math.abs(left.y2 - right.y2) < 1e-9);
+});
+
+test('rampLayout: angle 0 yields horizontal ramps (y1 == y2)', () => {
+  const [left] = rampLayout(1, 0, 1000, 1500);
+  assert.ok(Math.abs(left.y1 - left.y2) < 1e-9);
+});

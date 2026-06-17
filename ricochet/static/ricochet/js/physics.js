@@ -511,3 +511,32 @@ export function spawnCount(acc, spawnRate, dt, freeSlots, maxPerTick) {
 export function rollGoldenFlag(goldenChance, rng = Math.random) {
   return rng() < goldenChance ? FLAG_GOLDEN : 0;
 }
+
+// --- ramps (side deflectors) -------------------------------------------------
+// Fixed-position bouncy walls derived from the ramps upgrade level + a tunable
+// angle (degrees). Left ramp `\`: outer end higher near the wall, inner end lower
+// toward center; right ramp is the mirror. Center stays open as the drain.
+const RAMP_LEN = 280;            // Task 7 swaps this for the config import
+const RAMP_X_FRAC = 0.27;        // left ramp center x = W * this (right = 1 - this)
+const RAMP_BOTTOM_OFFSET = 120;  // bottom pair center y = H - this
+const RAMP_MID_FRAC = 0.62;      // midway pair center y = H * this
+
+export function rampLayout(level, angleDeg, W, H) {
+  const out = [];
+  if (level <= 0) return out;
+  const theta = (angleDeg * Math.PI) / 180;
+  const half = RAMP_LEN / 2;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const cxL = W * RAMP_X_FRAC;
+  const cxR = W * (1 - RAMP_X_FRAC);
+  const addPair = (cy) => {
+    // left `\`: outer (toward wall) high/left, inner (toward center) low/right
+    out.push({ x1: cxL - half * cos, y1: cy - half * sin, x2: cxL + half * cos, y2: cy + half * sin });
+    // right `/`: mirror about W/2
+    out.push({ x1: cxR + half * cos, y1: cy - half * sin, x2: cxR - half * cos, y2: cy + half * sin });
+  };
+  addPair(H - RAMP_BOTTOM_OFFSET);
+  if (level >= 2) addPair(H * RAMP_MID_FRAC);
+  return out;
+}
