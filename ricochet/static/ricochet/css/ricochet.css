@@ -623,6 +623,7 @@ body.rc-body {
   font-size: 11px; font-weight: 700; line-height: 16px; text-align: center;
 }
 .rc-tab-badge[hidden] { display: none; }
+.rc-tool__count { color: #22e0ff; font-variant-numeric: tabular-nums; }
 
 @keyframes rc-suggest-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,224,255,0.0); } 50% { box-shadow: 0 0 10px 2px rgba(34,224,255,0.8); } }
 .rc-preset--suggest { animation: rc-suggest-pulse 1s ease-in-out infinite; border-color: #22e0ff; }

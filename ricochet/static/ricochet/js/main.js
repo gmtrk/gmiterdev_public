@@ -256,6 +256,18 @@ function refreshPlaceBadge() {
   placeBadge.textContent = String(n);
   placeBadge.hidden = n <= 0;
 }
+const pegToolBtn = document.querySelector('[data-tool="peg"]');
+const blockToolBtn = document.querySelector('[data-tool="block"]');
+const pegToolCount = document.createElement('span');
+pegToolCount.className = 'rc-tool__count';
+const blockToolCount = document.createElement('span');
+blockToolCount.className = 'rc-tool__count';
+if (pegToolBtn) pegToolBtn.append(pegToolCount);
+if (blockToolBtn) blockToolBtn.append(blockToolCount);
+function refreshToolCounts() {
+  pegToolCount.textContent = ' (' + Math.max(0, world.budgets.pegs - state.placed.pegs.length) + ')';
+  blockToolCount.textContent = ' (' + Math.max(0, world.budgets.blocks - state.placed.blocks.length) + ')';
+}
 const triangleBtn = document.querySelector('[data-preset="triangle"]');
 function refreshPresetHint() {
   if (!triangleBtn) return;
@@ -263,7 +275,7 @@ function refreshPresetHint() {
   const suggest = unplacedPegs > 0 && !state.placed.preset;
   triangleBtn.classList.toggle('rc-preset--suggest', suggest);
 }
-refreshPlaceBadge(); refreshPresetHint();
+refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint();
 
 function refreshRampControl() {
   if (!rampRow) return;
@@ -298,7 +310,7 @@ function refreshShop() {
         }
         refreshShop();
         refreshRampControl();
-        refreshPlaceBadge(); refreshPresetHint();
+        refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint();
       }
     },
   });
@@ -363,7 +375,7 @@ function onBigBangClicked() {
       persistSave();
       refreshShop();
       refreshCoresTab();
-      refreshPlaceBadge(); refreshPresetHint();
+      refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint();
       // Immediate HUD refresh so the new Cores total shows at once (the throttled
       // render-loop HUD would otherwise lag up to ~166ms).
       updateHUD(buildHudAdapter(state, world, run), hudEls);
@@ -412,7 +424,7 @@ const tabs = setupTabs({
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
     if (name !== 'place' && view.place) view.place.active = false;
-    refreshPlaceBadge(); refreshPresetHint();
+    refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint();
   },
 });
 // Reflect the initially-active tab on the canvas cursor (onSelect only fires on
@@ -429,7 +441,7 @@ setupPlacement({
   state,
   toolButtons: Array.from(document.querySelectorAll('[data-tool]')),
   presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
-  onChange: () => { refreshShop(); refreshPlaceBadge(); refreshPresetHint(); },
+  onChange: () => { refreshShop(); refreshPlaceBadge(); refreshToolCounts(); refreshPresetHint(); },
   isActive: isPlaceActive,
   view,
 });
