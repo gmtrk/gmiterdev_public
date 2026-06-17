@@ -17,7 +17,7 @@ import {
   updateHUD, renderShop, buyUpgrade, coresShopRows, showModal, setupQualityToggle,
   specialUnlockDef, buySpecialUnlock, exportStatCard,
 } from './ui.js';
-import { setupPlacement, setupTabs } from './input.js';
+import { setupPlacement, setupTabs, applyPreset } from './input.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
 import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
@@ -240,6 +240,11 @@ function refreshShop() {
       }
       if (buyUpgrade(world, state, id, applyUpgradeEffects)) {
         rebuildColliders(world); // budget upgrades may change placement room
+        if (id === 'pegBudget' && state.placed.preset) {
+          state.placed.pegs = [];  // regenerate the full formation at the new budget
+          applyPreset(state.placed.preset, world, state.placed);
+          rebuildColliders(world);
+        }
         refreshShop();
       }
     },

@@ -189,3 +189,23 @@ test('canPlacePeg / tryPlace: allows a peg at or beyond MIN_PEG_SPACING', () => 
   assert.equal(tryPlace(world, placed, 'peg', 200, 440), true);
   assert.equal(placed.pegs.length, 2);
 });
+
+test('clear-then-applyPreset regenerates the FULL formation at the new budget', () => {
+  // applyPreset fills autoFillCount(placed.length, budget) = (budget - placed) NEW
+  // pegs and REPLACES placed.pegs with them. So to fill to the full budget the
+  // caller must clear placed.pegs first (this is what the preset handler and the
+  // auto-place-on-buy do).
+  const world = makeWorld({ pegs: 5, blocks: 0 });
+  const placed = { pegs: [], blocks: [], paddle: { x: 500, width: 120 }, preset: 'triangle' };
+  applyPreset('triangle', world, placed);
+  assert.equal(placed.pegs.length, 5);
+  world.budgets.pegs = 10;     // simulate buying Peg Budget
+  placed.pegs = [];            // caller clears before re-applying
+  applyPreset('triangle', world, placed);
+  assert.equal(placed.pegs.length, 10); // full 10-peg formation, not 5
+
+  // WITHOUT the clear, applyPreset would only add the 5-peg headroom and replace:
+  world.budgets.pegs = 20;
+  applyPreset('triangle', world, placed); // placed has 10 -> autoFillCount(10,20)=10
+  assert.equal(placed.pegs.length, 10); // proves the clear is required to reach budget
+});

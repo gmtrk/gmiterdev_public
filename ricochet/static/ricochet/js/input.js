@@ -176,6 +176,7 @@ export function setupPlacement(deps) {
     if (tool === 'remove') changed = eraseWithinRadius(world, state.placed, x, y, ERASER_RADIUS) > 0;
     else changed = tryPlace(world, state.placed, tool, x, y);
     if (changed) {
+      state.placed.preset = null;
       rebuildColliders(world);
       onChange();
     }
@@ -204,6 +205,8 @@ export function setupPlacement(deps) {
 
   for (const btn of presetButtons) {
     btn.addEventListener('click', () => {
+      state.placed.preset = btn.dataset.preset;
+      state.placed.pegs = [];   // regenerate the FULL formation at the current budget
       applyPreset(btn.dataset.preset, world, state.placed);
       rebuildColliders(world);
       onChange();

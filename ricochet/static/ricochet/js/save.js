@@ -12,7 +12,7 @@ function starterBlueprint() {
   ];
   const blocks = [];
   const paddle = { x: ARENA_W / 2, width: PADDLE_WIDTH_BASE };
-  return { pegs, blocks, paddle };
+  return { pegs, blocks, paddle, preset: null };
 }
 
 export function defaultSave() {
