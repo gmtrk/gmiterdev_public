@@ -90,6 +90,9 @@ export function applyUpgradeEffects(world, state) {
   const kickDef = _def(UPGRADES, 'pegKick');
   world.kick = KICK + upgradeEffect(kickDef, _level(up, 'pegKick'));
 
+  // ramps: how many ramp pairs are active (0/1/2). rebuildRamps reads this.
+  world.rampsLevel = _level(up, 'ramps');
+
   // Cores head-start: starting-credits multiplier (multiplicative; 1 when unbought).
   // reinitFreshRun (Phase 7) reads world.startCreditsMult to scale the cold-open grant.
   const startMultDef = _def(CORES_UPGRADES, 'startCreditsMult');

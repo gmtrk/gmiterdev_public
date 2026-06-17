@@ -227,3 +227,13 @@ test('canPrestige honors an explicit min override', () => {
   assert.equal(canPrestige(100, 100), true);
   assert.equal(canPrestige(99, 100), false);
 });
+
+test('buying ramps raises world.rampsLevel', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  assert.equal(world.rampsLevel, 0);
+  state.upgrades.ramps = 2;
+  applyUpgradeEffects(world, state);
+  assert.equal(world.rampsLevel, 2);
+});

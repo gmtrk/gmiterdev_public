@@ -56,6 +56,7 @@ export const UPGRADES = [
   { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 60,  costGrowth: 1.28, effectKind: 'add', effectStep: 4 },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1 },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10 },
+  { id: 'ramps',           label: 'Ramps',            group: 'ramps',  baseCost: 70,  costGrowth: 1.5,  effectKind: 'add', effectStep: 1, max: 2 },
   // Special-ball unlocks. One-shot purchases (max:1, no cost growth): buying
   // flips state.specials[unlock].unlocked and seeds the starter pack so the type
   // actually spawns. `unlock` names the save-shape special key. The standard
