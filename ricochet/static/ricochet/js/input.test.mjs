@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tryPlace, removeTopmost, canPlacePeg } from './input.js';
+import { tryPlace, eraseWithinRadius, canPlacePeg } from './input.js';
 import { BLOCK_W, BLOCK_H } from './config.js';
 
 // world: minimal stub carrying budgets, blockW/blockH, pegRadius.
@@ -84,32 +84,24 @@ test('tryPlace: peg refused if it overlaps a block footprint (cross-type)', () =
   assert.equal(ok, false);
 });
 
-test('removeTopmost: removes the newest peg under the cursor', () => {
-  const world = makeWorld({ pegs: 5, blocks: 5 });
-  const placed = makePlaced();
-  placed.pegs.push({ x: 200, y: 400 }); // older, same spot
-  placed.pegs.push({ x: 200, y: 400 }); // newer, same spot
-  const ok = removeTopmost(world, placed, 201, 401);
-  assert.equal(ok, true);
-  assert.equal(placed.pegs.length, 1); // only the newer one removed
-});
-
-test('removeTopmost: prefers a block over a peg at the same point', () => {
-  const world = makeWorld({ pegs: 5, blocks: 5 });
-  const placed = makePlaced();
-  placed.pegs.push({ x: 400, y: 820 });
-  placed.blocks.push({ x: 400, y: 820, level: 9, respawnAt: null, golden: false });
-  const ok = removeTopmost(world, placed, 400, 820);
-  assert.equal(ok, true);
+test('eraseWithinRadius: erases all pegs and blocks within the radius, returns the count', () => {
+  const world = makeWorld({ pegs: 10, blocks: 10 });
+  const placed = {
+    pegs: [{ x: 200, y: 400 }, { x: 230, y: 410 }, { x: 900, y: 900 }],
+    blocks: [{ x: 215, y: 405, level: 9, respawnAt: null, golden: false }],
+    paddle: { x: 500, width: 120 },
+  };
+  const n = eraseWithinRadius(world, placed, 210, 405, 50);
+  assert.equal(n, 3);                 // 2 near pegs + 1 near block
+  assert.deepEqual(placed.pegs, [{ x: 900, y: 900 }]); // far peg survives
   assert.equal(placed.blocks.length, 0);
-  assert.equal(placed.pegs.length, 1); // peg survives — block removed first
 });
 
-test('removeTopmost: returns false when nothing is under the cursor', () => {
-  const world = makeWorld({ pegs: 5, blocks: 5 });
-  const placed = makePlaced();
-  placed.pegs.push({ x: 200, y: 400 });
-  assert.equal(removeTopmost(world, placed, 900, 900), false);
+test('eraseWithinRadius: returns 0 and mutates nothing when range is empty', () => {
+  const world = makeWorld({ pegs: 10, blocks: 10 });
+  const placed = { pegs: [{ x: 900, y: 900 }], blocks: [], paddle: { x: 500, width: 120 } };
+  assert.equal(eraseWithinRadius(world, placed, 100, 100, 50), 0);
+  assert.equal(placed.pegs.length, 1);
 });
 
 import { presetPositions } from './input.js';

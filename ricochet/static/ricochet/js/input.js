@@ -1,9 +1,9 @@
 // Hands-on placement layer: place/remove pegs+blocks (budget + overlap + bounds
 // + spawn-band guarded), presets/auto-fill, blueprint apply (clamped to budgets),
-// tabs. Pure decision helpers (tryPlace/removeTopmost) are unit-tested; the DOM
+// tabs. Pure decision helpers (tryPlace/eraseWithinRadius) are unit-tested; the DOM
 // wiring (setupPlacement/setupTabs) builds on them and sets touch-action:none on
 // the canvas.
-import { BLOCK_LEVELS, MIN_PEG_SPACING } from './config.js';
+import { BLOCK_LEVELS, MIN_PEG_SPACING, ERASER_RADIUS } from './config.js';
 import {
   overlaps,
   inBounds,
@@ -79,25 +79,26 @@ export function tryPlace(world, placed, type, x, y) {
   return true;
 }
 
-// Remove the topmost (last-placed) element whose footprint contains (x,y),
-// searching blocks then pegs newest-first. Returns true if something was
-// removed (caller re-syncs colliders).
-export function removeTopmost(world, placed, x, y) {
-  for (let i = placed.blocks.length - 1; i >= 0; i--) {
-    const b = placed.blocks[i];
-    if (Math.abs(x - b.x) <= world.blockW / 2 && Math.abs(y - b.y) <= world.blockH / 2) {
-      placed.blocks.splice(i, 1);
-      return true;
-    }
-  }
-  for (let i = placed.pegs.length - 1; i >= 0; i--) {
-    const p = placed.pegs[i];
-    if (Math.abs(x - p.x) <= world.pegRadius && Math.abs(y - p.y) <= world.pegRadius) {
-      placed.pegs.splice(i, 1);
-      return true;
-    }
-  }
-  return false;
+// Erase every peg AND block whose center is within `radius` of (x,y). Returns the
+// number removed (> 0 means the caller should re-sync colliders). Area eraser —
+// no pixel-precise targeting needed; drag-to-erase works because setupPlacement
+// calls this on every pointermove while painting. Mutates placed.*. Pure + tested.
+export function eraseWithinRadius(world, placed, x, y, radius) {
+  const r2 = radius * radius;
+  let removed = 0;
+  placed.pegs = placed.pegs.filter((p) => {
+    const dx = x - p.x;
+    const dy = y - p.y;
+    if (dx * dx + dy * dy <= r2) { removed++; return false; }
+    return true;
+  });
+  placed.blocks = placed.blocks.filter((b) => {
+    const dx = x - b.x;
+    const dy = y - b.y;
+    if (dx * dx + dy * dy <= r2) { removed++; return false; }
+    return true;
+  });
+  return removed;
 }
 
 // Compute the peg positions for a preset, sized to the remaining peg budget
@@ -172,7 +173,7 @@ export function setupPlacement(deps) {
   function actAt(x, y) {
     if (!placeActive()) return; // only the Place tab may edit the arena
     let changed = false;
-    if (tool === 'remove') changed = removeTopmost(world, state.placed, x, y);
+    if (tool === 'remove') changed = eraseWithinRadius(world, state.placed, x, y, ERASER_RADIUS) > 0;
     else changed = tryPlace(world, state.placed, tool, x, y);
     if (changed) {
       rebuildColliders(world);

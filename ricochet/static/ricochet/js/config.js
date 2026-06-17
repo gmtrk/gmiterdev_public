@@ -20,6 +20,9 @@ export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
 // can always pass between two pegs (2*PEG_RADIUS+12 = 26 < this). Presets (pitch 70)
 // are unaffected. Live in the Place-tab overlay as exclusion rings.
 export const MIN_PEG_SPACING = 34;
+// Radius (virtual px) of the Remove-tool eraser: click/drag erases every peg and
+// block whose center is within this distance of the cursor.
+export const ERASER_RADIUS = 50;
 // Hard speed cap (px/s). At this speed a single DT step would move MAX_SPEED*DT
 // ≈ 18px — far past a 7px peg — so physics.stepPhysics SUB-STEPS the movement
 // (physics.substepCount) into slices each shorter than PEG_RADIUS, preserving the
