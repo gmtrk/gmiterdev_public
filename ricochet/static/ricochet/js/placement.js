@@ -114,6 +114,23 @@ export function clampBlueprintToBudget(blueprint, budgets) {
   };
 }
 
+// Commit the currently-visible (budget-clamped) field as the working blueprint,
+// IN PLACE: drop any over-budget "regrow" tail that a Big Bang keeps in state.placed.
+// Called before a manual edit so erasing a peg frees a slot instead of sliding a
+// hidden peg into the visible window (and so placing works off the visible set).
+// No-op when already within budget; tolerates a missing budgets object. Mutates
+// `placed`. Pure logic + tested.
+export function commitToBudget(placed, budgets) {
+  if (!budgets) return placed;
+  if (budgets.pegs != null && placed.pegs.length > budgets.pegs) {
+    placed.pegs = placed.pegs.slice(0, budgets.pegs);
+  }
+  if (budgets.blocks != null && placed.blocks.length > budgets.blocks) {
+    placed.blocks = placed.blocks.slice(0, budgets.blocks);
+  }
+  return placed;
+}
+
 // How many placeable items are waiting (peg + block budget headroom, never < 0).
 // Drives the Place-tab count badge. Pure + tested.
 export function unplacedCount(budgets, placed) {

@@ -10,6 +10,7 @@ import {
   inSpawnBand,
   autoFillCount,
   clampBlueprintToBudget,
+  commitToBudget,
   previewPositions,
 } from './placement.js';
 import { rebuildColliders } from './physics.js';
@@ -178,6 +179,10 @@ export function setupPlacement(deps) {
 
   function actAt(x, y) {
     if (!placeActive()) return; // only the Place tab may edit the arena
+    // Hand-editing takes manual control of the field: commit the visible
+    // (budget-clamped) set first, dropping any over-budget regrow tail kept after
+    // a Big Bang — otherwise erasing a visible peg slides a hidden one into view.
+    commitToBudget(state.placed, world.budgets);
     let changed = false;
     if (tool === 'remove') changed = eraseWithinRadius(world, state.placed, x, y, ERASER_RADIUS) > 0;
     else changed = tryPlace(world, state.placed, tool, x, y);

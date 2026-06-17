@@ -9,6 +9,7 @@ import {
   funnelPegs,
   autoFillCount,
   clampBlueprintToBudget,
+  commitToBudget,
   unplacedCount,
   previewPositions,
 } from './placement.js';
@@ -154,6 +155,25 @@ test('clampBlueprintToBudget: does not mutate the input arrays', () => {
   const blueprint = { pegs, blocks: [], paddle: { x: 500, width: 120 } };
   clampBlueprintToBudget(blueprint, { pegs: 1, blocks: 0 });
   assert.equal(pegs.length, 2, 'input pegs array must not be mutated');
+});
+
+test('commitToBudget: trims placed pegs/blocks to budget IN PLACE (drops the regrow tail)', () => {
+  const placed = {
+    pegs: [{ x: 1, y: 1 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 4 }],
+    blocks: [{ x: 10, y: 10, level: 9, respawnAt: null, golden: false }],
+    paddle: { x: 500, width: 120 },
+  };
+  commitToBudget(placed, { pegs: 2, blocks: 0 });
+  assert.deepEqual(placed.pegs, [{ x: 1, y: 1 }, { x: 2, y: 2 }], 'keeps the visible (earliest) pegs');
+  assert.deepEqual(placed.blocks, [], 'drops over-budget blocks');
+});
+
+test('commitToBudget: no-op when within budget (and tolerates a missing budgets object)', () => {
+  const placed = { pegs: [{ x: 1, y: 1 }], blocks: [], paddle: { x: 500, width: 120 } };
+  commitToBudget(placed, { pegs: 5, blocks: 5 });
+  assert.equal(placed.pegs.length, 1);
+  commitToBudget(placed, undefined); // must not throw
+  assert.equal(placed.pegs.length, 1);
 });
 
 test('trianglePegs: the apex row now builds in the lower portion of the arena', () => {

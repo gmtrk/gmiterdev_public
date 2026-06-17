@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { tryPlace, eraseWithinRadius, canPlacePeg, presetPositions } from './input.js';
-import { previewPositions } from './placement.js';
+import { previewPositions, commitToBudget } from './placement.js';
 import { BLOCK_W, BLOCK_H } from './config.js';
 
 // world: minimal stub carrying budgets, blockW/blockH, pegRadius.
@@ -12,6 +12,22 @@ function makeWorld(budgets) {
 function makePlaced() {
   return { pegs: [], blocks: [], paddle: { x: 500, width: 120 } };
 }
+
+test('post-Big-Bang erase: commit-then-erase frees a slot and does NOT slide a hidden peg in', () => {
+  // Budget 2, but the blueprint kept 5 pegs (the Big-Bang regrow tail); the first
+  // 2 are the visible/live ones. A manual edit must commit the visible field first.
+  const world = makeWorld({ pegs: 2, blocks: 0 });
+  const placed = {
+    pegs: [{ x: 100, y: 300 }, { x: 200, y: 400 }, { x: 300, y: 500 }, { x: 400, y: 600 }, { x: 500, y: 700 }],
+    blocks: [], paddle: { x: 500, width: 120 },
+  };
+  commitToBudget(placed, world.budgets);          // what actAt does before an edit
+  assert.equal(placed.pegs.length, 2, 'hidden regrow tail dropped on manual edit');
+  const removed = eraseWithinRadius(world, placed, 200, 400, 10); // erase the 2nd visible peg
+  assert.equal(removed, 1);
+  // a genuine free slot now — the removed peg did NOT get replaced by a hidden one
+  assert.deepEqual(placed.pegs, [{ x: 100, y: 300 }]);
+});
 
 test('tryPlace: places a peg at a valid spot and grows state.placed.pegs', () => {
   const world = makeWorld({ pegs: 5, blocks: 5 });
