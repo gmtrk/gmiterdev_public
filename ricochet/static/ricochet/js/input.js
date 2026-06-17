@@ -47,7 +47,8 @@ export function canPlacePeg(world, placed, x, y) {
   for (const box of placedBoxes(world, placed)) {
     if (overlaps(candidate, box)) return false;
   }
-  const minSq = MIN_PEG_SPACING * MIN_PEG_SPACING;
+  const spacing = world.minPegSpacing != null ? world.minPegSpacing : MIN_PEG_SPACING;
+  const minSq = spacing * spacing;
   for (const p of placed.pegs) {
     const dx = x - p.x;
     const dy = y - p.y;

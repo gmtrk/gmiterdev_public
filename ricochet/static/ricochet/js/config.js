@@ -19,7 +19,7 @@ export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
 // Minimum center-to-center spacing between hand-placed pegs, so a ball (dia 12)
 // can always pass between two pegs (2*PEG_RADIUS+12 = 26 < this). Presets (pitch 70)
 // are unaffected. Live in the Place-tab overlay as exclusion rings.
-export const MIN_PEG_SPACING = 34;
+export const MIN_PEG_SPACING = 44;
 // Radius (virtual px) of the Remove-tool eraser: click/drag erases every peg and
 // block whose center is within this distance of the cursor.
 export const ERASER_RADIUS = 50;

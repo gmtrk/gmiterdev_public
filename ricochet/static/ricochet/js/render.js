@@ -316,7 +316,7 @@ export function draw(ctx, world, atlas, view) {
     ctx.strokeStyle = 'rgba(255,61,240,0.25)'; // faint peg-hue exclusion rings
     for (let i = 0; i < pegs.count; i++) {
       ctx.beginPath();
-      ctx.arc(pegs.xs[i], pegs.ys[i], MIN_PEG_SPACING, 0, Math.PI * 2);
+      ctx.arc(pegs.xs[i], pegs.ys[i], (world.minPegSpacing != null ? world.minPegSpacing : MIN_PEG_SPACING), 0, Math.PI * 2);
       ctx.stroke();
     }
     if (Number.isFinite(place.x) && Number.isFinite(place.y)) {

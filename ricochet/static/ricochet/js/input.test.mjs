@@ -177,17 +177,22 @@ test('applyBlueprint: produces canonical block shapes (fresh copies)', () => {
 test('canPlacePeg / tryPlace: refuses a peg within MIN_PEG_SPACING of another', () => {
   const world = makeWorld({ pegs: 10, blocks: 0 });
   const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
-  assert.equal(canPlacePeg(world, placed, 200, 430), false); // dist 30 < 34
+  assert.equal(canPlacePeg(world, placed, 200, 430), false); // dist 30 < 44
   assert.equal(tryPlace(world, placed, 'peg', 200, 430), false);
   assert.equal(placed.pegs.length, 1);
 });
-
 test('canPlacePeg / tryPlace: allows a peg at or beyond MIN_PEG_SPACING', () => {
   const world = makeWorld({ pegs: 10, blocks: 0 });
   const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
-  assert.equal(canPlacePeg(world, placed, 200, 440), true); // dist 40 >= 34
-  assert.equal(tryPlace(world, placed, 'peg', 200, 440), true);
+  assert.equal(canPlacePeg(world, placed, 200, 450), true); // dist 50 >= 44
+  assert.equal(tryPlace(world, placed, 'peg', 200, 450), true);
   assert.equal(placed.pegs.length, 2);
+});
+test('canPlacePeg: honors a live world.minPegSpacing override', () => {
+  const world = makeWorld({ pegs: 10, blocks: 0 });
+  world.minPegSpacing = 100;
+  const placed = { pegs: [{ x: 200, y: 400 }], blocks: [], paddle: { x: 500, width: 120 } };
+  assert.equal(canPlacePeg(world, placed, 200, 480), false); // dist 80 < 100
 });
 
 test('clear-then-applyPreset regenerates the FULL formation at the new budget', () => {
