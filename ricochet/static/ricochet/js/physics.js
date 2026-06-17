@@ -213,8 +213,11 @@ export function buildWorld(state) {
     blockW: BLOCK_W,
     blockH: BLOCK_H,
   };
-  rebuildColliders(world);
+  // Derive budgets/levers FIRST: rebuildColliders now clamps the live colliders to
+  // world.budgets, so applyUpgradeEffects must run before it (the seed budgets above
+  // are 0, which would otherwise clamp the whole starter field away on first build).
   applyUpgradeEffects(world, state);
+  rebuildColliders(world);
   rebuildRamps(world); // applyUpgradeEffects set world.rampsLevel; build the segments
   return world;
 }
@@ -222,10 +225,17 @@ export function buildWorld(state) {
 export function rebuildColliders(world) {
   const placedPegs = world.state.placed.pegs;
   const placedBlocks = world.state.placed.blocks;
-  const np = placedPegs.length;
-  if (world.pegs.xs.length < np) {
-    world.pegs.xs = new Float32Array(np);
-    world.pegs.ys = new Float32Array(np);
+  // Live colliders never exceed the current budgets. The persisted blueprint
+  // (state.placed) may hold MORE than the budget after a Big Bang — it is kept
+  // full so growing the budget refills the saved layout — so clamp the live view
+  // on EVERY rebuild (not only in reinitFreshRun). Without this, the next rebuild
+  // (e.g. buying any upgrade) would resurrect the entire pre-prestige field.
+  const budgets = world.budgets || {};
+  const npCap = placedPegs.length; // allocate to the full blueprint so a later budget bump needs no realloc
+  const np = budgets.pegs != null ? Math.min(npCap, budgets.pegs) : npCap;
+  if (world.pegs.xs.length < npCap) {
+    world.pegs.xs = new Float32Array(npCap);
+    world.pegs.ys = new Float32Array(npCap);
   }
   for (let i = 0; i < np; i++) {
     world.pegs.xs[i] = placedPegs[i].x;
@@ -234,13 +244,14 @@ export function rebuildColliders(world) {
   world.pegs.count = np;
   world.pegs.r = world.pegRadius;
 
-  const nb = placedBlocks.length;
-  if (world.blocks.xs.length < nb) {
-    world.blocks.xs = new Float32Array(nb);
-    world.blocks.ys = new Float32Array(nb);
-    world.blocks.level = new Int16Array(nb);
-    world.blocks.respawnAt = new Float64Array(nb);
-    world.blocks.golden = new Uint8Array(nb);
+  const nbCap = placedBlocks.length;
+  const nb = budgets.blocks != null ? Math.min(nbCap, budgets.blocks) : nbCap;
+  if (world.blocks.xs.length < nbCap) {
+    world.blocks.xs = new Float32Array(nbCap);
+    world.blocks.ys = new Float32Array(nbCap);
+    world.blocks.level = new Int16Array(nbCap);
+    world.blocks.respawnAt = new Float64Array(nbCap);
+    world.blocks.golden = new Uint8Array(nbCap);
   }
   for (let i = 0; i < nb; i++) {
     const b = placedBlocks[i];

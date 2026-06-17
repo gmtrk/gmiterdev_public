@@ -6,7 +6,7 @@ import { projectPrestige, performBigBang } from './prestige.js';
 import { reinitFreshRun } from './prestige.js';
 import { STARTING_CREDITS } from './config.js';
 import { applyUpgradeEffects } from './economy.js';
-import { buildWorld } from './physics.js';
+import { buildWorld, rebuildColliders } from './physics.js';
 
 // Build a real world from a state so the clamp reads the actual post-reset budgets.
 function worldFor(state) {
@@ -122,4 +122,20 @@ test('reinitFreshRun keeps the saved blueprint intact (clamp is on the live worl
   reinitFreshRun(world, state);
   // The persisted blueprint still has both pegs even though only 1 is live.
   assert.equal(state.placed.pegs.length, 2);
+});
+
+test('after reinitFreshRun, a later rebuildColliders (e.g. buying an upgrade) does NOT resurrect the blueprint', () => {
+  // Regression: post-Big-Bang the field looked reset, but buying any upgrade
+  // re-ran rebuildColliders against the full (untrimmed) state.placed and
+  // re-showed every old obstacle. The clamp must hold on every rebuild.
+  const state = { ...sampleState(), credits: 0, upgrades: {}, coresShop: {} };
+  const world = worldFor(state);
+  world.budgets.pegs = 1;
+  world.budgets.blocks = 0;
+  reinitFreshRun(world, state);
+  assert.equal(world.pegs.count, 1, 'reset field is clamped to the post-Big-Bang budget');
+  rebuildColliders(world); // simulate the rebuild a shop purchase triggers
+  assert.equal(world.pegs.count, 1, 'still clamped — no obstacle resurrection');
+  assert.equal(world.blocks.count, 0);
+  assert.equal(state.placed.pegs.length, 2, 'blueprint stays full for regrow');
 });

@@ -249,7 +249,11 @@ function makeState() {
     version: 1,
     credits: 50,
     cores: 0, lifetimeCores: 0,
-    upgrades: {},
+    // Ample placement budget so collision tests aren't constrained by economy:
+    // rebuildColliders clamps live colliders to world.budgets, so fixtures that
+    // place pegs/blocks need budget headroom (the clamp itself is covered by its
+    // own test, which sets world.budgets explicitly).
+    upgrades: { pegBudget: 200, blockBudget: 200 },
     specials: { clacker: { unlocked: false, capacity: 0 }, splitter: { unlocked: false, capacity: 0 }, burster: { unlocked: false, capacity: 0 } },
     coresShop: {},
     placed: {
@@ -293,6 +297,7 @@ test('buildWorld returns the canonical world shape with both pools and zeroed co
 test('rebuildColliders rewrites pegs/blocks SoA from state.placed and rebuilds the grid', () => {
   const state = makeState();
   const world = buildWorld(state);
+  world.budgets = { pegs: 10, blocks: 10 }; // ample budget: the clamp (own test below) must not trim this rewrite
   // mutate the blueprint then re-sync
   state.placed.pegs = [{ x: 10, y: 20 }, { x: 30, y: 40 }, { x: 50, y: 60 }];
   state.placed.blocks = [
@@ -309,6 +314,26 @@ test('rebuildColliders rewrites pegs/blocks SoA from state.placed and rebuilds t
   assert.equal(world.blocks.level[0], 5);
   assert.equal(world.blocks.golden[0], 1);
   assert.equal(world.blocks.golden[1], 0);
+});
+
+test('rebuildColliders clamps live colliders to world.budgets (persisted blueprint kept full)', () => {
+  // Post-Big-Bang shape: state.placed holds the FULL pre-prestige layout but the
+  // budgets shrank. Every rebuild must show only budget-many obstacles, never the
+  // whole saved blueprint (regression: buying any upgrade resurrected the field).
+  const state = makeState();
+  const world = buildWorld(state);
+  state.placed.pegs = [{ x: 100, y: 300 }, { x: 200, y: 400 }, { x: 300, y: 500 }, { x: 400, y: 600 }];
+  state.placed.blocks = [{ x: 400, y: 820, level: 9, respawnAt: 0, golden: false }];
+  world.budgets = { pegs: 2, blocks: 0 };
+  rebuildColliders(world);
+  assert.equal(world.pegs.count, 2, 'live pegs clamped to the peg budget');
+  assert.equal(world.blocks.count, 0, 'live blocks clamped to the block budget');
+  // the persisted blueprint is NOT trimmed (it refills when the budget grows)
+  assert.equal(state.placed.pegs.length, 4);
+  assert.equal(state.placed.blocks.length, 1);
+  // a SECOND rebuild (e.g. triggered by buying an upgrade) stays clamped
+  rebuildColliders(world);
+  assert.equal(world.pegs.count, 2);
 });
 
 test('spawnNormal inserts into world.normal while count < ceiling and sets fields', () => {
