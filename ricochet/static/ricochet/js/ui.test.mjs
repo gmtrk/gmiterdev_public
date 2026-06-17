@@ -211,6 +211,13 @@ test('effectLabel: unlock rows have no effect label', () => {
   assert.equal(effectLabel({ unlock: 'clacker', effectKind: 'add', effectStep: 0 }, 0), '');
 });
 
+test('effectLabel renders the respawn interval for interval upgrades', () => {
+  const def = { effectKind: 'interval', intervalBase: 1.0, effectStep: 0.1 };
+  assert.equal(effectLabel(def, 0), '1.0s');
+  assert.equal(effectLabel(def, 5), '0.5s');
+  assert.equal(effectLabel(def, 10), '0.0s');
+});
+
 function shopState() {
   return { credits: 1e9, upgrades: { globalValueMult: 4 },
     specials: { clacker: { unlocked: true }, splitter: { unlocked: false }, burster: { unlocked: false } } };

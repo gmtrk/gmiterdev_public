@@ -112,7 +112,7 @@ test('UPGRADES is a non-empty array of well-formed, unique-id defs', () => {
     assert.equal(typeof u.group, 'string');
     assert.equal(typeof u.baseCost, 'number');
     assert.equal(typeof u.costGrowth, 'number');
-    assert.ok(u.effectKind === 'add' || u.effectKind === 'mul', `bad effectKind on ${u.id}`);
+    assert.ok(u.effectKind === 'add' || u.effectKind === 'mul' || u.effectKind === 'interval', `bad effectKind on ${u.id}`);
     assert.equal(typeof u.effectStep, 'number');
     assert.ok(!ids.has(u.id), `duplicate UPGRADES id ${u.id}`);
     ids.add(u.id);
@@ -162,4 +162,14 @@ test('CORES_UPGRADES includes a permanent global mult + head-start + offline def
   assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'globalValueMult' && u.group === 'power'), 'missing permanent global mult');
   assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'startCreditsMult'), 'missing startCreditsMult');
   assert.ok(C.CORES_UPGRADES.find((u) => u.id === 'offlineEfficiencyAdd'), 'missing offlineEfficiencyAdd');
+});
+
+test('spawn-interval scalars + spawnRate def match the contract', () => {
+  assert.equal(C.SPAWN_INTERVAL_BASE, 1.0);
+  assert.equal(C.SPAWN_RATE_MAX, 1000);
+  const sr = C.UPGRADES.find((u) => u.id === 'spawnRate');
+  assert.equal(sr.effectKind, 'interval');
+  assert.equal(sr.intervalBase, 1.0);
+  assert.equal(sr.effectStep, 0.1);
+  assert.equal(sr.max, 10);
 });

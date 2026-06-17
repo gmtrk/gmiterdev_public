@@ -5,7 +5,7 @@ import {
   applyUpgradeEffects, coresFromRun, canPrestige,
 } from './economy.js';
 import { buildWorld } from './physics.js';
-import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES, BASE_CAPACITY, GOLDEN, KICK, ARENA_W, PRESTIGE } from './config.js';
+import { EVENT_CAP, SURFACE_BASE, COMBO, UPGRADES, BASE_CAPACITY, GOLDEN, KICK, ARENA_W, PRESTIGE, SPAWN_RATE_MAX } from './config.js';
 
 test('computeEventMult is 1 + sum of bonuses when under the cap', () => {
   assert.equal(computeEventMult(2, 3, 1), 1 + 6);
@@ -105,6 +105,25 @@ test('marginal ROI of globalValueMult lever is monotonically decreasing', () => 
     assert.ok(roi < prevRoi, `ROI must strictly decrease at level ${level}: ${roi} !< ${prevRoi}`);
     prevRoi = roi;
   }
+});
+
+test('upgradeEffect interval returns the respawn interval, floored at 0', () => {
+  const def = { effectKind: 'interval', intervalBase: 1.0, effectStep: 0.1 };
+  assert.ok(Math.abs(upgradeEffect(def, 0) - 1.0) < 1e-9);
+  assert.ok(Math.abs(upgradeEffect(def, 5) - 0.5) < 1e-9);
+  assert.equal(upgradeEffect(def, 10), 0);
+  assert.equal(upgradeEffect(def, 20), 0); // never negative past max
+});
+
+test('applyUpgradeEffects maps spawnRate level to balls/sec via interval', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  state.upgrades.spawnRate = 0; applyUpgradeEffects(world, state);
+  assert.ok(Math.abs(world.spawnRate - 1) < 1e-9, '1.0s interval -> 1 ball/sec');
+  state.upgrades.spawnRate = 5; applyUpgradeEffects(world, state);
+  assert.ok(Math.abs(world.spawnRate - 2) < 1e-9, '0.5s interval -> 2 balls/sec');
+  state.upgrades.spawnRate = 10; applyUpgradeEffects(world, state);
+  assert.equal(world.spawnRate, SPAWN_RATE_MAX, 'interval 0 -> instant (sentinel)');
 });
 
 function freshState() {

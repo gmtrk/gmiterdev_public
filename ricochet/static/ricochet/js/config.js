@@ -6,6 +6,11 @@ export const ARENA_W = 1000, ARENA_H = 1500;
 export const SPAWN_MARGIN = 40, SPAWN_Y = 30, MAX_SPAWNS_PER_TICK = 8;
 // Starting balls/sec = a 0.3s respawn interval. The spawnRate upgrade raises it.
 export const SPAWN_RATE_BASE = 1 / 0.3;
+// Respawn-interval upgrade: base 1.0s at level 0, -0.1s/level, max level 10 -> 0s
+// (instant). SPAWN_RATE_MAX is the balls/sec sentinel used when the interval hits
+// 0 (large but finite so the spawn accumulator stays finite; spawnCount clamps it
+// to free slots / MAX_SPAWNS_PER_TICK each tick).
+export const SPAWN_INTERVAL_BASE = 1.0, SPAWN_RATE_MAX = 1000;
 // Aim-assist: a top-spawn x within (hitRadius, hitRadius + this] of a peg column
 // gets nudged onto the peg. 0 disables. Live-tunable (debug "Aim Assist").
 export const SPAWN_HELPER_DIST = 24;
@@ -69,7 +74,7 @@ export const UPGRADES = [
   { id: 'globalValueMult', label: 'Value Multiplier', group: 'global', baseCost: 50,  costGrowth: 1.18, effectKind: 'add', effectStep: 0.25, desc: 'Boosts all scoring.' },
   { id: 'comboDecay', label: 'Combo Hold', group: 'global', baseCost: 150, costGrowth: 1.3, effectKind: 'add', effectStep: 0.3, max: 8, desc: 'Combo fades slower.' },
   { id: 'ballCapacity',    label: 'Ball Capacity',    group: 'balls',  baseCost: 40,  costGrowth: 1.30, effectKind: 'add', effectStep: 1, desc: '+1 ball on the field.' },
-  { id: 'spawnRate',       label: 'Spawn Speed',      group: 'balls',  baseCost: 35,  costGrowth: 1.26, effectKind: 'add', effectStep: 1, desc: 'Balls respawn faster.' },
+  { id: 'spawnRate',       label: 'Spawn Speed',      group: 'balls',  baseCost: 35,  costGrowth: 1.26, effectKind: 'interval', intervalBase: SPAWN_INTERVAL_BASE, effectStep: 0.1, max: 10, desc: 'Balls respawn faster.' },
   { id: 'goldenChance',    label: 'Golden Chance',    group: 'global', baseCost: 300, costGrowth: 1.35, effectKind: 'add', effectStep: 0.0025, max: 40, desc: 'Higher chance of golden balls.' },
   { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 25,  costGrowth: 1.15, effectKind: 'add', effectStep: 1, desc: '+1 peg you can place.' },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1, desc: '+1 block you can place.' },

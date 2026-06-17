@@ -1,7 +1,7 @@
 import {
   EVENT_CAP, BASE_CAPACITY, GOLDEN, KICK, COMBO,
   UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE,
-  PRESTIGE, SPAWN_RATE_BASE, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
+  PRESTIGE, SPAWN_RATE_MAX, PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 
 export function computeEventMult(comboBonus, goldenBonus, breakBonus, cap = EVENT_CAP) {
@@ -39,6 +39,9 @@ export function upgradeCost(def, level) {
 export function upgradeEffect(def, level) {
   if (def.effectKind === 'mul') {
     return (1 + def.effectStep) ** level;
+  }
+  if (def.effectKind === 'interval') {
+    return Math.max(0, def.intervalBase - def.effectStep * level);
   }
   return def.effectStep * level;
 }
@@ -79,9 +82,11 @@ export function applyUpgradeEffects(world, state) {
     upgradeEffect(goldDef, _level(up, 'goldenChance')) +
     upgradeEffect(coresGoldDef, _level(cs, 'goldenChance'));
 
-  // spawn rate = SPAWN_RATE_BASE + credits add (balls/sec the main spawn tick reads)
+  // spawn rate = balls/sec the main spawn tick reads. The Spawn Speed upgrade is
+  // an interval lever: interval seconds -> balls/sec; interval 0 -> instant sentinel.
   const spawnDef = _def(UPGRADES, 'spawnRate');
-  world.spawnRate = SPAWN_RATE_BASE + upgradeEffect(spawnDef, _level(up, 'spawnRate'));
+  const spawnInterval = upgradeEffect(spawnDef, _level(up, 'spawnRate'));
+  world.spawnRate = spawnInterval > 0 ? 1 / spawnInterval : SPAWN_RATE_MAX;
 
   // placement budgets
   const pegBudgetDef = _def(UPGRADES, 'pegBudget');

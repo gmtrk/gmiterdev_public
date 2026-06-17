@@ -81,7 +81,7 @@ const run = {
   creditsPerSec: 0,
   now: 0,
   lastAutosave: 0,
-  spawnRate: 4, // balls/sec baseline; overridden by applyUpgradeEffects if it sets world.spawnRate
+  spawnRate: 1, // 1 ball/sec = the base 1.0s respawn interval; world.spawnRate overrides
 };
 if (typeof world.spawnRate === 'number') run.spawnRate = world.spawnRate;
 

@@ -12,6 +12,7 @@ export function effectLabel(def, level) {
   if (def.unlock) return '';
   const eff = upgradeEffect(def, level);
   if (def.effectKind === 'mul') return '×' + eff.toFixed(2);
+  if (def.effectKind === 'interval') return eff.toFixed(1) + 's';
   if (eff === 0) return '+0';
   if (Number.isInteger(eff)) return '+' + formatNumber(eff);
   return '+' + String(Number(eff.toFixed(4)));
