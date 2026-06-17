@@ -6,7 +6,7 @@ import {
   GOLDEN, CLACK_COOLDOWN, COMBO, BASE_CAPACITY, MAX_SPAWNS_PER_TICK, SPAWN_HELPER_DIST,
   SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
   RAMP_LEN, RAMP_THICKNESS, RAMP_ANGLE, RAMP_WALL_OFFSET, RAMP_FLOOR_MARGIN,
-  SPECIAL_RADIUS, BURSTER_RADIUS, SPECIAL_MAX_SPEED, MIN_PEG_SPACING,
+  SPECIAL_RADIUS, BURSTER_RADIUS, SPECIAL_MAX_SPEED, SPECIAL_E, MIN_PEG_SPACING,
   PEG_PITCH_X, PEG_PITCH_Y, PEG_FIELD_TOP,
 } from './config.js';
 import { Grid } from './grid.js';
@@ -188,6 +188,7 @@ export function buildWorld(state) {
     kick: KICK,
     maxSpeed: MAX_SPEED,
     specialMaxSpeed: SPECIAL_MAX_SPEED,
+    specialE: SPECIAL_E,
     // Blocks bounce higher than pegs (own restitution + kick); block hits
     // get a random directional jitter for chaos. rng is injectable for tests.
     blockE: E_BLOCK,
@@ -344,14 +345,14 @@ export function resolveCircleSegment(bx, by, vx, vy, br, x1, y1, x2, y2, segR, e
 
 // Single module-scope peg narrow-phase helper. Resolves the nearest peg this
 // ball overlaps (grid broad-phase); returns true on a hit. Authored once.
-function _resolvePegsNear(world, pool, i) {
+function _resolvePegsNear(world, pool, i, isSpecial) {
   let hit = false;
   world.grid.forEachNeighbor(pool.x[i], pool.y[i], (pi) => {
     const cx = world.pegs.xs[pi];
     const cy = world.pegs.ys[pi];
     const r = resolveCircleCircle(
       pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-      cx, cy, world.pegs.r, world.eCollider, world.kick, world.maxSpeed,
+      cx, cy, world.pegs.r, isSpecial ? world.specialE : world.eCollider, world.kick, world.maxSpeed,
     );
     if (r.hit) {
       pool.x[i] = r.x; pool.y[i] = r.y; pool.vx[i] = r.vx; pool.vy[i] = r.vy;
@@ -394,10 +395,11 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
 // current position. Called once per movement sub-step. Counter increments are
 // per contact, which is correct: two pegs hit across two sub-steps = two peg hits.
 function _resolveContacts(world, pool, i, now, isSpecial) {
+  const eWall = isSpecial ? world.specialE : world.eWall;
   // walls
   const w = reflectWalls(
     pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-    world.W, world.H, world.eWall, world.hasFloor,
+    world.W, world.H, eWall, world.hasFloor,
   );
   pool.x[i] = w.x; pool.y[i] = w.y; pool.vx[i] = w.vx; pool.vy[i] = w.vy;
   if (w.hitWall) {
@@ -407,7 +409,7 @@ function _resolveContacts(world, pool, i, now, isSpecial) {
   }
 
   // pegs (grid broad-phase + single helper)
-  if (_resolvePegsNear(world, pool, i)) {
+  if (_resolvePegsNear(world, pool, i, isSpecial)) {
     world.counters.peg++;
     if (isSpecial) pool.envHits[i]++;
     if (!isSpecial && (pool.flags[i] & FLAG_GOLDEN)) world.counters.goldenBonus += GOLDEN.bonus;
@@ -424,7 +426,7 @@ function _resolveContacts(world, pool, i, now, isSpecial) {
       const rr = resolveCircleSegment(
         pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
         rmp.x1s[j], rmp.y1s[j], rmp.x2s[j], rmp.y2s[j], rmp.r,
-        world.eWall, world.maxSpeed,
+        eWall, world.maxSpeed,
       );
       if (rr.hit) {
         pool.x[i] = rr.x; pool.y[i] = rr.y; pool.vx[i] = rr.vx; pool.vy[i] = rr.vy;
@@ -444,7 +446,7 @@ function _resolveBlocksFor(world, pool, i, now, isSpecial) {
     if (b.level[j] <= 0) continue; // inactive (awaiting respawn)
     const r = resolveCircleAABB(
       pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-      b.xs[j], b.ys[j], hw, hh, world.blockE, world.blockKick, world.maxSpeed,
+      b.xs[j], b.ys[j], hw, hh, isSpecial ? world.specialE : world.blockE, world.blockKick, world.maxSpeed,
     );
     if (!r.hit) continue;
     pool.x[i] = r.x; pool.y[i] = r.y; pool.vx[i] = r.vx; pool.vy[i] = r.vy;
@@ -524,7 +526,7 @@ function _specialClackPass(world, dt, now, emit, resolveClack) {
       // elastic separation: treat j as the collider for i
       const ri = resolveCircleCircle(
         sp.x[i], sp.y[i], sp.vx[i], sp.vy[i], sp.radius[i],
-        sp.x[j], sp.y[j], sp.radius[j], world.eCollider, 0, world.maxSpeed,
+        sp.x[j], sp.y[j], sp.radius[j], world.specialE, 0, world.maxSpeed,
       );
       sp.x[i] = ri.x; sp.y[i] = ri.y; sp.vx[i] = ri.vx; sp.vy[i] = ri.vy;
       // debounced clack: only when both cooldowns are clear

@@ -173,3 +173,10 @@ test('spawn-interval scalars + spawnRate def match the contract', () => {
   assert.equal(sr.effectStep, 0.1);
   assert.equal(sr.max, 10);
 });
+
+test('special-ball scalars match the contract', () => {
+  assert.equal(C.SPECIAL_RADIUS, 11);
+  assert.equal(C.BURSTER_RADIUS, 14);
+  assert.equal(C.SPECIAL_MAX_SPEED, 850);
+  assert.equal(C.SPECIAL_E, 1.0);
+});

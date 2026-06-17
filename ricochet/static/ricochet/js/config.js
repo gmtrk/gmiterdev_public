@@ -54,7 +54,10 @@ export const CLACK_COOLDOWN = 0.2;
 export const BURSTER = { chargePerBounce: 1, chargePerClack: 5, threshold: 20, ballsPerBurst: 6 };
 // Special balls are bigger (more visible + clack/collide more) and capped slower
 // (so they linger and reach their powers instead of draining straight through).
-export const SPECIAL_RADIUS = 11, BURSTER_RADIUS = 14, SPECIAL_MAX_SPEED = 600;
+export const SPECIAL_RADIUS = 11, BURSTER_RADIUS = 14, SPECIAL_MAX_SPEED = 850;
+// Specials are perfectly elastic (vs normals' 0.9-0.95): they keep ricocheting
+// instead of draining, so splitters/bursters reach their powers. Live-tunable.
+export const SPECIAL_E = 1.0;
 export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLifeSec: 300 };
 // Half-life (s) for the smoothed PER-SEC HUD counter (symmetric EMA of credits/sec).
 export const DISPLAY_CPS_HALFLIFE = 1.0;

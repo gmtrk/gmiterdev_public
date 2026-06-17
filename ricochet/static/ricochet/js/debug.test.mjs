@@ -86,6 +86,8 @@ test('SLIDER_KEYS includes the new keys and no longer includes paddleE', () => {
   assert.ok(SLIDER_KEYS.includes('pegValue'));
   assert.ok(SLIDER_KEYS.includes('rampAngle'));
   assert.ok(!SLIDER_KEYS.includes('paddleE'));
+  assert.ok(SLIDER_KEYS.includes('specialE'));
+  assert.ok(SLIDER_KEYS.includes('specialMaxSpeed'));
 });
 
 test('pegValue apply writes the nested world.surfaceBase.peg; rampAngle apply rebuilds', () => {

@@ -793,3 +793,27 @@ test('buildWorld seeds world.specialMaxSpeed below the normal cap', () => {
   const world = buildWorld(makeState());
   assert.ok(world.specialMaxSpeed > 0 && world.specialMaxSpeed < world.maxSpeed);
 });
+
+test('specials reflect elastically off a wall (retain speed); normals lose energy', () => {
+  const state = makeState();
+  state.placed.pegs = [];     // clear the field so only the right wall is hit
+  state.placed.blocks = [];
+  const world = buildWorld(state);
+  const r = SPECIAL_RADIUS;
+  // a special heading straight into the right wall, purely horizontal
+  spawnSpecial(world, TYPE_CLACKER, world.W - r - 2, 750);
+  world.special.x[0] = world.W - r - 2; world.special.y[0] = 750;
+  world.special.vx[0] = 400; world.special.vy[0] = 0;
+  // a normal at the same spot
+  spawnNormal(world, world.W - BALL_RADIUS - 2, 760, 0);
+  const ni = world.normal.count - 1;
+  world.normal.x[ni] = world.W - BALL_RADIUS - 2; world.normal.y[ni] = 760;
+  world.normal.vx[ni] = 400; world.normal.vy[ni] = 0;
+
+  stepPhysics(world, 1 / 60, 0);
+
+  assert.ok(Math.abs(world.special.vx[0]) > 396,
+    `special should retain ~|vx| (e=1.0), got ${world.special.vx[0]}`);
+  assert.ok(Math.abs(world.normal.vx[ni]) < 380,
+    `normal should lose energy (e=0.92), got ${world.normal.vx[ni]}`);
+});
