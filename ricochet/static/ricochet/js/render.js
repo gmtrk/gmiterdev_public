@@ -244,6 +244,21 @@ export function draw(ctx, world, atlas, view) {
     ctx.fillRect(blocks.xs[i] - hw, blocks.ys[i] - hh, world.blockW, world.blockH);
   }
 
+  // ramps — thick neon capsule strokes (bouncy angled walls)
+  const rmp = world.ramps;
+  if (rmp && rmp.count > 0) {
+    ctx.strokeStyle = P.ballCyan;
+    ctx.lineWidth = rmp.r * 2;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < rmp.count; i++) {
+      ctx.beginPath();
+      ctx.moveTo(rmp.x1s[i], rmp.y1s[i]);
+      ctx.lineTo(rmp.x2s[i], rmp.y2s[i]);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+
   // normal balls — golden flag selects the golden sprite
   const n = world.normal;
   for (let i = 0; i < n.count; i++) {
