@@ -778,3 +778,18 @@ test('RAMP DRAIN: a ball dropped onto a ramp pair drains within a bounded number
   assert.ok(steps < LIMIT, 'ramp bounce trap: ball never drained');
   assert.ok(rampContacts > 0, 'ball never bounced off a ramp before draining (test would be vacuous)');
 });
+
+import { SPECIAL_RADIUS, BURSTER_RADIUS } from './config.js';
+
+test('spawnSpecial: burster gets BURSTER_RADIUS, other specials SPECIAL_RADIUS', () => {
+  const world = buildWorld(makeState());
+  spawnSpecial(world, TYPE_BURSTER, 100, 30);
+  spawnSpecial(world, TYPE_CLACKER, 200, 30);
+  assert.equal(world.special.radius[0], BURSTER_RADIUS);
+  assert.equal(world.special.radius[1], SPECIAL_RADIUS);
+});
+
+test('buildWorld seeds world.specialMaxSpeed below the normal cap', () => {
+  const world = buildWorld(makeState());
+  assert.ok(world.specialMaxSpeed > 0 && world.specialMaxSpeed < world.maxSpeed);
+});

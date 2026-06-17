@@ -8,7 +8,7 @@ import {
 import {
   DT, COMBO, ARENA_W, ARENA_H, CEILING_DESKTOP, BALL_RADIUS, PEG_RADIUS, FRAME_BUDGET_MS,
   SPECIAL_CAP, SPAWN_MARGIN, SPAWN_Y, BURSTER as BURSTER_CFG, OFFLINE, PRESTIGE, DISPLAY_CPS_HALFLIFE,
-  RAMP_ANGLE,
+  RAMP_ANGLE, SPECIAL_RADIUS, BURSTER_RADIUS,
 } from './config.js';
 import { buildAtlas, draw, createFloatingTextPool, createParticleRing } from './render.js';
 import { createLoop, adaptCeiling } from './gameloop.js';
@@ -105,7 +105,7 @@ fitCanvas();
 // (e.g. dragging the window between displays) the atlas must be rebuilt or
 // sprites blur/alias. Debounced (~150ms) so a burst of resize events triggers a
 // single refit + at most one atlas rebuild.
-let atlas = buildAtlas(ATLAS_PALETTE, [BALL_RADIUS, PEG_RADIUS], dpr);
+let atlas = buildAtlas(ATLAS_PALETTE, [BALL_RADIUS, PEG_RADIUS, SPECIAL_RADIUS, BURSTER_RADIUS], dpr);
 let _resizeTimer = 0;
 window.addEventListener('resize', () => {
   if (_resizeTimer) clearTimeout(_resizeTimer);
@@ -114,7 +114,7 @@ window.addEventListener('resize', () => {
     const ndpr = currentDpr();
     if (ndpr !== dpr) {
       dpr = ndpr;
-      atlas = buildAtlas(ATLAS_PALETTE, [BALL_RADIUS, PEG_RADIUS], dpr);
+      atlas = buildAtlas(ATLAS_PALETTE, [BALL_RADIUS, PEG_RADIUS, SPECIAL_RADIUS, BURSTER_RADIUS], dpr);
     }
     fitCanvas();
   }, 150);

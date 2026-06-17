@@ -6,6 +6,7 @@ import {
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK, SPAWN_HELPER_DIST,
   SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
   RAMP_LEN, RAMP_THICKNESS, RAMP_ANGLE, RAMP_WALL_OFFSET, RAMP_FLOOR_MARGIN,
+  SPECIAL_RADIUS, BURSTER_RADIUS, SPECIAL_MAX_SPEED,
 } from './config.js';
 import { Grid } from './grid.js';
 import { applyUpgradeEffects } from './economy.js';
@@ -182,6 +183,7 @@ export function buildWorld(state) {
     eCollider: E_COLLIDER,
     kick: KICK,
     maxSpeed: MAX_SPEED,
+    specialMaxSpeed: SPECIAL_MAX_SPEED,
     // Blocks bounce higher than pegs (own restitution + kick); block hits
     // get a random directional jitter for chaos. rng is injectable for tests.
     blockE: E_BLOCK,
@@ -263,7 +265,7 @@ export function spawnSpecial(world, type, x, y) {
   if (p.count >= SPECIAL_CAP) return -1;
   const i = p.count++;
   p.x[i] = x; p.y[i] = y; p.vx[i] = 0; p.vy[i] = 0;
-  p.radius[i] = BALL_RADIUS; p.type[i] = type; p.flags[i] = 0;
+  p.radius[i] = type === TYPE_BURSTER ? BURSTER_RADIUS : SPECIAL_RADIUS; p.type[i] = type; p.flags[i] = 0;
   p.charge[i] = 0; p.clackCooldown[i] = 0; p.envHits[i] = 0;
   return i;
 }
@@ -366,7 +368,8 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   pool.vy[i] *= drag;
   // Clamp the speed feeding the move to MAX_SPEED. The contact resolvers also
   // clamp, so velocity stays <= maxSpeed across every sub-step below.
-  const cl = clampSpeed(pool.vx[i], pool.vy[i], world.maxSpeed);
+  const cap = isSpecial ? (world.specialMaxSpeed != null ? world.specialMaxSpeed : world.maxSpeed) : world.maxSpeed;
+  const cl = clampSpeed(pool.vx[i], pool.vy[i], cap);
   pool.vx[i] = cl.vx; pool.vy[i] = cl.vy;
 
   // Advance + collide in N sub-steps so a fast ball can't skip an obstacle. A
