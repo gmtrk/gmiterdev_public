@@ -424,6 +424,38 @@ test('FINITE LIFETIME: a ball launched at MAX_SPEED through an empty no-floor ar
   assert.ok(steps < LIMIT, 'lifetime exceeded the bound (energy not bounded by drag)');
 });
 
+test('NO TUNNELING: free-flight speed stays clamped to MAX_SPEED under extreme gravity/light drag', () => {
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  world.gravity = 6000;  // far above the default
+  world.drag = 0.999;    // terminal would be enormous without the per-step clamp
+  spawnNormal(world, 500, 50, 0);
+  for (let k = 0; k < 200 && world.normal.count > 0; k++) {
+    stepPhysics(world, DT, k * DT);
+    if (world.normal.count === 0) break;
+    const sp = Math.hypot(world.normal.vx[0], world.normal.vy[0]);
+    assert.ok(sp <= MAX_SPEED + 1e-3, `free-flight speed ${sp} exceeded MAX_SPEED ${MAX_SPEED}`);
+  }
+});
+
+test('NO TUNNELING: a fast ball collides with a block instead of passing through it', () => {
+  const s = makeState();
+  s.placed.pegs = [];
+  s.placed.blocks = [{ x: 500, y: 800, level: 9, respawnAt: 0, golden: false }];
+  const world = buildWorld(s);
+  world.hasFloor = false;
+  world.gravity = 6000;        // would tunnel a ball straight through without the clamp
+  world.drag = 0.999;
+  world.bounceJitterChance = 0; // deterministic
+  spawnNormal(world, 500, 50, 0); // directly above the block, falls straight down
+  let hit = false;
+  for (let k = 0; k < 800 && world.normal.count > 0; k++) {
+    stepPhysics(world, DT, k * DT);
+    if (world.counters.block > 0) { hit = true; break; }
+  }
+  assert.ok(hit, 'fast ball tunneled through the block instead of colliding');
+});
+
 test('PADDLE DRAIN: a ball dropped straight onto the paddle drains (no infinite bounce)', () => {
   // Regression for the paddle "infinite bounce" trap: a positive paddle kick once
   // replenished the energy restitution+drag removed, so a ball oscillated forever.

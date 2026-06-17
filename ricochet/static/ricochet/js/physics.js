@@ -304,6 +304,14 @@ function _integrateAndCollide(world, pool, i, dt, now, isSpecial) {
   pool.vy[i] += gravity * dt;
   pool.vx[i] *= drag;
   pool.vy[i] *= drag;
+  // Clamp free-flight speed to MAX_SPEED BEFORE advancing. The collision
+  // resolvers clamp on contact, but a fast free fall is never clamped otherwise,
+  // and the tunneling invariant (MAX_SPEED*DT < PEG_RADIUS) only holds if EVERY
+  // step's displacement is bounded. Without this, high gravity / light drag push
+  // terminal velocity far past the cap and balls tunnel straight through pegs,
+  // blocks, and the paddle (or bounce off the far face after over-shooting).
+  const cl = clampSpeed(pool.vx[i], pool.vy[i], world.maxSpeed);
+  pool.vx[i] = cl.vx; pool.vy[i] = cl.vy;
   pool.x[i] += pool.vx[i] * dt;
   pool.y[i] += pool.vy[i] * dt;
 
