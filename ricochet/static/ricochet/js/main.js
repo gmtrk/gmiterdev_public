@@ -126,6 +126,7 @@ const view = {
   PALETTE: { bg: '#0a0a16', ballCyan: '#22e0ff', ballYellow: '#fff14a', peg: '#ff3df0', clacker: '#22e0ff', splitter: '#ff3df0', burster: '#ffb347' },
   floatingText,
   particles,
+  place: { active: false },
 };
 
 // --- UI bootstrap --------------------------------------------------------
@@ -388,6 +389,7 @@ const tabs = setupTabs({
     else if (name === 'place') refreshRampControl();
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
+    if (name !== 'place' && view.place) view.place.active = false;
   },
 });
 // Reflect the initially-active tab on the canvas cursor (onSelect only fires on
@@ -406,6 +408,7 @@ setupPlacement({
   presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
   onChange: refreshShop,
   isActive: isPlaceActive,
+  view,
 });
 setupQualityToggle(window.__ricochetSetLowQuality, runtime.lowQuality);
 

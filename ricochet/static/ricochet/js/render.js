@@ -1,4 +1,4 @@
-import { PALETTE, BALL_RADIUS, PEG_RADIUS, BURSTER as BURSTER_CFG } from './config.js';
+import { PALETTE, BALL_RADIUS, PEG_RADIUS, BURSTER as BURSTER_CFG, MIN_PEG_SPACING, ERASER_RADIUS } from './config.js';
 import { CLACKER, SPLITTER, BURSTER, NORMAL } from './physics.js';
 
 const FT_LIFE = 0.9;          // floating-text lifetime (seconds)
@@ -306,5 +306,33 @@ export function draw(ctx, world, atlas, view) {
       ctx.fillText(ft.text, ft.x, ft.y);
     });
     ctx.globalAlpha = 1;
+  }
+
+  // placement overlay (Place tab only): peg exclusion rings + cursor preview
+  const place = view.place;
+  if (place && place.active) {
+    const pegs = world.pegs;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,61,240,0.25)'; // faint peg-hue exclusion rings
+    for (let i = 0; i < pegs.count; i++) {
+      ctx.beginPath();
+      ctx.arc(pegs.xs[i], pegs.ys[i], MIN_PEG_SPACING, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (Number.isFinite(place.x) && Number.isFinite(place.y)) {
+      if (place.tool === 'remove') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(place.x, place.y, ERASER_RADIUS, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = place.canPlace ? 'rgba(80,230,120,0.9)' : 'rgba(236,106,94,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(place.x, place.y, PEG_RADIUS + 2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
   }
 }

@@ -157,11 +157,21 @@ function eventToVirtual(canvas, world, ev) {
 // Defaults to always-active for headless/test callers. Sets touch-action:none on
 // the canvas (kills scroll-vs-drag).
 export function setupPlacement(deps) {
-  const { canvas, world, state, toolButtons, presetButtons, onChange, isActive } = deps;
+  const { canvas, world, state, toolButtons, presetButtons, onChange, isActive, view } = deps;
   const placeActive = typeof isActive === 'function' ? isActive : () => true;
   canvas.style.touchAction = 'none';
   let tool = 'peg'; // 'peg' | 'block' | 'remove'
   let painting = false;
+
+  function updateOverlay(x, y) {
+    if (!view) return;
+    const canPlace = tool === 'peg'
+      ? (canPlacePeg(world, state.placed, x, y) && state.placed.pegs.length < world.budgets.pegs)
+      : tool === 'block'
+        ? (state.placed.blocks.length < world.budgets.blocks)
+        : false;
+    view.place = { active: placeActive(), tool, x, y, canPlace };
+  }
 
   for (const btn of toolButtons) {
     btn.addEventListener('click', () => {
@@ -187,11 +197,13 @@ export function setupPlacement(deps) {
     painting = true;
     canvas.setPointerCapture(ev.pointerId);
     const { x, y } = eventToVirtual(canvas, world, ev);
+    updateOverlay(x, y);
     actAt(x, y);
   });
   canvas.addEventListener('pointermove', (ev) => {
-    if (!painting) return;
     const { x, y } = eventToVirtual(canvas, world, ev);
+    if (placeActive()) updateOverlay(x, y);
+    if (!painting) return;
     actAt(x, y);
   });
   const stop = (ev) => {
@@ -202,6 +214,7 @@ export function setupPlacement(deps) {
   };
   canvas.addEventListener('pointerup', stop);
   canvas.addEventListener('pointercancel', stop);
+  canvas.addEventListener('pointerleave', () => { if (view && view.place) view.place.active = false; });
 
   for (const btn of presetButtons) {
     btn.addEventListener('click', () => {
