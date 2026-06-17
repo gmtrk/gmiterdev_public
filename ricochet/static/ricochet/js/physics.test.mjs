@@ -719,3 +719,40 @@ test('rebuildColliders also rebuilds ramps from the current level', () => {
   rebuildColliders(world);
   assert.equal(world.ramps.count, 2);
 });
+
+test('a ball falling onto a ramp segment bounces (counts as a wall hit) and does not pass through', () => {
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  // one horizontal ramp segment under the ball
+  world.ramps.x1s = new Float32Array([400]); world.ramps.y1s = new Float32Array([900]);
+  world.ramps.x2s = new Float32Array([600]); world.ramps.y2s = new Float32Array([900]);
+  world.ramps.count = 1; world.ramps.r = 4;
+  spawnNormal(world, 500, 880, 0);
+  world.normal.vy[0] = 50;
+  let hit = false;
+  for (let k = 0; k < 120 && world.normal.count > 0; k++) {
+    stepPhysics(world, DT, k * DT);
+    if (world.counters.wall > 0) { hit = true; break; }
+  }
+  assert.ok(hit, 'ball never registered a ramp (wall) contact');
+});
+
+test('RAMP DRAIN: a ball dropped onto a ramp pair drains within a bounded number of steps', () => {
+  // Regression: ramps use E_WALL (<1) and inject NO kick, so energy strictly
+  // decays and a ball cannot oscillate forever — it slides off into the open
+  // center/sides and leaks. (Replaces the old PADDLE DRAIN regression.)
+  const world = buildWorld(makeEmptyState());
+  world.hasFloor = false;
+  world.rampsLevel = 1;
+  rebuildRamps(world);
+  // drop onto the left ramp's center
+  spawnNormal(world, world.W * 0.27, world.H - 200, 0);
+  let steps = 0;
+  const LIMIT = 6000;
+  while (world.normal.count > 0 && steps < LIMIT) {
+    stepPhysics(world, DT, steps * DT);
+    steps++;
+  }
+  assert.equal(world.normal.count, 0, `ball never drained off the ramps in ${steps} steps`);
+  assert.ok(steps < LIMIT, 'ramp bounce trap: ball never drained');
+});

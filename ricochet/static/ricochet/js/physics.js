@@ -408,6 +408,25 @@ function _resolveContacts(world, pool, i, now, isSpecial) {
 
   // blocks (narrow-phase + block runtime)
   _resolveBlocksFor(world, pool, i, now, isSpecial);
+
+  // ramps — bouncy angled walls: restitution E_WALL, NO kick (so no farm),
+  // +1 point each (counts as a wall hit), fed into combo/golden like walls.
+  const rmp = world.ramps;
+  if (rmp && rmp.count > 0) {
+    for (let j = 0; j < rmp.count; j++) {
+      const rr = resolveCircleSegment(
+        pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
+        rmp.x1s[j], rmp.y1s[j], rmp.x2s[j], rmp.y2s[j], rmp.r,
+        world.eWall, world.maxSpeed,
+      );
+      if (rr.hit) {
+        pool.x[i] = rr.x; pool.y[i] = rr.y; pool.vx[i] = rr.vx; pool.vy[i] = rr.vy;
+        world.counters.wall++;
+        if (isSpecial) pool.envHits[i]++;
+        if (!isSpecial && (pool.flags[i] & FLAG_GOLDEN)) world.counters.goldenBonus += GOLDEN.bonus;
+      }
+    }
+  }
 }
 
 function _resolveBlocksFor(world, pool, i, now, isSpecial) {
