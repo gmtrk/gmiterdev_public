@@ -374,13 +374,23 @@ test('unlockSpecial throws on an unknown type', () => {
 });
 
 test('trySplitOnEnv: a splitter with env-hits emits 1-2 balls', () => {
+  // Test the SPLITTER_MAX branch (rng = 0.9)
   const emitted = [];
   const world = { special: { type: new Uint8Array([SPLITTER]), envHits: new Int32Array([3]),
     x: new Float32Array([100]), y: new Float32Array([200]), count: 1 } };
   const emit = { balls: (n) => emitted.push(n), credits() {} };
   assert.equal(trySplitOnEnv(world, 0, emit, () => 0.9), true);
   assert.equal(emitted.length, 1);
-  assert.ok(emitted[0] === SPLITTER_MIN || emitted[0] === SPLITTER_MAX);
+  assert.equal(emitted[0], SPLITTER_MAX);
+
+  // Test the SPLITTER_MIN branch (rng = 0.1)
+  const emitted2 = [];
+  const world2 = { special: { type: new Uint8Array([SPLITTER]), envHits: new Int32Array([3]),
+    x: new Float32Array([100]), y: new Float32Array([200]), count: 1 } };
+  const emit2 = { balls: (n) => emitted2.push(n), credits() {} };
+  assert.equal(trySplitOnEnv(world2, 0, emit2, () => 0.1), true);
+  assert.equal(emitted2.length, 1);
+  assert.equal(emitted2[0], SPLITTER_MIN);
 });
 
 test('trySplitOnEnv: no-op for non-splitters or zero env-hits', () => {

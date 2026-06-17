@@ -124,3 +124,9 @@ test('peg slider apply hooks write the world fields', () => {
   sliderRange('pegPitchY').apply(w, 100); assert.equal(w.pegSpread.pitchY, 100);
   sliderRange('pegFieldTop').apply(w, 700); assert.equal(w.pegSpread.fieldTop, 700);
 });
+
+test('peg slider apply hooks auto-vivify pegSpread on a bare object', () => {
+  const w = {};
+  sliderRange('pegPitchX').apply(w, 110);
+  assert.equal(w.pegSpread.pitchX, 110);
+});

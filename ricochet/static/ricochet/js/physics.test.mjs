@@ -670,7 +670,7 @@ test('resolveCircleSegment: clamps the outgoing speed to maxSpeed', () => {
 
 import { rampLayout } from './physics.js';
 
-test('rampLayout: level 0 -> no ramps; level 1 -> 2; level 2 -> 4', () => {
+test('rampLayout: level 0 -> 2 (free bottom pair); level >=1 -> 4 (+ mid pair)', () => {
   // level 0 now yields the (free) bottom pair; level >=1 adds the mid pair
   assert.equal(rampLayout(0, 30, 1000, 1500).length, 2);
   assert.equal(rampLayout(1, 30, 1000, 1500).length, 4);
