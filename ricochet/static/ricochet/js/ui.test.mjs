@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buyUpgrade, coresShopRows, statCardLines, buySpecialUnlock, specialUnlockDef, effectLabel } from './ui.js';
+import { buyUpgrade, coresShopRows, statCardLines, buySpecialUnlock, specialUnlockDef, effectLabel, creditsRowModel } from './ui.js';
 import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost } from './economy.js';
 import { unlockSpecial, specialSpawnPlan } from './specials.js';
@@ -209,4 +209,21 @@ test('effectLabel: fractional additive shows the real value (the +0 bug)', () =>
 
 test('effectLabel: unlock rows have no effect label', () => {
   assert.equal(effectLabel({ unlock: 'clacker', effectKind: 'add', effectStep: 0 }, 0), '');
+});
+
+function shopState() {
+  return { credits: 1e9, upgrades: { globalValueMult: 4 },
+    specials: { clacker: { unlocked: true }, splitter: { unlocked: false }, burster: { unlocked: false } } };
+}
+test('creditsRowModel: one row per UPGRADES entry with derived display fields', () => {
+  const rows = creditsRowModel(shopState());
+  assert.equal(rows.length, UPGRADES.length);
+  const vm = rows.find((r) => r.id === 'globalValueMult');
+  assert.equal(vm.label, 'Value Multiplier (Lv 4)');
+  assert.equal(vm.effectText, '+1'); // 0.25*4, via effectLabel
+  assert.equal(vm.afford, true);     // 1e9 credits
+  const clk = rows.find((r) => r.id === 'unlockClacker');
+  assert.equal(clk.isUnlock, true);
+  assert.equal(clk.effectText, 'OWNED'); // already unlocked in shopState
+  assert.equal(clk.maxed, true);
 });

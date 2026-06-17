@@ -153,6 +153,31 @@ export function showModal({ title, body, confirmLabel = 'OK', cancelLabel, onCon
   el.hidden = false;
 }
 
+// Pure per-row view-model for the Credits shop — one entry per UPGRADES def.
+// renderShop builds the row DOM once and updates it from this model, so the
+// 500ms affordability refresh never tears down the button under the cursor.
+export function creditsRowModel(state) {
+  return UPGRADES.map((def) => {
+    const level = state.upgrades[def.id] || 0;
+    const isUnlock = !!def.unlock;
+    const unlocked = isUnlock && state.specials && state.specials[def.unlock] && state.specials[def.unlock].unlocked;
+    const maxed = unlocked || (def.max != null && level >= def.max);
+    const cost = upgradeCost(def, level);
+    const afford = !maxed && state.credits >= cost;
+    return {
+      id: def.id,
+      group: def.group || '',
+      isUnlock,
+      label: isUnlock ? def.label : def.label + ' (Lv ' + level + ')',
+      effectText: isUnlock ? (unlocked ? 'OWNED' : 'NEW') : effectLabel(def, level),
+      costText: maxed ? (isUnlock ? 'OWNED' : 'MAX') : (afford ? 'BUY ' + formatNumber(cost) : formatNumber(cost)),
+      afford,
+      maxed,
+      desc: def.desc || '',
+    };
+  });
+}
+
 // --- Credits shop ---------------------------------------------------------
 // Render rows for the requested tab into `container`. `onBuy(id)` is the click
 // handler the caller wires (it calls buyUpgrade + refreshes). Affordable rows
@@ -186,50 +211,39 @@ export function renderShop(tab, { container, state, onBuy, rows }) {
     return;
   }
   if (tab !== 'credits') return;
-  container.replaceChildren();
-  for (const def of UPGRADES) {
-    const level = state.upgrades[def.id] || 0;
-    const isUnlock = !!def.unlock;
-    // An unlock row is "maxed" (= owned) once the special is unlocked.
-    const unlocked = isUnlock && state.specials && state.specials[def.unlock] && state.specials[def.unlock].unlocked;
-    const maxed = unlocked || (def.max != null && level >= def.max);
-    const cost = upgradeCost(def, level);
-    const afford = !maxed && state.credits >= cost;
-
-    const row = document.createElement('button');
-    row.type = 'button';
-    row.className = 'rc-row' + (afford ? ' rc-row--afford' : '');
-    row.disabled = maxed;
-    row.dataset.upgradeId = def.id;
-    if (def.group) row.dataset.group = def.group;
-
-    const label = document.createElement('span');
-    label.className = 'rc-row__label';
-    label.textContent = isUnlock ? def.label : def.label + ' (Lv ' + level + ')';
-
-    const effect = document.createElement('span');
-    effect.className = 'rc-row__effect';
-    if (isUnlock) {
-      effect.textContent = unlocked ? 'OWNED' : 'NEW';
-    } else {
-      const eff = upgradeEffect(def, level);
-      effect.textContent =
-        def.effectKind === 'mul'
-          ? '×' + eff.toFixed(2)
-          : '+' + formatNumber(eff);
+  const model = creditsRowModel(state);
+  if (!container._rcRows) {
+    // First render: build the row buttons once and cache them by id.
+    container.replaceChildren();
+    container._rcRows = {};
+    for (const r of model) {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.dataset.upgradeId = r.id;
+      if (r.group) row.dataset.group = r.group;
+      const label = document.createElement('span');
+      label.className = 'rc-row__label';
+      const effect = document.createElement('span');
+      effect.className = 'rc-row__effect';
+      const price = document.createElement('span');
+      price.className = 'rc-row__cost';
+      row.append(label, effect, price);
+      row.addEventListener('click', () => onBuy(r.id));
+      container.append(row);
+      container._rcRows[r.id] = { row, label, effect, price };
     }
-
-    const price = document.createElement('span');
-    price.className = 'rc-row__cost';
-    // Affordable rows read "BUY <cost>" so the cyan pill clearly invites a click.
-    price.textContent = maxed
-      ? (isUnlock ? 'OWNED' : 'MAX')
-      : (afford ? 'BUY ' + formatNumber(cost) : formatNumber(cost));
-
-    row.append(label, effect, price);
-    row.addEventListener('click', () => onBuy(def.id));
-    container.append(row);
   }
+  // Update every row's volatile state in place (no DOM teardown).
+  for (const r of model) {
+    const refs = container._rcRows[r.id];
+    if (!refs) continue;
+    refs.row.className = 'rc-row' + (r.afford ? ' rc-row--afford' : '');
+    refs.row.disabled = r.maxed;
+    refs.label.textContent = r.label;
+    refs.effect.textContent = r.effectText;
+    refs.price.textContent = r.costText;
+  }
+  return;
 }
 
 // --- Cores shop -----------------------------------------------------------
