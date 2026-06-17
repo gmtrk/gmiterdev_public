@@ -317,6 +317,8 @@ body.rc-body {
   white-space: nowrap;
 }
 
+.rc-row__desc { display: block; width: 100%; margin-top: 2px; font-size: 11px; color: #8aa; opacity: 0.85; }
+
 /* Unaffordable: dim the whole row so it reads as "not yet". */
 .rc-row:not(.rc-row--afford):not([disabled]) {
   opacity: 0.62;

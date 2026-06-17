@@ -204,7 +204,13 @@ export function renderShop(tab, { container, state, onBuy, rows }) {
       price.className = 'rc-row__cost';
       price.textContent = r.maxed ? 'MAX' : formatNumber(r.cost) + ' ★';
 
-      row.append(label, price);
+      const desc = document.createElement('span');
+      desc.className = 'rc-row__desc';
+      const cdef = CORES_UPGRADES.find((d) => d.id === r.id);
+      desc.textContent = cdef && cdef.desc ? cdef.desc : '';
+      row.title = desc.textContent;
+
+      row.append(label, price, desc);
       row.addEventListener('click', () => onBuy(r.id));
       container.append(row);
     }
@@ -227,7 +233,11 @@ export function renderShop(tab, { container, state, onBuy, rows }) {
       effect.className = 'rc-row__effect';
       const price = document.createElement('span');
       price.className = 'rc-row__cost';
-      row.append(label, effect, price);
+      const desc = document.createElement('span');
+      desc.className = 'rc-row__desc';
+      desc.textContent = r.desc;
+      row.title = r.desc;
+      row.append(label, effect, price, desc);
       row.addEventListener('click', () => onBuy(r.id));
       container.append(row);
       container._rcRows[r.id] = { row, label, effect, price };
