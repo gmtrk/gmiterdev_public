@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buyUpgrade, coresShopRows, statCardLines, buySpecialUnlock, specialUnlockDef } from './ui.js';
+import { buyUpgrade, coresShopRows, statCardLines, buySpecialUnlock, specialUnlockDef, effectLabel } from './ui.js';
 import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost } from './economy.js';
 import { unlockSpecial, specialSpawnPlan } from './specials.js';
@@ -187,4 +187,26 @@ test('statCardLines is resilient to missing stats (treats as 0)', () => {
     'Most Balls  0',
     'Run Earnings  0',
   ]);
+});
+
+test('effectLabel: mul shows ×N.NN', () => {
+  const def = { effectKind: 'mul', effectStep: 0.5 };
+  assert.equal(effectLabel(def, 1), '×1.50'); // (1+0.5)^1
+  assert.equal(effectLabel(def, 0), '×1.00');
+});
+
+test('effectLabel: integer additive shows +N', () => {
+  assert.equal(effectLabel({ effectKind: 'add', effectStep: 1 }, 4), '+4');
+});
+
+test('effectLabel: fractional additive shows the real value (the +0 bug)', () => {
+  const valueMult = { effectKind: 'add', effectStep: 0.25 };
+  assert.equal(effectLabel(valueMult, 6), '+1.5'); // was floored to "+1"/"+0"
+  assert.equal(effectLabel(valueMult, 4), '+1');   // exactly integer
+  const golden = { effectKind: 'add', effectStep: 0.0025 };
+  assert.equal(effectLabel(golden, 1), '+0.0025'); // was hidden as "+0"
+});
+
+test('effectLabel: unlock rows have no effect label', () => {
+  assert.equal(effectLabel({ unlock: 'clacker', effectKind: 'add', effectStep: 0 }, 0), '');
 });

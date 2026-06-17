@@ -4,6 +4,19 @@ import { UPGRADES, CORES_UPGRADES } from './config.js';
 import { upgradeCost, upgradeEffect } from './economy.js';
 import { formatNumber } from './numfmt.js';
 
+// Player-facing effect string for an upgrade at `level`. Unlock rows show no
+// effect (the row uses OWNED/NEW). 'mul' → ×N.NN; 'add' → +N for integers, else
+// the real fractional value (formatNumber floors < 1000, which hid 0.25/level as
+// "+0" — this shows "+0.25"/"+1.5"/"+0.0025"). Pure + tested.
+export function effectLabel(def, level) {
+  if (def.unlock) return '';
+  const eff = upgradeEffect(def, level);
+  if (def.effectKind === 'mul') return '×' + eff.toFixed(2);
+  if (eff === 0) return '+0';
+  if (Number.isInteger(eff)) return '+' + formatNumber(eff);
+  return '+' + String(Number(eff.toFixed(4)));
+}
+
 // --- Buying --------------------------------------------------------------
 // Reads/writes state.credits (a JS number) and state.upgrades, then calls
 // applyEffects(world, state) so derived world stats (budgets, mults, ...) catch
