@@ -9,7 +9,7 @@
 // The pure helpers (clampLevel / sliderRange) are unit-tested in debug.test.mjs;
 // the DOM wiring (setupDebug) is manually verified.
 
-import { UPGRADES, CORES_UPGRADES, PALETTE, GRAVITY, DRAG, MAX_SPEED, E_PADDLE } from './config.js';
+import { UPGRADES, CORES_UPGRADES, PALETTE, GRAVITY, DRAG, MAX_SPEED } from './config.js';
 import { applyUpgradeEffects } from './economy.js';
 import { rebuildColliders } from './physics.js';
 import { unlockSpecial, SPECIAL_TYPES } from './specials.js';
@@ -29,7 +29,6 @@ const SLIDER_DEFS = {
   gravity:   { worldKey: 'gravity',   label: 'Gravity',          min: 0,    max: GRAVITY * 4,  step: 10,    value: GRAVITY },
   drag:      { worldKey: 'drag',      label: 'Drag',             min: 0.8,  max: 1,            step: 0.001, value: DRAG },
   maxSpeed:  { worldKey: 'maxSpeed',  label: 'Ball Speed Cap',   min: 50,   max: MAX_SPEED * 3, step: 5,     value: MAX_SPEED },
-  paddleE:   { worldKey: 'paddleE',   label: 'Paddle Bounciness', min: 0,   max: 1.2,          step: 0.01,  value: E_PADDLE },
   spawnRate: { worldKey: 'spawnRate', label: 'Spawn Rate',       min: 0,    max: 60,           step: 0.5,   value: 4 },
 };
 
@@ -46,7 +45,7 @@ export function clampSlider(key, raw) {
   return Math.max(r.min, Math.min(raw, r.max));
 }
 
-export const SLIDER_KEYS = ['gravity', 'drag', 'maxSpeed', 'paddleE', 'spawnRate'];
+export const SLIDER_KEYS = ['gravity', 'drag', 'maxSpeed', 'spawnRate'];
 
 // --- DOM overlay (manually verified) ------------------------------------
 

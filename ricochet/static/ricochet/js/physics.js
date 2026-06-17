@@ -1,7 +1,7 @@
 import {
   DT, ARENA_W, ARENA_H, SPAWN_MARGIN, SPAWN_Y,
   CEILING_DESKTOP, RESERVED_OWNED, SPECIAL_CAP, GRID_CELL,
-  GRAVITY, DRAG, E_WALL, E_COLLIDER, E_PADDLE, PADDLE_NUDGE, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
+  GRAVITY, DRAG, E_WALL, E_COLLIDER, PEG_RADIUS, BALL_RADIUS, KICK, MAX_SPEED,
   BLOCK_W, BLOCK_H, BLOCK_LEVELS, RESPAWN_DELAY, BLOCK_BREAK_BONUS, E_BLOCK, BLOCK_KICK,
   GOLDEN, CLACK_COOLDOWN, BASE_CAPACITY, MAX_SPAWNS_PER_TICK, SPAWN_HELPER_DIST,
   SPAWN_RATE_BASE, BOUNCE_JITTER, BOUNCE_JITTER_CHANCE, SURFACE_BASE,
@@ -164,9 +164,6 @@ export function buildWorld(state) {
       w: BLOCK_W,
       h: BLOCK_H,
     },
-    // present:false until the player buys the Paddle upgrade (applyUpgradeEffects
-    // sets it from the paddleWidth level right after buildWorld).
-    paddle: { x: state.placed.paddle.x, y: ARENA_H - 80, w: state.placed.paddle.width, h: 16, present: false },
     grid: new Grid(ARENA_W, ARENA_H, GRID_CELL),
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
     surfaceBase: { ...SURFACE_BASE },
@@ -175,7 +172,6 @@ export function buildWorld(state) {
     hasFloor: false,
     eWall: E_WALL,
     eCollider: E_COLLIDER,
-    paddleE: E_PADDLE,
     kick: KICK,
     maxSpeed: MAX_SPEED,
     // Blocks bounce higher than pegs (own restitution + kick); block/paddle hits
@@ -364,29 +360,6 @@ function _resolveContacts(world, pool, i, now, isSpecial) {
 
   // blocks (narrow-phase + block runtime)
   _resolveBlocksFor(world, pool, i, now, isSpecial);
-
-  // paddle — bounces high (near-elastic restitution) but injects NO fixed energy
-  // (kick = 0): a positive kick once created a stable limit cycle where balls
-  // oscillated on the paddle forever banking points. Restitution < 1 means energy
-  // decays at the surface, and the tangential nudge walks a near-vertical drop off
-  // the edge so it eventually drains. The paddle exists only once owned.
-  const pa = world.paddle;
-  if (pa.present) {
-    const pr = resolveCircleAABB(
-      pool.x[i], pool.y[i], pool.vx[i], pool.vy[i], pool.radius[i],
-      pa.x, pa.y, pa.w / 2, pa.h / 2, world.paddleE, 0, world.maxSpeed,
-    );
-    if (pr.hit) {
-      pool.x[i] = pr.x; pool.y[i] = pr.y; pool.vx[i] = pr.vx; pool.vy[i] = pr.vy;
-      // Near-vertical contact (mostly horizontal separation impulse, little vx):
-      // nudge tangentially so the ball can walk off the paddle edge and drain.
-      if (Math.abs(pool.vx[i]) < Math.abs(pool.vy[i])) {
-        pool.vx[i] += PADDLE_NUDGE * Math.sign((pool.x[i] - pa.x) || 1);
-      }
-      _maybeJitter(world, pool, i); // chaotic scatter off the paddle
-      if (isSpecial) pool.envHits[i]++;
-    }
-  }
 }
 
 function _resolveBlocksFor(world, pool, i, now, isSpecial) {

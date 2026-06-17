@@ -16,10 +16,6 @@ export const CEILING_DESKTOP = 5000, RESERVED_OWNED = 200, SPECIAL_CAP = 96, GRI
 // satisfying in playtest: drag 1.0 + a high speed cap, made safe by sub-stepping.)
 export const GRAVITY = 1700, DRAG = 1.0, E_WALL = 0.92, E_COLLIDER = 0.9;
 export const PEG_RADIUS = 7, BALL_RADIUS = 6, KICK = 60;
-// Paddle bounces high (restitution near-elastic) but injects NO fixed energy
-// (kick stays 0) so it can't pump a trapped ball forever; the tangential nudge
-// walks a near-vertical drop off the edge so it eventually drains.
-export const E_PADDLE = 0.95, PADDLE_NUDGE = 25;
 // Hard speed cap (px/s). At this speed a single DT step would move MAX_SPEED*DT
 // ≈ 18px — far past a 7px peg — so physics.stepPhysics SUB-STEPS the movement
 // (physics.substepCount) into slices each shorter than PEG_RADIUS, preserving the
@@ -56,9 +52,6 @@ export const UPGRADES = [
   { id: 'goldenChance',    label: 'Golden Chance',    group: 'global', baseCost: 300, costGrowth: 1.35, effectKind: 'add', effectStep: 0.0025, max: 40 },
   { id: 'pegBudget',       label: 'Peg Budget',       group: 'pegs',   baseCost: 60,  costGrowth: 1.28, effectKind: 'add', effectStep: 4 },
   { id: 'blockBudget',     label: 'Block Budget',     group: 'blocks', baseCost: 120, costGrowth: 1.40, effectKind: 'add', effectStep: 1 },
-  // Paddle: buying the first level both ADDS the paddle (present once level>=1)
-  // and sets its width; further levels widen it.
-  { id: 'paddleWidth',     label: 'Paddle',           group: 'paddle', baseCost: 80,  costGrowth: 1.25, effectKind: 'add', effectStep: 20 },
   { id: 'pegKick',         label: 'Peg Kick',         group: 'pegs',   baseCost: 90,  costGrowth: 1.27, effectKind: 'add', effectStep: 10 },
   // Special-ball unlocks. One-shot purchases (max:1, no cost growth): buying
   // flips state.specials[unlock].unlocked and seeds the starter pack so the type

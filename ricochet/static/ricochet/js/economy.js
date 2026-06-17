@@ -1,6 +1,6 @@
 import {
   EVENT_CAP, SURFACE_BASE, BASE_CAPACITY, GOLDEN, KICK,
-  UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE, PADDLE_WIDTH_BASE,
+  UPGRADES, CORES_UPGRADES, PEG_BUDGET_BASE, BLOCK_BUDGET_BASE,
   PRESTIGE, SPAWN_RATE_BASE,
 } from './config.js';
 
@@ -86,14 +86,7 @@ export function applyUpgradeEffects(world, state) {
   world.budgets.pegs = PEG_BUDGET_BASE + upgradeEffect(pegBudgetDef, _level(up, 'pegBudget'));
   world.budgets.blocks = BLOCK_BUDGET_BASE + upgradeEffect(blockBudgetDef, _level(up, 'blockBudget'));
 
-  // paddle: width + ownership. The paddle exists only once the player buys the
-  // first level (level>=1); width = PADDLE_WIDTH_BASE + additive levels.
-  const paddleDef = _def(UPGRADES, 'paddleWidth');
-  const paddleLevel = _level(up, 'paddleWidth');
-  world.paddle.w = PADDLE_WIDTH_BASE + upgradeEffect(paddleDef, paddleLevel);
-  world.paddle.present = paddleLevel >= 1;
-
-  // peg/paddle kick
+  // peg kick
   const kickDef = _def(UPGRADES, 'pegKick');
   world.kick = KICK + upgradeEffect(kickDef, _level(up, 'pegKick'));
 

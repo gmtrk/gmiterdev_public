@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { clampLevel, sliderRange, clampSlider, SLIDER_KEYS } from './debug.js';
-import { GRAVITY, DRAG, MAX_SPEED, E_PADDLE } from './config.js';
+import { GRAVITY, DRAG, MAX_SPEED } from './config.js';
 
 test('clampLevel clamps to [0, max]', () => {
   assert.equal(clampLevel(5, 9), 5);
@@ -36,9 +36,6 @@ test('sliderRange returns a {worldKey,min,max,step,value} descriptor seeded from
 
   const ms = sliderRange('maxSpeed');
   assert.equal(ms.value, MAX_SPEED);
-
-  const pe = sliderRange('paddleE');
-  assert.equal(pe.value, E_PADDLE);
 
   const sr = sliderRange('spawnRate');
   assert.equal(sr.worldKey, 'spawnRate');

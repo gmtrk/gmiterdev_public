@@ -160,22 +160,19 @@ test('buying goldenChance (credits + cores) raises world.goldenChance', () => {
   assert.ok(Math.abs(world.goldenChance - (GOLDEN.chance + 0.005 + 0.005)) < 1e-12);
 });
 
-test('buying budgets/paddle/kick raises the matching derived stats', () => {
+test('buying budgets/kick raises the matching derived stats', () => {
   const state = freshState();
   const world = buildWorld(state);
   applyUpgradeEffects(world, state);
   const pegB = world.budgets.pegs;
   const blockB = world.budgets.blocks;
-  const paddleW = world.paddle.w;
   const kick = world.kick;
   state.upgrades.pegBudget = 2;     // +8
   state.upgrades.blockBudget = 3;   // +3
-  state.upgrades.paddleWidth = 1;   // +20
   state.upgrades.pegKick = 2;       // +20
   applyUpgradeEffects(world, state);
   assert.equal(world.budgets.pegs, pegB + 8);
   assert.equal(world.budgets.blocks, blockB + 3);
-  assert.equal(world.paddle.w, paddleW + 20);
   assert.equal(world.kick, kick + 20);
 });
 

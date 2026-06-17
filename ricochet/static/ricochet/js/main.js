@@ -17,7 +17,7 @@ import {
   updateHUD, renderShop, buyUpgrade, coresShopRows, showModal, setupQualityToggle,
   specialUnlockDef, buySpecialUnlock, exportStatCard,
 } from './ui.js';
-import { setupPlacement, setupPaddleDrag, setupTabs } from './input.js';
+import { setupPlacement, setupTabs } from './input.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
 import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
@@ -186,8 +186,8 @@ if (tabBody && !shopContainer) {
   const placeHint = document.createElement('p');
   placeHint.className = 'rc-place-hint';
   placeHint.textContent =
-    'Pick a tool, then click or drag in the arena to place it. The auto-fill '
-    + 'buttons lay out peg patterns. Drag the paddle at the bottom to move it.';
+    'Pick a tool, then click or drag in the arena to place pegs. The auto-fill '
+    + 'buttons lay out peg patterns. Buy Ramps in the shop to add bouncy walls.';
   const toolHead = document.createElement('p');
   toolHead.className = 'rc-place-subhead';
   toolHead.textContent = 'Tools';
@@ -354,7 +354,6 @@ setupPlacement({
   onChange: refreshShop,
   isActive: isPlaceActive,
 });
-setupPaddleDrag({ canvas, world, state, onChange: () => {}, isActive: isPlaceActive });
 setupQualityToggle(window.__ricochetSetLowQuality, runtime.lowQuality);
 
 // Module-scope so onBigBangClicked (Phase 7) can call leaderboard.offerOnBigBang().

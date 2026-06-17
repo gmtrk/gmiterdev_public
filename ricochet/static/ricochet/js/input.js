@@ -1,8 +1,8 @@
 // Hands-on placement layer: place/remove pegs+blocks (budget + overlap + bounds
 // + spawn-band guarded), presets/auto-fill, blueprint apply (clamped to budgets),
-// draggable paddle, tabs. Pure decision helpers (tryPlace/removeTopmost) are
-// unit-tested; the DOM wiring (setupPlacement/setupPaddleDrag/setupTabs) builds
-// on them and sets touch-action:none on the canvas.
+// tabs. Pure decision helpers (tryPlace/removeTopmost) are unit-tested; the DOM
+// wiring (setupPlacement/setupTabs) builds on them and sets touch-action:none on
+// the canvas.
 import { BLOCK_LEVELS } from './config.js';
 import {
   overlaps,
@@ -184,49 +184,6 @@ export function setupPlacement(deps) {
       onChange();
     });
   }
-}
-
-// Wire the draggable paddle. `deps` = { canvas, world, state, onChange, isActive }.
-// The paddle moves horizontally in virtual coords; y/width come from world.paddle.
-// `isActive()` gates the grab to the Place tab (same rationale as setupPlacement):
-// a Credits/Cores/Scores-tab arena click must not start a paddle drag. Defaults to
-// always-active for headless/test callers.
-export function setupPaddleDrag(deps) {
-  const { canvas, world, state, onChange, isActive } = deps;
-  const placeActive = typeof isActive === 'function' ? isActive : () => true;
-  let dragging = false;
-
-  function near(x, y) {
-    if (!world.paddle.present) return false; // no paddle to grab until it's bought
-    return (
-      Math.abs(x - world.paddle.x) <= world.paddle.w / 2 + 30 &&
-      Math.abs(y - world.paddle.y) <= world.paddle.h / 2 + 30
-    );
-  }
-  function moveTo(x) {
-    const half = world.paddle.w / 2;
-    const clamped = Math.max(half, Math.min(world.W - half, x));
-    world.paddle.x = clamped;
-    state.placed.paddle.x = clamped;
-    onChange();
-  }
-
-  canvas.addEventListener('pointerdown', (ev) => {
-    if (!placeActive()) return; // only the Place tab may grab the paddle
-    const { x, y } = eventToVirtual(canvas, world, ev);
-    if (near(x, y)) {
-      dragging = true;
-      moveTo(x);
-    }
-  });
-  canvas.addEventListener('pointermove', (ev) => {
-    if (!dragging) return;
-    const { x } = eventToVirtual(canvas, world, ev);
-    moveTo(x);
-  });
-  const stop = () => { dragging = false; };
-  canvas.addEventListener('pointerup', stop);
-  canvas.addEventListener('pointercancel', stop);
 }
 
 // Wire the right-panel tabs (Credits / Cores / Place / Scores). `deps` =

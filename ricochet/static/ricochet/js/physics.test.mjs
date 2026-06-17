@@ -475,31 +475,6 @@ test('NO TUNNELING: a fast ball collides with a block instead of passing through
   assert.ok(hit, 'fast ball tunneled through the block instead of colliding');
 });
 
-test('PADDLE DRAIN: a ball dropped straight onto the paddle drains (no infinite bounce)', () => {
-  // Regression for the paddle "infinite bounce" trap: a positive paddle kick once
-  // replenished the energy restitution+drag removed, so a ball oscillated forever.
-  // The paddle now bounces high (restitution near 1) but still injects NO fixed
-  // energy (kick=0), so energy strictly decays and the tangential nudge walks the
-  // ball off the edge to drain. Owned-gated, so enable it; jitter off for a
-  // deterministic worst case (drain must hold on the nudge path alone).
-  const world = buildWorld(makeEmptyState());
-  world.hasFloor = false;
-  world.paddle.present = true;
-  world.bounceJitterChance = 0;
-  const pa = world.paddle;
-  // rest the ball just above the paddle top at the paddle's x, ~zero velocity
-  spawnNormal(world, pa.x, pa.y - pa.h / 2 - BALL_RADIUS - 1, 0);
-  world.normal.vx[0] = 0;
-  world.normal.vy[0] = 0;
-  let steps = 0;
-  const LIMIT = 3000;
-  while (world.normal.count > 0 && steps < LIMIT) {
-    stepPhysics(world, DT, steps * DT);
-    steps++;
-  }
-  assert.equal(world.normal.count, 0, `ball never drained off the paddle in ${steps} steps`);
-  assert.ok(steps < LIMIT, 'paddle bounce trap: ball never drained');
-});
 
 function makeBlockState(level, golden) {
   const s = makeState();
