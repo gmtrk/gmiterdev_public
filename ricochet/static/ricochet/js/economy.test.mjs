@@ -238,14 +238,15 @@ test('buying Cores offline levels makes world.offline*Add non-zero', () => {
 });
 
 test('coresFromRun matches the contract anchor values with defaults', () => {
-  assert.equal(coresFromRun(1e9), 1);
-  assert.equal(coresFromRun(1e12), 31);   // floor(sqrt(1000)) = 31
-  assert.equal(coresFromRun(1e15), 1000); // floor(sqrt(1e6)) = 1000
+  // coreScale is now 1e7: floor(sqrt(runCredits / 1e7))
+  assert.equal(coresFromRun(1e7), 1);     // sqrt(1) = 1
+  assert.equal(coresFromRun(4e7), 2);     // sqrt(4) = 2
+  assert.equal(coresFromRun(1e9), 10);    // sqrt(100) = 10
 });
 
 test('coresFromRun floors and is 0 below one core', () => {
   assert.equal(coresFromRun(0), 0);
-  assert.equal(coresFromRun(5e8), 0); // sqrt(0.5) < 1 -> floor 0
+  assert.equal(coresFromRun(5e6), 0); // sqrt(0.5) < 1 -> floor 0 (below the 1e7 one-core threshold)
 });
 
 test('coresFromRun honors coreK and coreScale overrides', () => {

@@ -1,6 +1,6 @@
 import { migrate, deserialize, serialize } from './save.js';
 import { buildWorld, rebuildColliders, stepPhysics, spawnSpecial, CLACKER, SPLITTER, BURSTER, rebuildRamps } from './physics.js';
-import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige } from './economy.js';
+import { applyUpgradeEffects, computeEventMult, creditsFromCounters, updateCombo, canPrestige, coresFromRun } from './economy.js';
 import {
   specialSpawnPlan, unlockSpecial, SPECIAL_TYPES,
   resolveClack, makeSpecialEmit, chargeBurster, tryBurst, trySplitOnEnv,
@@ -473,6 +473,20 @@ function onBigBangClicked() {
 }
 const bigBangBtn = $('big-bang-btn');
 if (bigBangBtn) bigBangBtn.addEventListener('click', onBigBangClicked);
+// Reflect the prestige gate on the Big Bang button: a requirement when locked,
+// the projected Cores payout when ready. Called from the throttled HUD tick.
+function refreshBigBang() {
+  if (!bigBangBtn) return;
+  const credits = Number(state.credits);
+  if (credits >= PRESTIGE.minCredits) {
+    bigBangBtn.classList.remove('rc-bigbang--locked');
+    bigBangBtn.textContent = `Big Bang (+${formatNumber(coresFromRun(credits))} ★)`;
+  } else {
+    bigBangBtn.classList.add('rc-bigbang--locked');
+    bigBangBtn.textContent = `Big Bang — need ${formatNumber(PRESTIGE.minCredits)}`;
+  }
+}
+refreshBigBang();
 
 // ---- Offline earnings on load ("while you were gone") ----
 function runOfflineOnLoad() {
@@ -691,7 +705,7 @@ function render() {
   ctx.restore();
 
   const ms = performance.now();
-  if (hudGate(ms)) updateHUD(buildHudAdapter(state, world, run), hudEls);
+  if (hudGate(ms)) { updateHUD(buildHudAdapter(state, world, run), hudEls); refreshBigBang(); }
   if (shopGate(ms)) refreshShop();
 }
 

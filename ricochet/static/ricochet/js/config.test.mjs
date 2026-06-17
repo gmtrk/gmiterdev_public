@@ -65,7 +65,7 @@ test('event + combo + golden + clack scalars match the contract', () => {
 test('burster + offline + prestige scalars match the contract', () => {
   assert.deepEqual(C.BURSTER, { chargePerBounce: 1, chargePerClack: 5, threshold: 20, ballsPerBurst: 6 });
   assert.deepEqual(C.OFFLINE, { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLifeSec: 300 });
-  assert.deepEqual(C.PRESTIGE, { coreScale: 1e9, coreK: 1, minCredits: 1e9 });
+  assert.deepEqual(C.PRESTIGE, { coreScale: 1e7, coreK: 1, minCredits: 1e7 });
 });
 
 test('cold-open + base-capacity scalars match the contract', () => {

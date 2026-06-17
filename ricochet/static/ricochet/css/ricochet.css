@@ -163,6 +163,8 @@ body.rc-body {
   letter-spacing: 0.04em;
 }
 
+.rc-bigbang--locked { opacity: 0.55; }
+
 .rc-lb__table {
   display: flex;
   flex-direction: column;

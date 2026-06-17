@@ -41,7 +41,7 @@ test('projectPrestige reports projected cores and a positive speedup', () => {
   const state = sampleState();
   const proj = projectPrestige(state);
   assert.equal(proj.cores, coresFromRun(state.credits));
-  assert.equal(proj.cores, 2); // floor(1*sqrt(4e9/1e9)) = floor(2) = 2
+  assert.equal(proj.cores, 20); // floor(1*sqrt(4e9/1e7)) = floor(20) = 20
   assert.equal(proj.lifetimeAfter, state.lifetimeCores + proj.cores);
   assert.ok(proj.speedup > 1, 'projected next-run speedup should exceed 1x');
 });
@@ -57,9 +57,9 @@ test('performBigBang grants projected cores into cores and lifetimeCores', () =>
   const beforeCores = state.cores;
   const beforeLifetime = state.lifetimeCores;
   const gained = performBigBang(state);
-  assert.equal(gained, 2);
-  assert.equal(state.cores, beforeCores + 2);
-  assert.equal(state.lifetimeCores, beforeLifetime + 2);
+  assert.equal(gained, 20);
+  assert.equal(state.cores, beforeCores + 20);
+  assert.equal(state.lifetimeCores, beforeLifetime + 20);
 });
 
 test('performBigBang resets run progress (credits/upgrades/specials)', () => {

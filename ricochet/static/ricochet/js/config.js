@@ -61,7 +61,7 @@ export const SPECIAL_E = 1.0;
 export const OFFLINE = { efficiencyBase: 0.30, capSeconds: 8 * 3600, emaHalfLifeSec: 300 };
 // Half-life (s) for the smoothed PER-SEC HUD counter (symmetric EMA of credits/sec).
 export const DISPLAY_CPS_HALFLIFE = 1.0;
-export const PRESTIGE = { coreScale: 1e9, coreK: 1, minCredits: 1e9 };
+export const PRESTIGE = { coreScale: 1e7, coreK: 1, minCredits: 1e7 };
 export const STARTING_CREDITS = 25; // cold-open grant (first upgrade affordable after ~10s, not instantly)
 export const BASE_CAPACITY = 1;     // start with a single ball; buy Ball Capacity for more
 // Minimal cold-open field: 2 placed pegs, no blocks. Players buy the
