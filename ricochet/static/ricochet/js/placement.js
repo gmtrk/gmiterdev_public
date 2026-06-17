@@ -34,7 +34,7 @@ export function inSpawnBand(y, hy) {
 
 const PEG_PITCH_X = 70; // horizontal spacing between pegs in a row
 const PEG_PITCH_Y = 70; // vertical spacing between rows
-const FIELD_TOP = SPAWN_Y + 80; // first peg row sits well below the spawn band
+const FIELD_TOP = Math.round(ARENA_H * 0.35); // presets build in the lower-middle so balls get a long fall first
 
 // A centered triangle (Plinko): row r has r+1 pegs, widening downward.
 export function trianglePegs(count) {

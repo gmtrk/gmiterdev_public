@@ -10,7 +10,7 @@ import {
   autoFillCount,
   clampBlueprintToBudget,
 } from './placement.js';
-import { ARENA_W } from './config.js';
+import { ARENA_W, ARENA_H } from './config.js';
 
 // overlaps(a, b): each is {x, y, hx, hy} (center + half-extents). AABB separation.
 test('overlaps: true when AABBs interpenetrate on both axes', () => {
@@ -152,4 +152,9 @@ test('clampBlueprintToBudget: does not mutate the input arrays', () => {
   const blueprint = { pegs, blocks: [], paddle: { x: 500, width: 120 } };
   clampBlueprintToBudget(blueprint, { pegs: 1, blocks: 0 });
   assert.equal(pegs.length, 2, 'input pegs array must not be mutated');
+});
+
+test('trianglePegs: the apex row now builds in the lower portion of the arena', () => {
+  const apex = trianglePegs(3)[0]; // row 0, single peg, at FIELD_TOP
+  assert.ok(apex.y >= ARENA_H * 0.3, `apex y ${apex.y} should be well below the top`);
 });
