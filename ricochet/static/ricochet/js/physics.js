@@ -171,7 +171,7 @@ export function buildWorld(state) {
       count: 0, r: RAMP_THICKNESS,
     },
     rampsLevel: 0,
-    rampAngle: RAMP_ANGLE,
+    rampAngle: state.placed.rampAngle != null ? state.placed.rampAngle : RAMP_ANGLE,
     grid: new Grid(ARENA_W, ARENA_H, GRID_CELL),
     counters: { wall: 0, peg: 0, block: 0, goldenBonus: 0, breakBonus: 0 },
     surfaceBase: { ...SURFACE_BASE },

@@ -92,6 +92,7 @@ export function applyUpgradeEffects(world, state) {
 
   // ramps: how many ramp pairs are active (0/1/2). rebuildRamps reads this.
   world.rampsLevel = _level(up, 'ramps');
+  world.rampAngleUnlocked = _level(up, 'rampAngleUnlock') >= 1;
 
   // Cores head-start: starting-credits multiplier (multiplicative; 1 when unbought).
   // reinitFreshRun (Phase 7) reads world.startCreditsMult to scale the cold-open grant.

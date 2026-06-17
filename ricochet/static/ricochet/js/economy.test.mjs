@@ -237,3 +237,13 @@ test('buying ramps raises world.rampsLevel', () => {
   applyUpgradeEffects(world, state);
   assert.equal(world.rampsLevel, 2);
 });
+
+test('buying rampAngleUnlock flips world.rampAngleUnlocked', () => {
+  const state = freshState();
+  const world = buildWorld(state);
+  applyUpgradeEffects(world, state);
+  assert.equal(world.rampAngleUnlocked, false);
+  state.upgrades.rampAngleUnlock = 1;
+  applyUpgradeEffects(world, state);
+  assert.equal(world.rampAngleUnlocked, true);
+});

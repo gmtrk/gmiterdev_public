@@ -750,6 +750,12 @@ test('a ball falling onto a ramp segment bounces (counts as a wall hit) and does
   assert.ok(hit, 'ball never registered a ramp (wall) contact');
 });
 
+test('buildWorld seeds world.rampAngle from state.placed.rampAngle when present', () => {
+  const s = makeState();
+  s.placed.rampAngle = 47;
+  assert.equal(buildWorld(s).rampAngle, 47);
+});
+
 test('RAMP DRAIN: a ball dropped onto a ramp pair drains within a bounded number of steps', () => {
   // Regression: ramps use E_WALL (<1) and inject NO kick, so energy strictly
   // decays and a ball cannot oscillate forever — it slides off into the open

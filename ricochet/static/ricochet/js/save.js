@@ -1,4 +1,4 @@
-import { STARTING_CREDITS, ARENA_W, ARENA_H, PADDLE_WIDTH_BASE } from './config.js';
+import { STARTING_CREDITS, ARENA_W, ARENA_H, PADDLE_WIDTH_BASE, RAMP_ANGLE } from './config.js';
 
 export const CURRENT_VERSION = 1;
 
@@ -12,7 +12,7 @@ function starterBlueprint() {
   ];
   const blocks = [];
   const paddle = { x: ARENA_W / 2, width: PADDLE_WIDTH_BASE };
-  return { pegs, blocks, paddle, preset: null };
+  return { pegs, blocks, paddle, preset: null, rampAngle: RAMP_ANGLE };
 }
 
 export function defaultSave() {
