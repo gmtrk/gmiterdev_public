@@ -9,6 +9,7 @@ import {
   funnelPegs,
   autoFillCount,
   clampBlueprintToBudget,
+  unplacedCount,
 } from './placement.js';
 import { ARENA_W, ARENA_H } from './config.js';
 
@@ -157,4 +158,9 @@ test('clampBlueprintToBudget: does not mutate the input arrays', () => {
 test('trianglePegs: the apex row now builds in the lower portion of the arena', () => {
   const apex = trianglePegs(3)[0]; // row 0, single peg, at FIELD_TOP
   assert.ok(apex.y >= ARENA_H * 0.3, `apex y ${apex.y} should be well below the top`);
+});
+
+test('unplacedCount: sums the remaining peg + block budget headroom (never negative)', () => {
+  assert.equal(unplacedCount({ pegs: 5, blocks: 2 }, { pegs: [{}, {}], blocks: [] }), 5); // 3 pegs + 2 blocks
+  assert.equal(unplacedCount({ pegs: 1, blocks: 0 }, { pegs: [{}, {}, {}], blocks: [] }), 0); // over budget -> 0
 });

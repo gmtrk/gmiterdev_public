@@ -107,3 +107,11 @@ export function clampBlueprintToBudget(blueprint, budgets) {
     paddle: blueprint.paddle,
   };
 }
+
+// How many placeable items are waiting (peg + block budget headroom, never < 0).
+// Drives the Place-tab count badge. Pure + tested.
+export function unplacedCount(budgets, placed) {
+  const pegs = Math.max(0, budgets.pegs - placed.pegs.length);
+  const blocks = Math.max(0, budgets.blocks - placed.blocks.length);
+  return pegs + blocks;
+}

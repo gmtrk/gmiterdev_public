@@ -613,3 +613,9 @@ body.rc-body {
   font-size: 0.66rem;
   color: var(--rc-cyan);
 }
+
+.rc-tab-badge {
+  display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 5px;
+  border-radius: 9px; background: #22e0ff; color: #0a0a16;
+  font-size: 11px; font-weight: 700; line-height: 16px; text-align: center;
+}

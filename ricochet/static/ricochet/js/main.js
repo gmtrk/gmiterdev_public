@@ -19,6 +19,7 @@ import {
   specialUnlockDef, buySpecialUnlock, exportStatCard,
 } from './ui.js';
 import { setupPlacement, setupTabs, applyPreset } from './input.js';
+import { unplacedCount } from './placement.js';
 import { makeThrottle } from './throttle.js';
 import { projectPrestige, performBigBang, reinitFreshRun } from './prestige.js';
 import { buyCoresUpgrade, coresOfflineBonuses } from './coresshop.js';
@@ -245,6 +246,18 @@ function persistSave() {
   try { localStorage.setItem(SAVE_KEY, serialize(state)); } catch (e) { /* storage full/blocked */ }
 }
 
+const placeTabBtn = document.querySelector('[data-tab="place"]');
+const placeBadge = document.createElement('span');
+placeBadge.className = 'rc-tab-badge';
+placeBadge.hidden = true;
+if (placeTabBtn) placeTabBtn.append(placeBadge);
+function refreshPlaceBadge() {
+  const n = unplacedCount(world.budgets, state.placed);
+  placeBadge.textContent = String(n);
+  placeBadge.hidden = n <= 0;
+}
+refreshPlaceBadge();
+
 function refreshRampControl() {
   if (!rampRow) return;
   rampRow.hidden = !world.rampAngleUnlocked;
@@ -278,6 +291,7 @@ function refreshShop() {
         }
         refreshShop();
         refreshRampControl();
+        refreshPlaceBadge();
       }
     },
   });
@@ -342,6 +356,7 @@ function onBigBangClicked() {
       persistSave();
       refreshShop();
       refreshCoresTab();
+      refreshPlaceBadge();
       // Immediate HUD refresh so the new Cores total shows at once (the throttled
       // render-loop HUD would otherwise lag up to ~166ms).
       updateHUD(buildHudAdapter(state, world, run), hudEls);
@@ -390,6 +405,7 @@ const tabs = setupTabs({
     // Arena cursor affordance: only the Place tab edits the arena.
     canvas.classList.toggle('rc-canvas--place', name === 'place');
     if (name !== 'place' && view.place) view.place.active = false;
+    refreshPlaceBadge();
   },
 });
 // Reflect the initially-active tab on the canvas cursor (onSelect only fires on
@@ -406,7 +422,7 @@ setupPlacement({
   state,
   toolButtons: Array.from(document.querySelectorAll('[data-tool]')),
   presetButtons: Array.from(document.querySelectorAll('[data-preset]')),
-  onChange: refreshShop,
+  onChange: () => { refreshShop(); refreshPlaceBadge(); },
   isActive: isPlaceActive,
   view,
 });
