@@ -54,6 +54,7 @@ body.ud-home {
   .ud-caret { animation: none; }
 }
 
-/* Sketchy preview: a hand-drawn Flowey-style grin (Undertale nod). */
+/* Sketchy preview: a Flowey face — white field, black eyes + open smile. */
 .ud-sk { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.ud-sk__face { fill: #2b2b2b; }   /* charcoal ink */
+.ud-sk__bg   { fill: #ffffff; }   /* white background */
+.ud-sk__face { fill: #111111; }   /* black eyes + smile */
