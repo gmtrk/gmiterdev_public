@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { strokesToInput, bbox, transformParams, SIZE, RENDER, RENDER_MARGIN } from './rasterizer.js';
+import { strokesToInput, bbox, transformParams, SIZE, RENDER, RENDER_MARGIN, LINE_WIDTH } from './rasterizer.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const golden = JSON.parse(readFileSync(join(here, 'rasterizer_golden.json'), 'utf8'));
@@ -12,6 +12,7 @@ test('constants match the python rasterizer', () => {
   assert.equal(SIZE, 64);
   assert.equal(RENDER, 256);
   assert.equal(RENDER_MARGIN, 16);
+  assert.equal(LINE_WIDTH, 6);
 });
 
 test('bbox over all points', () => {

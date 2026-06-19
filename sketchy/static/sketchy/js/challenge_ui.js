@@ -11,6 +11,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   let round = createRound(pickPrompts(bundle.labels, PROMPTS_PER_ROUND), ROUND_SECONDS);
   let deadline = 0;
   let raf = 0;
+  let advanceTimer = 0;
   let lastRun = 0;
   let topk = [];
   const promptWordEl = document.querySelector('.sk-prompt__word');
@@ -66,7 +67,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
 
   function advance() {
     if (isOver(round)) return finish();
-    setTimeout(startPrompt, 350);
+    advanceTimer = setTimeout(startPrompt, 350);
   }
 
   function finish() {
@@ -110,6 +111,6 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
 
   return {
     onDraw,
-    stop() { cancelAnimationFrame(raf); const r = document.getElementById('sk-recap'); if (r) r.hidden = true; els.skip.onclick = null; },
+    stop() { cancelAnimationFrame(raf); clearTimeout(advanceTimer); const r = document.getElementById('sk-recap'); if (r) r.hidden = true; els.skip.onclick = null; },
   };
 }
