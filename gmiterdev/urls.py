@@ -24,5 +24,6 @@ urlpatterns = [
     path("mnist/", include("mnist.urls")),
     path("metaguess/", include("metaguess.urls")),
     path("ricochet/", include("ricochet.urls")),
+    path("sketchy/", include("sketchy.urls")),
     path("admin/", admin.site.urls),
 ]

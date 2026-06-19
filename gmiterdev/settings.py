@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'metaguess',
     'ricochet.apps.RicochetConfig',
+    "sketchy.apps.SketchyConfig",
 ]
 
 MIDDLEWARE = [
