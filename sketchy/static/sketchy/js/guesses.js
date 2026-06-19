@@ -1,3 +1,8 @@
+// "a" / "an" by leading vowel letter — correct for all Sketchy categories.
+export function article(word) {
+  return /^[aeiou]/i.test(String(word).trim()) ? 'an' : 'a';
+}
+
 // Render top-k guesses as labeled confidence bars + an optional headline.
 export function renderGuesses(container, topk, { headlineEl } = {}) {
   if (!container) return;
@@ -7,6 +12,8 @@ export function renderGuesses(container, topk, { headlineEl } = {}) {
       + `<div class="sk-bar"><i style="width:${pct}%"></i></div></div>`;
   }).join('');
   if (headlineEl) {
-    headlineEl.textContent = topk.length ? `i think it's a ${topk[0].label}` : 'draw something…';
+    headlineEl.textContent = topk.length
+      ? `i think it's ${article(topk[0].label)} ${topk[0].label}`
+      : 'draw something…';
   }
 }

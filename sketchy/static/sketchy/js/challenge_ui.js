@@ -2,7 +2,8 @@ import { pickPrompts } from './prompts.js';
 import { createRound, currentPrompt, isOver, isRecognized, recordResult } from './challenge.js';
 import { roundTotal } from './scoring.js';
 import { predictTopK } from './model.js';
-import { renderGuesses } from './guesses.js';
+import { renderGuesses, article } from './guesses.js';
+import { canJoin, joinLeaderboard } from './leaderboard.js';
 
 const ROUND_SECONDS = 20;
 const PROMPTS_PER_ROUND = 6;
@@ -15,6 +16,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   let lastRun = 0;
   let topk = [];
   const promptWordEl = document.querySelector('.sk-prompt__word');
+  const promptLeadEl = document.querySelector('.sk-prompt__lead');
   const scoreEl = document.getElementById('sk-score');
   const fillEl = document.getElementById('sk-timer-fill');
   const secEl = document.getElementById('sk-timer-sec');
@@ -24,6 +26,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
     topk = [];
     renderGuesses(els.guesses, [], { headlineEl: els.headline });
     promptWordEl.textContent = (currentPrompt(round) || '').toUpperCase();
+    if (promptLeadEl) promptLeadEl.textContent = article(currentPrompt(round) || '');
     deadline = performance.now() + ROUND_SECONDS * 1000;
     tick();
   }
@@ -58,7 +61,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   function timeout() {
     cancelAnimationFrame(raf);
     const sawGuess = topk.length ? topk[0].label : 'nothing';
-    toast(`⏱ time! I was sure it was a <span class="sk-toast__word">${sawGuess}</span> 🤷 → next!`);
+    toast(`⏱ time! I was sure it was ${article(sawGuess)} <span class="sk-toast__word">${sawGuess}</span> 🤷 → next!`);
     round = recordResult(round, { won: false, secondsLeft: 0 });
     advance();
   }
@@ -91,10 +94,18 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
       `<div class="sk-recap__row"><span>${x.target}</span>`
       + (x.won ? `<span class="ok">✓ +${x.points}</span>` : `<span class="no">✗ timed out +0</span>`)
       + `</div>`).join('');
+    const joinBlock = state.playerId
+      ? `<div class="sk-recap__join">★ on the board as ${state.initials}</div>`
+      : (canJoin(state)
+        ? `<div class="sk-recap__join">put yourself on the board: `
+          + `<input id="sk-recap-initials" maxlength="3" placeholder="ABC"> `
+          + `<button class="sk-chip" id="sk-recap-join">Join 🏆</button></div>`
+        : '');
     recap.innerHTML =
       `<div class="sk-recap__card"><div class="sk-recap__title">round over!</div>${rows}`
       + `<div class="sk-recap__total">${total} points</div>`
       + (isBest ? `<div class="sk-recap__hi">★ new personal best! ★</div>` : '')
+      + joinBlock
       + `<div style="text-align:center;margin-top:14px"><button class="sk-chip" id="sk-again">Play again ↻</button></div></div>`;
     recap.hidden = false;
     document.getElementById('sk-again').addEventListener('click', () => {
@@ -103,6 +114,19 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
       scoreEl.textContent = '0';
       startPrompt();
     });
+    const rj = document.getElementById('sk-recap-join');
+    if (rj) {
+      rj.addEventListener('click', () => {
+        const inp = document.getElementById('sk-recap-initials');
+        joinLeaderboard(state, inp ? inp.value : '', persist).then((ok) => {
+          if (ok) {
+            const box = document.querySelector('.sk-recap__join');
+            if (box) box.textContent = `★ on the board as ${state.initials}`;
+            if (lb) lb.refresh();
+          }
+        });
+      });
+    }
   }
 
   els.skip.onclick = skip;

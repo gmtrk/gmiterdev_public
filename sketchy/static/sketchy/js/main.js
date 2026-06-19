@@ -49,6 +49,8 @@ function setMode(next) {
   els.modes.forEach((b) => b.classList.toggle('sk-mode--active', b.dataset.mode === next));
   els.chhead.hidden = next !== 'challenge';
   els.skip.hidden = next !== 'challenge';
+  const railJoin = document.querySelector('.sk-lb-join');
+  if (railJoin) railJoin.hidden = (next === 'challenge');
   canvas.clear();
   if (next === 'sandbox') {
     if (challenge) { challenge.stop(); challenge = null; }
@@ -63,5 +65,7 @@ els.modes.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mod
   els.headline.textContent = 'loading the AI…';
   bundle = await loadModel();
   els.headline.textContent = 'draw something…';
+  const loadingEl = document.getElementById('sk-loading');
+  if (loadingEl) loadingEl.hidden = true;
   lb = setupLeaderboard(state, { persist: () => persistSave(state) });
 })();

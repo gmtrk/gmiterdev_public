@@ -25,14 +25,17 @@
 
   <!-- challenge header (hidden in sandbox) -->
   <div class="sk-chhead" hidden>
-    <div class="sk-prompt">draw a <span class="sk-prompt__word">—</span></div>
+      <div class="sk-prompt">draw <span class="sk-prompt__lead">a</span> <span class="sk-prompt__word">—</span></div>
     <div class="sk-score">score <span id="sk-score">0</span></div>
     <div class="sk-timerwrap"><div class="sk-timer"><i id="sk-timer-fill"></i></div><span id="sk-timer-sec">20s</span></div>
   </div>
 
   <div class="sk-main">
     <div class="sk-left">
-      <canvas id="sk-canvas" class="sk-canvas"></canvas>
+      <div class="sk-canvas-wrap">
+          <canvas id="sk-canvas" class="sk-canvas"></canvas>
+          <div id="sk-loading" class="sk-loading"><span class="sk-loading__pulse">waking up the AI…</span></div>
+        </div>
       <div class="sk-tools">
         <button id="sk-clear" class="sk-chip">Clear ✗</button>
         <button id="sk-skip" class="sk-chip" hidden>Skip ⤳</button>
