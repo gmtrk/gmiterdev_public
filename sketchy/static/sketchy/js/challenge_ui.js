@@ -15,6 +15,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   let advanceTimer = 0;
   let lastRun = 0;
   let topk = [];
+  let transitioning = false;  // true between a recorded result and the next startPrompt()
   const promptWordEl = document.querySelector('.sk-prompt__word');
   const promptLeadEl = document.querySelector('.sk-prompt__lead');
   const scoreEl = document.getElementById('sk-score');
@@ -22,6 +23,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   const secEl = document.getElementById('sk-timer-sec');
 
   function startPrompt() {
+    transitioning = false;
     canvas.clear();
     topk = [];
     renderGuesses(els.guesses, [], { headlineEl: els.headline });
@@ -42,6 +44,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   }
 
   function onDraw(strokes) {
+    if (transitioning) return;  // ignore strokes during the inter-prompt gap (canvas not yet cleared)
     if (!strokes || strokes.length === 0) return;
     const now = Date.now();
     if (now - lastRun < 80 || !bundle) return;
@@ -52,6 +55,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   }
 
   function win() {
+    if (transitioning) return;
     cancelAnimationFrame(raf);
     round = recordResult(round, { won: true, secondsLeft: secondsLeft() });
     scoreEl.textContent = String(roundTotal(round.results));
@@ -59,6 +63,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   }
 
   function timeout() {
+    if (transitioning) return;
     cancelAnimationFrame(raf);
     const sawGuess = topk.length ? topk[0].label : 'nothing';
     toast(`⏱ time! I was sure it was ${article(sawGuess)} <span class="sk-toast__word">${sawGuess}</span> 🤷 → next!`);
@@ -66,9 +71,15 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
     advance();
   }
 
-  function skip() { cancelAnimationFrame(raf); round = recordResult(round, { won: false, secondsLeft: 0 }); advance(); }
+  function skip() {
+    if (transitioning) return;
+    cancelAnimationFrame(raf);
+    round = recordResult(round, { won: false, secondsLeft: 0 });
+    advance();
+  }
 
   function advance() {
+    transitioning = true;
     if (isOver(round)) return finish();
     advanceTimer = setTimeout(startPrompt, 350);
   }
@@ -135,6 +146,14 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
 
   return {
     onDraw,
-    stop() { cancelAnimationFrame(raf); clearTimeout(advanceTimer); const r = document.getElementById('sk-recap'); if (r) r.hidden = true; els.skip.onclick = null; },
+    stop() {
+      cancelAnimationFrame(raf);
+      clearTimeout(advanceTimer);
+      const t = document.getElementById('sk-toast');
+      if (t) { clearTimeout(t._timer); t.hidden = true; }
+      const r = document.getElementById('sk-recap');
+      if (r) r.hidden = true;
+      els.skip.onclick = null;
+    },
   };
 }

@@ -45,6 +45,8 @@ els.clear.addEventListener('click', () => {
 });
 
 function setMode(next) {
+  // Challenge needs bundle.labels — ignore the click until the model has loaded.
+  if (next === 'challenge' && !bundle) return;
   mode = next;
   els.modes.forEach((b) => b.classList.toggle('sk-mode--active', b.dataset.mode === next));
   els.chhead.hidden = next !== 'challenge';
@@ -52,8 +54,10 @@ function setMode(next) {
   const railJoin = document.querySelector('.sk-lb-join');
   if (railJoin) railJoin.hidden = (next === 'challenge');
   canvas.clear();
+  // Tear down any in-flight challenge before (re)entering a mode — re-clicking
+  // "Challenge" must not spawn a second one with its own timers/RAF loop.
+  if (challenge) { challenge.stop(); challenge = null; }
   if (next === 'sandbox') {
-    if (challenge) { challenge.stop(); challenge = null; }
     renderGuesses(els.guesses, [], { headlineEl: els.headline });
   } else {
     challenge = startChallenge({ canvas, bundle, els, state, persist: () => persistSave(state), lb });
