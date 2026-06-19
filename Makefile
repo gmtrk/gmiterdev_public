@@ -25,13 +25,16 @@ run: ## Run the dev server at http://127.0.0.1:8000
 test: ## Run the test suite
 	.venv/bin/pytest
 
+js-test: ## Run the buildless JS unit tests (node --test)
+	node --test mnist/static/mnist/js/*.test.mjs sketchy/static/sketchy/js/*.test.mjs
+
 lint: ## Lint with ruff
 	.venv/bin/ruff check .
 
 format: ## Auto-format with ruff
 	.venv/bin/ruff format .
 
-check: lint test ## Lint + test (run before every PR)
+check: lint test js-test ## Lint + py tests + js tests (run before every PR)
 
 migrate: ## Apply database migrations
 	$(MANAGE) migrate
@@ -48,4 +51,4 @@ collectstatic: ## Rebuild the staticfiles/ bundle
 shell: ## Open the Django shell
 	$(MANAGE) shell
 
-.PHONY: help install setup run test lint format check migrate seed makemigrations collectstatic shell
+.PHONY: help install setup run test js-test lint format check migrate seed makemigrations collectstatic shell
