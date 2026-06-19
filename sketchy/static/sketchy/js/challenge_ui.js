@@ -38,6 +38,7 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
   }
 
   function onDraw(strokes) {
+    if (!strokes || strokes.length === 0) return;
     const now = Date.now();
     if (now - lastRun < 80 || !bundle) return;
     lastRun = now;
@@ -55,7 +56,6 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
 
   function timeout() {
     cancelAnimationFrame(raf);
-    const target = currentPrompt(round);
     const sawGuess = topk.length ? topk[0].label : 'nothing';
     toast(`⏱ time! I was sure it was a <span class="sk-toast__word">${sawGuess}</span> 🤷 → next!`);
     round = recordResult(round, { won: false, secondsLeft: 0 });
@@ -71,13 +71,14 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
 
   function finish() {
     const total = roundTotal(round.results);
-    if (total > state.bestPoints) { state.bestPoints = total; persist(); }
+    const prevBest = state.bestPoints;
+    if (total > prevBest) { state.bestPoints = total; persist(); }
     if (lb) lb.onRoundEnd();
-    showRecap(round, total, total >= state.bestPoints);
+    showRecap(round, total, total > prevBest);
   }
 
   function toast(html) {
-    const t = els.toastEl || document.getElementById('sk-toast');
+    const t = document.getElementById('sk-toast');
     t.innerHTML = html; t.hidden = false;
     clearTimeout(t._timer);
     t._timer = setTimeout(() => { t.hidden = true; }, 1900);
