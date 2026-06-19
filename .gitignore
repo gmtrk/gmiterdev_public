@@ -30,3 +30,6 @@ db.sqlite3
 
 # Training venv (dev/train-only — TF is not a runtime dep)
 .venv-train/
+
+# Sketchy training data (downloaded + rendered; never committed)
+sketchy/data/
