@@ -12,23 +12,23 @@ CATEGORIES = [
     "bear", "shark", "dolphin", "monkey",
     # nature (14)
     "tree", "flower", "leaf", "cactus", "mushroom", "cloud", "sun", "moon",
-    "star", "rainbow", "mountain", "fire", "snowflake", "palm tree",
+    "star", "rainbow", "mountain", "campfire", "snowflake", "palm tree",
     # food/drink (14)
     "apple", "banana", "pizza", "hamburger", "hot dog", "ice cream", "cake",
-    "cookie", "donut", "carrot", "bread", "egg", "coffee cup", "wine glass",
+    "cookie", "donut", "carrot", "bread", "sandwich", "coffee cup", "wine glass",
     # household/objects (32)
     "house", "door", "key", "clock", "light bulb", "candle", "scissors",
     "hammer", "ladder", "umbrella", "eyeglasses", "chair", "table", "bed",
     "television", "telephone", "camera", "book", "pencil", "paintbrush",
-    "envelope", "fork", "knife", "spoon", "lock", "anvil", "bucket", "broom",
+    "envelope", "fork", "knife", "spoon", "calculator", "anvil", "bucket", "broom",
     "hat", "crown", "shoe", "mug",
     # transport (12)
     "car", "bus", "truck", "train", "airplane", "helicopter", "bicycle",
-    "sailboat", "rocket", "submarine", "hot air balloon", "canoe",
+    "sailboat", "van", "submarine", "hot air balloon", "canoe",
     # music (6)
     "guitar", "piano", "drums", "trumpet", "violin", "saxophone",
     # sport/misc (8)
-    "basketball", "tennis racquet", "dumbbell", "axe", "sword", "kite",
+    "basketball", "tennis racquet", "dumbbell", "axe", "sword", "parachute",
     "tent", "windmill",
     # symbols/body (6)
     "wheel", "tornado", "skull", "eye", "hand", "smiley face",
