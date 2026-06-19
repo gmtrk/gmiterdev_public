@@ -1,4 +1,5 @@
 import pytest
+from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
 
@@ -7,9 +8,6 @@ def test_sketchy_visit_is_tracked(client):
     from mnist.models import AppVisit
     client.get("/sketchy/")
     assert AppVisit.objects.filter(app_name="sketchy").exists()
-
-
-from django.urls import reverse
 
 
 def test_home_exposes_sketchy_tile(client):
