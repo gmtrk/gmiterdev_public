@@ -23,11 +23,22 @@
 .sk-header{position:relative;display:flex;align-items:center;justify-content:center;
   padding:15px 18px;background:linear-gradient(180deg,#ffd0e0,#ffe3ec);
   border-bottom:3px solid var(--sk-border);box-shadow:0 2px 0 rgba(255,124,162,.25)}
-/* reuse the real gmiterdev soul-heart wordmark, recoloured for the pink banner */
+/* gmiter.dev — DDLC-style cut-paper wordmark: per-letter pastels + paper-mache blue heart */
 .sk-home{position:absolute;left:16px;top:50%;transform:translateY(-50%);
-  font-size:18px;color:var(--sk-ink);letter-spacing:.03em}
-.sk-home:hover{color:var(--sk-bold)}
-.sk-home .ud-sw{transform:scale(.78);transform-origin:center}
+  display:inline-flex;align-items:center;text-decoration:none;
+  font-family:'Chewy',cursive;font-size:23px;line-height:1}
+.sk-home__word{display:inline-flex}
+.sk-home__l{display:inline-block;color:var(--c);
+  text-shadow:1px 1px 0 var(--e),2px 2px 0 var(--e),0 4px 5px rgba(120,60,85,.22)}
+.sk-home__l:nth-child(odd){transform:rotate(-6deg) translateY(1px)}
+.sk-home__l:nth-child(even){transform:rotate(5deg) translateY(-1px)}
+.sk-home__l,.sk-home__heart{transition:transform .15s ease}
+.sk-home__heart{display:inline-block;margin:0 3px;font-size:.92em;color:#8fd3ef;
+  text-shadow:1px 1px 0 #5aa9cc,2px 2px 0 #5aa9cc,0 4px 5px rgba(80,130,160,.3);transform:rotate(-8deg)}
+.sk-home:hover .sk-home__l,.sk-home:hover .sk-home__heart{transform:translateY(-2px) rotate(0)}
+/* pastel paper colours: fill (--c) + darker craft-foam edge (--e) */
+.c-red{--c:#ff9aa2;--e:#e2767f} .c-pur{--c:#c3a6f0;--e:#9c81cc} .c-pnk{--c:#ffb3d1;--e:#e489b0}
+.c-grn{--c:#a6e2a6;--e:#7fc47f} .c-blu{--c:#a8d4f0;--e:#7fb1d8}
 /* hand-lettered, scrapbook vibe: white fill + pink outline */
 .sk-logo{font-family:'Chewy',cursive;font-size:40px;line-height:1;font-weight:700;color:#fff;letter-spacing:1px;
   -webkit-text-stroke:1px var(--sk-bold);
@@ -37,7 +48,7 @@
     0 6px 0 rgba(232,77,138,.28)}
 .sk-logo__heart{-webkit-text-stroke:0;color:var(--sk-pink2);font-size:.62em;vertical-align:middle;margin-left:.2em;
   text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff}
-@media (max-width:600px){.sk-logo{font-size:24px}.sk-home{font-size:14px}}
+@media (max-width:600px){.sk-logo{font-size:24px}.sk-home{font-size:17px}}
 
 /* mode tabs */
 .sk-topbar{display:flex;align-items:center;justify-content:center;margin:14px 0}
