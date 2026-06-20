@@ -4,6 +4,8 @@ import { renderGuesses } from './guesses.js';
 import { loadSave, persistSave } from './save.js';
 import { setupLeaderboard } from './leaderboard.js';
 import { startChallenge } from './challenge_ui.js';
+import { mountEyes } from './eyes.js';
+import { createGlitchEngine, applyBeat, readSignals, bumpVisit } from './glitch.js';
 
 const state = loadSave();
 const els = {
@@ -21,15 +23,24 @@ let mode = 'sandbox';
 let lb = null;
 let challenge = null;
 let lastRun = 0;
+let eyes = null;
+let glitch = null;
+let clearCount = 0;
 
 // throttle: re-predict at most ~12/s while drawing
 function scheduleSandboxPredict() {
-  if (mode !== 'sandbox' || !bundle) return;
+  if (mode !== 'sandbox' || !bundle || !glitch) return;
   const now = Date.now();
   if (now - lastRun < 80) return;
   lastRun = now;
   const topk = predictTopK(bundle, canvas.getStrokes(), 6);
   renderGuesses(els.guesses, topk, { headlineEl: els.headline });
+  const beat = glitch.roll({ signals: readSignals({ strokes: canvas.getStrokes(), clears: clearCount }) });
+  if (beat) applyBeat(beat, {
+    dialog: document.querySelector('.sk-dialog'),
+    name: document.getElementById('sk-name'),
+    headline: els.headline, eyes,
+  });
 }
 
 const canvas = createCanvas(els.canvas, {
@@ -41,6 +52,7 @@ const canvas = createCanvas(els.canvas, {
 
 els.clear.addEventListener('click', () => {
   canvas.clear();
+  clearCount += 1;
   if (mode === 'sandbox') renderGuesses(els.guesses, [], { headlineEl: els.headline });
 });
 
@@ -60,16 +72,36 @@ function setMode(next) {
   if (next === 'sandbox') {
     renderGuesses(els.guesses, [], { headlineEl: els.headline });
   } else {
-    challenge = startChallenge({ canvas, bundle, els, state, persist: () => persistSave(state), lb });
+    challenge = startChallenge({ canvas, bundle, els, state, persist: () => persistSave(state), lb, glitch, eyes });
   }
 }
 els.modes.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
+// Scatter falling cherry-blossom petals into #sk-petals (CSS animates them; the
+// reduced-motion media query hides the container, but skip the DOM churn too).
+function spawnPetals(n = 14) {
+  const host = document.getElementById('sk-petals');
+  if (!host) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i = 0; i < n; i += 1) {
+    const p = document.createElement('span');
+    p.className = 'sk-petal';
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.animationDuration = `${6 + Math.random() * 6}s`;
+    p.style.animationDelay = `${-Math.random() * 8}s`;
+    host.appendChild(p);
+  }
+}
+
 (async function init() {
+  spawnPetals();
   els.headline.textContent = 'loading the AI…';
   bundle = await loadModel();
   els.headline.textContent = 'draw something…';
   const loadingEl = document.getElementById('sk-loading');
   if (loadingEl) loadingEl.hidden = true;
   lb = setupLeaderboard(state, { persist: () => persistSave(state) });
+  eyes = mountEyes(document.getElementById('sk-eyes'));
+  bumpVisit();
+  glitch = createGlitchEngine({});
 })();

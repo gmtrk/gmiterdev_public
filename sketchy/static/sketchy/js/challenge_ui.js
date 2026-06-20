@@ -4,11 +4,12 @@ import { roundTotal } from './scoring.js';
 import { predictTopK } from './model.js';
 import { renderGuesses, article } from './guesses.js';
 import { canJoin, joinLeaderboard } from './leaderboard.js';
+import { applyBeat } from './glitch.js';
 
 const ROUND_SECONDS = 20;
 const PROMPTS_PER_ROUND = 6;
 
-export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
+export function startChallenge({ canvas, bundle, els, state, persist, lb, glitch, eyes }) {
   let round = createRound(pickPrompts(bundle.labels, PROMPTS_PER_ROUND), ROUND_SECONDS);
   let deadline = 0;
   let raf = 0;
@@ -51,6 +52,14 @@ export function startChallenge({ canvas, bundle, els, state, persist, lb }) {
     lastRun = now;
     topk = predictTopK(bundle, strokes, 6);
     renderGuesses(els.guesses, topk, { headlineEl: els.headline });
+    if (glitch) {
+      const beat = glitch.roll({ signals: { firstStroke: strokes.length === 1 } });
+      if (beat) applyBeat(beat, {
+        dialog: document.querySelector('.sk-dialog'),
+        name: document.getElementById('sk-name'),
+        headline: els.headline, eyes,
+      });
+    }
     if (topk.length && isRecognized(topk[0].label, currentPrompt(round))) win();
   }
 

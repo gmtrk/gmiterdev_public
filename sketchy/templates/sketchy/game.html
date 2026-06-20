@@ -6,26 +6,35 @@
 {% block extra_head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Shantell+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chewy&family=Mochiy+Pop+One&family=Nunito:wght@800;900&family=Zen+Maru+Gothic:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'sketchy/css/sketchy.css' %}">
 {% endblock %}
 
 {% block body_class %}sk-body{% endblock %}
 
+{% block header %}
+<header class="sk-header">
+  <a class="sk-home" href="{% url 'main' %}" aria-label="gmiterdev home">
+    <span class="sk-home__word" aria-hidden="true"><span class="sk-home__l c-red">g</span><span class="sk-home__l c-pur">m</span><span class="sk-home__l c-pnk">i</span><span class="sk-home__l c-grn">t</span><span class="sk-home__l c-blu">e</span><span class="sk-home__l c-red">r</span></span><span class="sk-home__heart" aria-hidden="true">♥</span><span class="sk-home__word" aria-hidden="true"><span class="sk-home__l c-pur">d</span><span class="sk-home__l c-pnk">e</span><span class="sk-home__l c-grn">v</span></span>
+  </a>
+  <div class="sk-logo">Sketchy<span class="sk-logo__heart">♥</span></div>
+</header>
+{% endblock %}
+
 {% block content %}
 {% csrf_token %}
+<div class="sk-petals" id="sk-petals" aria-hidden="true"></div>
 <div class="sk-page">
   <div class="sk-topbar">
-    <div class="sk-title">Sketchy</div>
     <div class="sk-modes">
-      <button class="sk-mode sk-mode--active" data-mode="sandbox">Sandbox</button>
-      <button class="sk-mode" data-mode="challenge">Challenge</button>
+      <button class="sk-mode sk-mode--active" data-mode="sandbox">sandbox</button>
+      <button class="sk-mode" data-mode="challenge">challenge</button>
     </div>
   </div>
 
   <!-- challenge header (hidden in sandbox) -->
   <div class="sk-chhead" hidden>
-      <div class="sk-prompt">draw <span class="sk-prompt__lead">a</span> <span class="sk-prompt__word">—</span></div>
+    <div class="sk-prompt">draw <span class="sk-prompt__lead">a</span> <span class="sk-prompt__word">—</span></div>
     <div class="sk-score">score <span id="sk-score">0</span></div>
     <div class="sk-timerwrap"><div class="sk-timer"><i id="sk-timer-fill"></i></div><span id="sk-timer-sec">20s</span></div>
   </div>
@@ -33,30 +42,37 @@
   <div class="sk-main">
     <div class="sk-left">
       <div class="sk-canvas-wrap">
-          <canvas id="sk-canvas" class="sk-canvas"></canvas>
-          <div id="sk-loading" class="sk-loading"><span class="sk-loading__pulse">waking up the AI…</span></div>
-        </div>
+        <canvas id="sk-canvas" class="sk-canvas"></canvas>
+        <div id="sk-loading" class="sk-loading"><span class="sk-loading__pulse">waking up the AI…</span></div>
+      </div>
       <div class="sk-tools">
-        <button id="sk-clear" class="sk-chip">Clear ✗</button>
-        <button id="sk-skip" class="sk-chip" hidden>Skip ⤳</button>
+        <button id="sk-clear" class="sk-chip">clear ✗</button>
+        <button id="sk-skip" class="sk-chip" hidden>skip ⤳</button>
       </div>
     </div>
+
     <div class="sk-rail">
-      <div class="sk-headline" id="sk-headline">draw something…</div>
-      <div id="sk-guesses"></div>
+      <!-- the visual-novel dialogue box -->
+      <div class="sk-dialog">
+        <span class="sk-name" id="sk-name">???</span>
+        <div class="sk-say" id="sk-headline">draw something for me ♡</div>
+        <div class="sk-alts" id="sk-guesses"></div>
+      </div>
       <div class="sk-lb-wrap">
-        <div class="sk-lb-title">🏆 leaderboard</div>
+        <div class="sk-lb-title">♡ leaderboard</div>
         <div id="sk-lb"></div>
         <div class="sk-lb-join">
           <span id="sk-lb-status"></span>
           <input id="sk-lb-initials" maxlength="3" placeholder="ABC" disabled>
-          <button id="sk-lb-join" class="sk-chip" disabled>Join 🏆</button>
+          <button id="sk-lb-join" class="sk-chip" disabled>join 🏆</button>
         </div>
+      </div>
+      <div class="sk-stage">
+        <div class="sk-eyes" id="sk-eyes" aria-hidden="true"></div>
       </div>
     </div>
   </div>
 
-  <!-- toast + recap mounts (filled by main.js) -->
   <div id="sk-toast" class="sk-toast" hidden></div>
   <div id="sk-recap" class="sk-recap" hidden></div>
 </div>
