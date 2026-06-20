@@ -84,7 +84,7 @@ function spasm(ctx) {
 export function readSignals({ strokes, clears, idle } = {}) {
   const s = {};
   if (strokes != null && strokes.length === 1) s.firstStroke = true;
-  if (clears != null) s.clears = clears;
+  if (clears > 1) s.clears = clears; // only suspicious once they've actually cleared a few times (and avoids "0/1 times")
   if (idle) s.idle = true;
   try {
     const d = new Date();
