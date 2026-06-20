@@ -19,9 +19,21 @@
 @keyframes sk-fall{0%{transform:translateY(-16px) rotate(0)}
   100%{transform:translateY(105vh) rotate(240deg)}}
 
-/* top bar + tabs */
-.sk-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.sk-title{font-family:'Mochiy Pop One',sans-serif;color:var(--sk-bold);font-size:24px}
+/* DDLC page header — overrides the site header on /sketchy; puts the logo up top */
+.sk-header{position:relative;display:flex;align-items:center;justify-content:center;
+  padding:15px 18px;background:linear-gradient(180deg,#ffd0e0,#ffe3ec);
+  border-bottom:3px solid var(--sk-border);box-shadow:0 2px 0 rgba(255,124,162,.25)}
+.sk-header__home{position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  font-size:12px;color:#c0507a;background:#fff;border:1.5px solid var(--sk-border);
+  border-radius:10px;padding:5px 12px;text-decoration:none}
+.sk-header__home:hover{background:#fff0f5}
+.sk-logo{font-family:'Mochiy Pop One',sans-serif;font-size:30px;color:var(--sk-bold);
+  letter-spacing:.5px;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(255,124,162,.45)}
+.sk-logo__heart{color:var(--sk-pink2);font-size:.62em;vertical-align:middle;margin-left:.16em}
+@media (max-width:600px){.sk-logo{font-size:22px}.sk-header__home{font-size:11px;padding:4px 9px}}
+
+/* mode tabs */
+.sk-topbar{display:flex;align-items:center;justify-content:center;margin:14px 0}
 .sk-modes{display:flex;gap:8px}
 .sk-mode{font-family:'Mochiy Pop One',sans-serif;font-size:12px;cursor:pointer;
   background:#fff;border:1.5px solid var(--sk-border);color:#c0507a;border-radius:10px;padding:6px 14px}
@@ -40,10 +52,12 @@
   background:linear-gradient(90deg,#ff9ec0,var(--sk-pink2))}
 .sk-timerwrap span{font-size:13px;color:#b06}
 
-/* the eyes stage */
-.sk-stage{display:flex;justify-content:center;margin:4px 0 14px}
-.sk-eyes{width:300px;max-width:80vw}
+/* the eyes — fixed in the bottom-right corner, watching */
+.sk-stage{height:0;margin:0}
+.sk-eyes{position:fixed;right:22px;bottom:16px;width:172px;z-index:6;pointer-events:none;
+  filter:drop-shadow(0 4px 10px rgba(200,80,120,.18))}
 .sk-eyes svg{width:100%;height:auto;display:block}
+@media (max-width:760px){.sk-eyes{width:116px;right:12px;bottom:12px}}
 
 /* layout */
 .sk-main{display:flex;gap:18px;align-items:flex-start}
@@ -82,7 +96,11 @@
 /* leaderboard */
 .sk-lb-wrap{background:rgba(255,255,255,.6);border:1.5px solid var(--sk-border);border-radius:14px;padding:12px 14px}
 .sk-lb-title{font-family:'Mochiy Pop One',sans-serif;font-size:13px;color:#c0507a;margin-bottom:8px}
-#sk-lb{display:flex;flex-direction:column;gap:4px;font-size:13px}
+#sk-lb{display:flex;flex-direction:column;font-size:13px}
+.sk-lb__row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 2px;border-bottom:1px dashed #ffe0ea}
+.sk-lb__row:last-child{border-bottom:none}
+.sk-lb__rank{display:inline-block;min-width:20px;color:var(--sk-bold);font-family:'Mochiy Pop One',sans-serif;font-size:11px}
+.sk-lb__row > span:last-child{color:#b06;font-weight:700;font-variant-numeric:tabular-nums}
 .sk-lb-join{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#a85c76}
 .sk-lb-join input{width:64px;border:1.5px solid var(--sk-border);border-radius:8px;padding:4px 8px;
   text-transform:uppercase;font-family:'Mochiy Pop One',sans-serif}

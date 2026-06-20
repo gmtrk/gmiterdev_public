@@ -5,9 +5,17 @@ export function article(word) {
 
 import { pickLine, runnerUps } from './voice.js';
 
+// Re-render the dialogue only when the TOP-1 prediction changes, so the spoken
+// line + bars stay steady while you keep drawing the same thing (instead of
+// re-rolling on every ~80ms percent tick). null (empty canvas) resets the gate.
+let lastTop = null;
+
 // Render the dialogue: spoken best-guess line into headlineEl, runner-up
 // question-rows (with bars) into `container`.
 export function renderGuesses(container, topk, { headlineEl, rng } = {}) {
+  const top = (topk && topk.length) ? topk[0].label : null;
+  if (top === lastTop) return;
+  lastTop = top;
   if (headlineEl) headlineEl.innerHTML = pickLine(topk, { rng });
   if (!container) return;
   const alts = runnerUps(topk, 2);

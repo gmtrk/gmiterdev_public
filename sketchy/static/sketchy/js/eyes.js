@@ -42,7 +42,6 @@ const SVG = `
       <path d="M48,79 C62,45 114,45 128,79 C110,60.8 66,60.8 48,79 Z" fill="#1f0f19"/>
       <path d="M48,79 L30,72 L51,81 Z" fill="#1f0f19"/>
       <path d="M55,71 L46,60 L61,76 Z" fill="#1f0f19"/>
-      <path d="M58,99 Q88,110 117,98" fill="none" stroke="#e7adc3" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
     </g>
     <g transform="translate(34,0)">
       <path d="M132,79 C146,45 198,45 212,79 C196,109 148,109 132,79 Z" fill="#fbffff"/>
@@ -61,7 +60,6 @@ const SVG = `
       <path d="M132,79 C146,45 198,45 212,79 C194,60.8 150,60.8 132,79 Z" fill="#1f0f19"/>
       <path d="M212,79 L230,72 L209,81 Z" fill="#1f0f19"/>
       <path d="M205,71 L214,60 L199,76 Z" fill="#1f0f19"/>
-      <path d="M143,98 Q172,110 202,99" fill="none" stroke="#e7adc3" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
     </g>
   </g>
 </svg>`;

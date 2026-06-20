@@ -12,12 +12,18 @@
 
 {% block body_class %}sk-body{% endblock %}
 
+{% block header %}
+<header class="sk-header">
+  <a class="sk-header__home" href="{% url 'main' %}">⟵ gmiterdev</a>
+  <div class="sk-logo">Sketchy<span class="sk-logo__heart">♥</span></div>
+</header>
+{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 <div class="sk-petals" id="sk-petals" aria-hidden="true"></div>
 <div class="sk-page">
   <div class="sk-topbar">
-    <div class="sk-title">✿ sketchy</div>
     <div class="sk-modes">
       <button class="sk-mode sk-mode--active" data-mode="sandbox">sandbox</button>
       <button class="sk-mode" data-mode="challenge">challenge</button>

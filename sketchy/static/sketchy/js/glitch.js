@@ -44,7 +44,14 @@ export function applyBeat(beat, ctx) {
   if (!beat) return;
   try {
     const { dialog, name, headline, eyes } = ctx;
-    if (beat.line && headline) headline.innerHTML = `<span class="sk-gl-mono">${beat.line}</span>`;
+    if (beat.line && headline) {
+      const prev = headline.innerHTML;
+      const html = `<span class="sk-gl-mono">${beat.line}</span>`;
+      headline.innerHTML = html;
+      // a beat is transient: snap back to the normal line after ~1.9s (unless
+      // the dialogue changed meanwhile, e.g. a new top guess re-rendered it).
+      setTimeout(() => { if (headline.innerHTML === html) headline.innerHTML = prev; }, 1900);
+    }
     switch (beat.effect) {
       case 'rgb': flashClass(headline, 'sk-gl-rgb', 1600); break;
       case 'corrupt': if (headline) headline.classList.add('sk-gl-mono'),
