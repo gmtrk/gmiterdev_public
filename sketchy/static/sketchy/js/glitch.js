@@ -17,7 +17,7 @@ const KNOWS = [
 function ord(n) { const v = n % 100; if (v >= 11 && v <= 13) return 'th'; return ['th','st','nd','rd'][Math.min(n % 10, 4)] || 'th'; }
 
 export function createGlitchEngine({ rng = Math.random, now = Date.now,
-  baseP = 0.1, rampPerMin = 0.04, cooldown = 2, guaranteeMs = 90000 } = {}) {
+  baseP = 0.005, rampPerMin = 0.0015, cooldown = 200, guaranteeMs = 150000 } = {}) {
   const start = now();
   let cd = 0, fired = false;
   return {
@@ -26,7 +26,7 @@ export function createGlitchEngine({ rng = Math.random, now = Date.now,
     roll(ctx = {}) {
       if (cd > 0) { cd -= 1; return null; }
       const mins = (now() - start) / 60000;
-      const p = Math.min(0.35, baseP + rampPerMin * mins);
+      const p = Math.min(0.05, baseP + rampPerMin * mins);
       const force = !fired && (now() - start) >= guaranteeMs;
       if (!force && rng() >= p) return null;
       fired = true; cd = cooldown;
