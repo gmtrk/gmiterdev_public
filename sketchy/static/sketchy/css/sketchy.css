@@ -122,3 +122,13 @@
   .sk-petals,.sk-scanline{display:none!important}
   .sk-loading__pulse,.sk-gl-rgb,.sk-dialog.sk-gl-shake{animation:none!important}
 }
+
+/* eyes */
+.sk-eyesvg .sk-iris{fill:var(--sk-iris,url(#sk-irisG));transition:fill .18s}
+.sk-eyesvg .sk-ring{stroke:#0c4b3a;transition:stroke .18s}
+.sk-eyesvg .sk-pup{transition:transform .18s;transform-box:fill-box;transform-origin:center}
+.sk-eyesvg.sk-staring .sk-iris{fill:url(#sk-irisR)}
+.sk-eyesvg.sk-staring .sk-ring{stroke:#cf1248}
+.sk-eyesvg.sk-staring .sk-pup{transform:scale(.72)}
+.sk-eyesvg.sk-staring{filter:drop-shadow(0 0 11px rgba(255,46,110,.6))}
+.sk-eyesvg .sk-hl{opacity:.94}

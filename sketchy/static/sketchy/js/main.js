@@ -4,6 +4,7 @@ import { renderGuesses } from './guesses.js';
 import { loadSave, persistSave } from './save.js';
 import { setupLeaderboard } from './leaderboard.js';
 import { startChallenge } from './challenge_ui.js';
+import { mountEyes } from './eyes.js';
 
 const state = loadSave();
 const els = {
@@ -21,6 +22,7 @@ let mode = 'sandbox';
 let lb = null;
 let challenge = null;
 let lastRun = 0;
+let eyes = null;
 
 // throttle: re-predict at most ~12/s while drawing
 function scheduleSandboxPredict() {
@@ -72,4 +74,5 @@ els.modes.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mod
   const loadingEl = document.getElementById('sk-loading');
   if (loadingEl) loadingEl.hidden = true;
   lb = setupLeaderboard(state, { persist: () => persistSave(state) });
+  eyes = mountEyes(document.getElementById('sk-eyes'));
 })();
