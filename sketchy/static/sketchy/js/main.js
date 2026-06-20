@@ -77,7 +77,24 @@ function setMode(next) {
 }
 els.modes.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
+// Scatter falling cherry-blossom petals into #sk-petals (CSS animates them; the
+// reduced-motion media query hides the container, but skip the DOM churn too).
+function spawnPetals(n = 14) {
+  const host = document.getElementById('sk-petals');
+  if (!host) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i = 0; i < n; i += 1) {
+    const p = document.createElement('span');
+    p.className = 'sk-petal';
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.animationDuration = `${6 + Math.random() * 6}s`;
+    p.style.animationDelay = `${-Math.random() * 8}s`;
+    host.appendChild(p);
+  }
+}
+
 (async function init() {
+  spawnPetals();
   els.headline.textContent = 'loading the AI…';
   bundle = await loadModel();
   els.headline.textContent = 'draw something…';
