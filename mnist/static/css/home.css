@@ -54,9 +54,8 @@ body.ud-home {
   .ud-caret { animation: none; }
 }
 
-/* Sketchy preview: the watching-eyes presence — pink field, teal irises + dark pupils. */
+/* Sketchy preview: the DDLC presence as a serene ^_^ face — pink field, plum ink, soft blush. */
 .ud-sk { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.ud-sk__bg   { fill: #ffe3ec; }
-.ud-sk__eye  { fill: #fbffff; }
-.ud-sk__iris { fill: #2a9c7d; }
-.ud-sk__pup  { fill: #160f12; }
+.ud-sk__bg    { fill: #ffe3ec; }
+.ud-sk__face  { fill: #4a2a3a; }
+.ud-sk__blush { fill: #ff9ec2; }

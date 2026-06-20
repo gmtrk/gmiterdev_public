@@ -13,14 +13,14 @@ const SVG = `
 <svg viewBox="0 0 300 150" class="sk-eyesvg" aria-hidden="true">
   <defs>
     <radialGradient id="sk-irisG" cx="50%" cy="68%" r="62%">
-      <stop offset="0%" stop-color="#bff3e4"/><stop offset="34%" stop-color="#54cda9"/>
-      <stop offset="72%" stop-color="#268f72"/><stop offset="100%" stop-color="#0e5240"/></radialGradient>
+      <stop offset="0%" stop-color="#d3ecff"/><stop offset="34%" stop-color="#5fabef"/>
+      <stop offset="72%" stop-color="#2a6cc9"/><stop offset="100%" stop-color="#123a7e"/></radialGradient>
     <radialGradient id="sk-irisR" cx="50%" cy="68%" r="62%">
       <stop offset="0%" stop-color="#ffd6e3"/><stop offset="34%" stop-color="#ff5683"/>
       <stop offset="72%" stop-color="#cf1248"/><stop offset="100%" stop-color="#6e0c2a"/></radialGradient>
     <radialGradient id="sk-lid" cx="50%" cy="0%" r="90%">
-      <stop offset="0%" stop-color="#06241c" stop-opacity=".5"/>
-      <stop offset="55%" stop-color="#06241c" stop-opacity="0"/></radialGradient>
+      <stop offset="0%" stop-color="#06203a" stop-opacity=".5"/>
+      <stop offset="55%" stop-color="#06203a" stop-opacity="0"/></radialGradient>
     <clipPath id="sk-clipL"><path d="M48,79 C62,45 114,45 128,79 C112,109 64,109 48,79 Z"/></clipPath>
     <clipPath id="sk-clipR"><path d="M132,79 C146,45 198,45 212,79 C196,109 148,109 132,79 Z"/></clipPath>
   </defs>
@@ -31,7 +31,7 @@ const SVG = `
         <g class="sk-mover" data-eye="l"><g transform="translate(88,80) scale(0.78) translate(-88,-80)">
           <ellipse class="sk-iris" cx="88" cy="80" rx="31" ry="33"/>
           <ellipse class="sk-ring" cx="88" cy="80" rx="31" ry="33" fill="none" stroke-width="3" opacity=".55"/>
-          <ellipse cx="88" cy="98" rx="19" ry="9" fill="#eafff8" opacity=".4"/>
+          <ellipse cx="88" cy="98" rx="19" ry="9" fill="#eaf3ff" opacity=".4"/>
           <ellipse class="sk-pup" cx="88" cy="82" rx="12.5" ry="15" fill="#130c10"/>
           <ellipse class="sk-hl" cx="76" cy="66" rx="9.5" ry="12" fill="#fff" transform="rotate(-20 76 66)"/>
           <circle class="sk-hl" cx="99" cy="92" r="4.5" fill="#fff"/>
@@ -49,7 +49,7 @@ const SVG = `
         <g class="sk-mover" data-eye="r"><g transform="translate(172,80) scale(0.78) translate(-172,-80)">
           <ellipse class="sk-iris" cx="172" cy="80" rx="31" ry="33"/>
           <ellipse class="sk-ring" cx="172" cy="80" rx="31" ry="33" fill="none" stroke-width="3" opacity=".55"/>
-          <ellipse cx="172" cy="98" rx="19" ry="9" fill="#eafff8" opacity=".4"/>
+          <ellipse cx="172" cy="98" rx="19" ry="9" fill="#eaf3ff" opacity=".4"/>
           <ellipse class="sk-pup" cx="172" cy="82" rx="12.5" ry="15" fill="#130c10"/>
           <ellipse class="sk-hl" cx="160" cy="66" rx="9.5" ry="12" fill="#fff" transform="rotate(-20 160 66)"/>
           <circle class="sk-hl" cx="183" cy="92" r="4.5" fill="#fff"/>
