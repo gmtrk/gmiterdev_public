@@ -54,7 +54,9 @@ body.ud-home {
   .ud-caret { animation: none; }
 }
 
-/* Sketchy preview: a Flowey face — white field, black eyes + open smile. */
+/* Sketchy preview: the watching-eyes presence — pink field, teal irises + dark pupils. */
 .ud-sk { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.ud-sk__bg   { fill: #ffffff; }   /* white background */
-.ud-sk__face { fill: #111111; }   /* black eyes + smile */
+.ud-sk__bg   { fill: #ffe3ec; }
+.ud-sk__eye  { fill: #fbffff; }
+.ud-sk__iris { fill: #2a9c7d; }
+.ud-sk__pup  { fill: #160f12; }
