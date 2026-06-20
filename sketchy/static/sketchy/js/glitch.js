@@ -32,7 +32,7 @@ export function createGlitchEngine({ rng = Math.random, now = Date.now,
       fired = true; cd = cooldown;
       const effect = EFFECTS[Math.floor(rng() * EFFECTS.length) % EFFECTS.length];
       const signals = ctx.signals || {};
-      const avail = KNOWS.filter((k) => signals[k.sig] != null || k.sig === 'firstStroke' || k.sig === 'idle');
+      const avail = KNOWS.filter((k) => signals[k.sig] != null && signals[k.sig] !== false);
       const line = avail.length ? avail[Math.floor(rng() * avail.length) % avail.length].line(signals) : null;
       return { effect, line };
     },

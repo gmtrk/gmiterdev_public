@@ -29,7 +29,7 @@ let clearCount = 0;
 
 // throttle: re-predict at most ~12/s while drawing
 function scheduleSandboxPredict() {
-  if (mode !== 'sandbox' || !bundle) return;
+  if (mode !== 'sandbox' || !bundle || !glitch) return;
   const now = Date.now();
   if (now - lastRun < 80) return;
   lastRun = now;
