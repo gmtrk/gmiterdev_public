@@ -27,9 +27,15 @@
   font-size:12px;color:#c0507a;background:#fff;border:1.5px solid var(--sk-border);
   border-radius:10px;padding:5px 12px;text-decoration:none}
 .sk-header__home:hover{background:#fff0f5}
-.sk-logo{font-family:'Mochiy Pop One',sans-serif;font-size:30px;color:var(--sk-bold);
-  letter-spacing:.5px;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(255,124,162,.45)}
-.sk-logo__heart{color:var(--sk-pink2);font-size:.62em;vertical-align:middle;margin-left:.16em}
+/* hand-lettered, scrapbook vibe: white fill + pink outline */
+.sk-logo{font-family:'Chewy',cursive;font-size:40px;line-height:1;color:#fff;letter-spacing:1px;
+  -webkit-text-stroke:1px var(--sk-bold);
+  text-shadow:
+    -2px -2px 0 var(--sk-bold), 2px -2px 0 var(--sk-bold), -2px 2px 0 var(--sk-bold), 2px 2px 0 var(--sk-bold),
+    -2px 0 0 var(--sk-bold), 2px 0 0 var(--sk-bold), 0 -2px 0 var(--sk-bold), 0 2px 0 var(--sk-bold),
+    0 6px 0 rgba(232,77,138,.28)}
+.sk-logo__heart{-webkit-text-stroke:0;color:var(--sk-pink2);font-size:.62em;vertical-align:middle;margin-left:.2em;
+  text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff}
 @media (max-width:600px){.sk-logo{font-size:22px}.sk-header__home{font-size:11px;padding:4px 9px}}
 
 /* mode tabs */
@@ -52,12 +58,10 @@
   background:linear-gradient(90deg,#ff9ec0,var(--sk-pink2))}
 .sk-timerwrap span{font-size:13px;color:#b06}
 
-/* the eyes — fixed in the bottom-right corner, watching */
-.sk-stage{height:0;margin:0}
-.sk-eyes{position:fixed;right:22px;bottom:16px;width:172px;z-index:6;pointer-events:none;
-  filter:drop-shadow(0 4px 10px rgba(200,80,120,.18))}
+/* the eyes — sit in the rail just below the leaderboard, watching */
+.sk-stage{margin:16px 0 0;display:flex;justify-content:center}
+.sk-eyes{width:190px;max-width:100%;filter:drop-shadow(0 4px 10px rgba(200,80,120,.16))}
 .sk-eyes svg{width:100%;height:auto;display:block}
-@media (max-width:760px){.sk-eyes{width:116px;right:12px;bottom:12px}}
 
 /* layout */
 .sk-main{display:flex;gap:18px;align-items:flex-start}
