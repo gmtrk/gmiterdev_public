@@ -3,17 +3,16 @@ export function article(word) {
   return /^[aeiou]/i.test(String(word).trim()) ? 'an' : 'a';
 }
 
-// Render top-k guesses as labeled confidence bars + an optional headline.
-export function renderGuesses(container, topk, { headlineEl } = {}) {
+import { pickLine, runnerUps } from './voice.js';
+
+// Render the dialogue: spoken best-guess line into headlineEl, runner-up
+// question-rows (with bars) into `container`.
+export function renderGuesses(container, topk, { headlineEl, rng } = {}) {
+  if (headlineEl) headlineEl.innerHTML = pickLine(topk, { rng });
   if (!container) return;
-  container.innerHTML = topk.map((g) => {
-    const pct = Math.round(g.prob * 100);
-    return `<div class="sk-g"><div class="sk-g__lab"><span>${g.label}</span><span>${pct}%</span></div>`
-      + `<div class="sk-bar"><i style="width:${pct}%"></i></div></div>`;
-  }).join('');
-  if (headlineEl) {
-    headlineEl.textContent = topk.length
-      ? `i think it's ${article(topk[0].label)} ${topk[0].label}`
-      : 'draw something…';
-  }
+  const alts = runnerUps(topk, 2);
+  container.innerHTML = alts.map((a) =>
+    `<div class="sk-alt"><span class="sk-alt__q">…or ${article(a.label)} ${a.label}?</span>`
+    + `<span class="sk-alt__track"><i style="width:${a.pct}%"></i></span>`
+    + `<span class="sk-alt__pct">${a.pct}%</span></div>`).join('');
 }
